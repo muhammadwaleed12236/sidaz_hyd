@@ -3,6 +3,36 @@
 @section('content')
     @include('hr.partials.hr-styles')
 
+    <style>
+        .off-day-pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 48px;
+            height: 40px;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: #6b7280;
+            background: #f9fafb;
+            transition: all 0.18s ease;
+            user-select: none;
+        }
+        .off-day-pill:hover {
+            border-color: #ef4444;
+            background: #fff1f2;
+            color: #dc2626;
+        }
+        .off-day-pill.active {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            border-color: #dc2626;
+            color: white;
+            box-shadow: 0 4px 10px rgba(220,38,38,0.3);
+        }
+    </style>
+
     <div class="main-content">
         <div class="main-content-inner">
             <div class="container">
@@ -115,6 +145,10 @@
                                     </div>
                                 </div>
                                 <div class="hr-tags">
+                                    @php
+                                        $dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+                                        $offDays = is_array($shift->weekly_off_days) ? $shift->weekly_off_days : [];
+                                    @endphp
                                     @if ($shift->is_default)
                                         <span class="hr-tag success"><i class="fa fa-star me-1"></i>Default</span>
                                     @endif
@@ -125,6 +159,16 @@
                                             {{ \Carbon\Carbon::parse($shift->break_start)->format('h:i A') }} -
                                             {{ \Carbon\Carbon::parse($shift->break_end)->format('h:i A') }}</span>
                                     @endif
+                                    @if(!empty($offDays))
+                                        <span class="hr-tag" style="background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5;">
+                                            <i class="fa fa-moon me-1"></i>Off:
+                                            {{ implode(', ', array_map(fn($d) => $dayNames[$d] ?? $d, $offDays)) }}
+                                        </span>
+                                    @else
+                                        <span class="hr-tag" style="background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5;">
+                                            <i class="fa fa-moon me-1"></i>Off: Sun (default)
+                                        </span>
+                                    @endif
                                 </div>
 
                                 <input type="hidden" class="edit-data" data-id="{{ $shift->id }}"
@@ -134,7 +178,8 @@
                                     data-break_start="{{ $shift->break_start ? \Carbon\Carbon::parse($shift->break_start)->format('H:i') : '' }}"
                                     data-break_end="{{ $shift->break_end ? \Carbon\Carbon::parse($shift->break_end)->format('H:i') : '' }}"
                                     data-grace_minutes="{{ $shift->grace_minutes }}"
-                                    data-is_default="{{ $shift->is_default ? '1' : '0' }}">
+                                    data-is_default="{{ $shift->is_default ? '1' : '0' }}"
+                                    data-weekly_off_days="{{ json_encode(is_array($shift->weekly_off_days) ? $shift->weekly_off_days : []) }}">
                             </div>
                         @empty
                             <div class="empty-state" style="grid-column: 1/-1;">
@@ -208,6 +253,31 @@
                                 </div>
                             </div>
                             <div class="col-md-12">
+                                <div class="form-group-modern">
+                                    <label class="form-label"><i class="fa fa-moon"></i> Weekly Off Days <small class="text-muted">(Select 1 or 2 days)</small></label>
+                                    <div class="d-flex flex-wrap gap-2 mt-2" id="weeklyOffDaysContainer">
+                                        @php
+                                            $weekDays = [
+                                                0 => 'Sunday',
+                                                1 => 'Monday',
+                                                2 => 'Tuesday',
+                                                3 => 'Wednesday',
+                                                4 => 'Thursday',
+                                                5 => 'Friday',
+                                                6 => 'Saturday',
+                                            ];
+                                        @endphp
+                                        @foreach($weekDays as $num => $dayLabel)
+                                            <label class="off-day-pill" for="off_day_{{ $num }}" title="{{ $dayLabel }}">
+                                                <input type="checkbox" name="weekly_off_days[]" id="off_day_{{ $num }}" value="{{ $num }}" class="off-day-cb" hidden>
+                                                <span>{{ substr($dayLabel, 0, 3) }}</span>
+                                            </label>
+                                        @endforeach
+                                    </div>
+                                    <small class="text-muted d-block mt-1"><i class="fa fa-info-circle me-1 text-primary"></i>Selected days will be marked as weekly holidays for payroll & attendance calculations.</small>
+                                </div>
+                            </div>
+                            <div class="col-md-12">
                                 <div class="form-check mb-3">
                                     <input type="checkbox" name="is_default" id="is_default" class="form-check-input"
                                         value="1">
@@ -269,6 +339,9 @@
             $('#createBtn').click(function() {
                 $('#shiftForm')[0].reset();
                 $('#edit_id').val('');
+                // Reset off day pills
+                $('.off-day-pill').removeClass('active');
+                $('.off-day-cb').prop('checked', false);
                 $('#modalTitle').html('<i class="fa fa-clock"></i><span>Add Shift</span>');
                 $('#shiftModal').modal('show');
             });
@@ -283,6 +356,17 @@
                 $('#break_end').val(data.data('break_end'));
                 $('#grace_minutes').val(data.data('grace_minutes'));
                 $('#is_default').prop('checked', data.data('is_default') == '1');
+
+                // Restore weekly off days
+                var offDays = data.data('weekly_off_days') || [];
+                if (typeof offDays === 'string') { try { offDays = JSON.parse(offDays); } catch(e) { offDays = []; } }
+                $('.off-day-cb').each(function() {
+                    var val = parseInt($(this).val());
+                    var isOff = offDays.indexOf(val) !== -1;
+                    $(this).prop('checked', isOff);
+                    $(this).closest('.off-day-pill').toggleClass('active', isOff);
+                });
+
                 $('#modalTitle').html('<i class="fa fa-pen"></i><span>Edit Shift</span>');
                 $('#shiftModal').modal('show');
             });
@@ -326,7 +410,18 @@
 
             $('#refreshBtn').click(() => location.reload());
 
-            // Custom submit handler removed - using data-ajax-validate
+            // Off-day pill toggle (toggle active state on click)
+            $(document).on('click', '.off-day-pill', function() {
+                var cb = $(this).find('.off-day-cb');
+                var isChecked = !cb.prop('checked');
+                cb.prop('checked', isChecked);
+                $(this).toggleClass('active', isChecked);
+            });
+
+            // Prevent double-toggle from label's native checkbox behavior
+            $(document).on('change', '.off-day-cb', function(e) {
+                e.stopPropagation();
+            });
         });
     </script>
 @endsection

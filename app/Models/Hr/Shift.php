@@ -19,13 +19,16 @@ class Shift extends Model
         'break_end',
         'grace_minutes',
         'is_default',
+        'weekly_off_days',
     ];
 
     protected $casts = [
         'is_default' => 'boolean',
         'start_time' => 'datetime:H:i',
         'end_time' => 'datetime:H:i',
+        'weekly_off_days' => 'array',
     ];
+
 
     public function employees()
     {
@@ -67,6 +70,19 @@ class Shift extends Model
         $checkOut = \Carbon\Carbon::parse($checkOutTime);
         
         return $checkOut->lt($shiftEnd);
+    }
+
+    /**
+     * Get the effective weekly off days for this shift
+     * Returns array of day numbers (0=Sun, 1=Mon ... 6=Sat)
+     * Defaults to [0] (Sunday) if not configured
+     */
+    public function getWeeklyOffDaysArray(): array
+    {
+        if (!empty($this->weekly_off_days)) {
+            return (array) $this->weekly_off_days;
+        }
+        return [0]; // Default: Sunday only
     }
 
     /**

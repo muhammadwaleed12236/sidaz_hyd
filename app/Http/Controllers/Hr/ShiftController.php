@@ -29,6 +29,8 @@ class ShiftController extends Controller
             'break_end' => 'nullable|date_format:H:i',
             'grace_minutes' => 'required|integer|min:0|max:60',
             'is_default' => 'boolean',
+            'weekly_off_days' => 'nullable|array',
+            'weekly_off_days.*' => 'integer|between:0,6',
         ]);
 
         if ($validator->fails()) {
@@ -40,18 +42,22 @@ class ShiftController extends Controller
             Shift::where('is_default', true)->update(['is_default' => false]);
         }
 
+        $data = $request->only(['name', 'start_time', 'end_time', 'break_start', 'break_end', 'grace_minutes', 'is_default']);
+        $data['weekly_off_days'] = $request->input('weekly_off_days', []);
+        $data['is_default'] = $request->boolean('is_default');
+
         if ($request->filled('edit_id')) {
             if (! auth()->user()->can('hr.shifts.edit')) {
                 return response()->json(['error' => 'Unauthorized action.'], 403);
             }
             $shift = Shift::findOrFail($request->edit_id);
-            $shift->update($request->all());
+            $shift->update($data);
             $message = 'Shift Updated Successfully';
         } else {
             if (! auth()->user()->can('hr.shifts.create')) {
                 return response()->json(['error' => 'Unauthorized action.'], 403);
             }
-            Shift::create($request->all());
+            Shift::create($data);
             $message = 'Shift Created Successfully';
         }
 
