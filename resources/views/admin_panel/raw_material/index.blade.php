@@ -315,6 +315,7 @@
                         <th class="text-start">Department</th>
                         <th class="text-start">Type</th>
                         <th class="text-start">Unit</th>
+                        <th class="text-end">Price</th>
                         <th class="text-center">Status</th>
                         <th class="d-none">Min Stock</th>
                         <th class="d-none">Reorder Level</th>
@@ -342,6 +343,8 @@
                                     <span class="unit-badge">{{ $rm->unit->short_code }}</span>
                                 @endif
                             </td>
+
+                            <td class="text-end fw-bold text-success price">{{ number_format((float)$rm->price, 2) }}</td>
 
                             <td class="text-center status" data-status="{{ $rm->status }}">
                                 @if($rm->status)
@@ -377,11 +380,14 @@
 {{-- Add/Edit Raw Material Modal --}}
 <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content border-0 shadow-lg" style="border-radius: 16px; overflow: hidden;">
-            <div class="modal-header bg-white px-4 py-3 border-bottom">
-                <h5 class="modal-title fw-bold text-dark" id="exampleModalLabel"><i class="fas fa-box-open text-primary me-2" style="color: #ea580c !important;"></i><span id="modalTitleText">Add Raw Material</span></h5>
+        <div class="modal-content border-0 shadow" style="border-radius: 12px;">
+            <div class="modal-header bg-light px-4 py-3 border-bottom">
+                <h5 class="modal-title fw-semibold text-dark" id="exampleModalLabel">
+                    <span id="modalTitleText">Add Raw Material</span>
+                </h5>
                 <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close"></button>
             </div>
+
             <form class="myform" action="{{ route('raw_materials.store') }}" method="POST">
                 @csrf
                 <div class="modal-body p-4">
@@ -389,18 +395,18 @@
                     
                     <div class="row g-3">
                         <div class="col-md-6 mb-3">
-                            <label for="name" class="form-label fw-semibold text-dark small">Material Name <span class="text-danger">*</span></label>
-                            <input type="text" name="name" class="form-control px-3 py-2" id="name" placeholder="e.g. Sugar, Citric Acid" required style="border-radius: 10px; border: 1.5px solid #cbd5e1;" />
+                            <label for="name" class="form-label text-dark small fw-medium">Material Name <span class="text-danger">*</span></label>
+                            <input type="text" name="name" class="form-control px-3 py-2" id="name" placeholder="e.g. Paracetamol API" required style="border-radius: 8px; border: 1.5px solid #cbd5e1;" />
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label for="code" class="form-label fw-semibold text-dark small">Code / SKU <span class="text-danger">*</span></label>
-                            <input type="text" name="code" class="form-control px-3 py-2" id="code" placeholder="e.g. RM-001" required style="border-radius: 10px; border: 1.5px solid #cbd5e1; text-transform: uppercase;" />
+                            <label for="code" class="form-label text-dark small fw-medium">Material Code <span class="text-danger">*</span></label>
+                            <input type="text" name="code" class="form-control px-3 py-2 text-uppercase" id="code" placeholder="RM-001" required style="border-radius: 8px; border: 1.5px solid #cbd5e1;" />
                         </div>
 
                         <div class="col-md-4 mb-3">
-                            <label for="department_id" class="form-label fw-semibold text-dark small">Department <span class="text-danger">*</span></label>
-                            <select name="department_id" id="department_id" class="form-control px-3 py-2" required style="border-radius: 10px; border: 1.5px solid #cbd5e1;">
-                                <option value="">-- Select Department --</option>
+                            <label for="department_id" class="form-label text-dark small fw-medium">Department <span class="text-danger">*</span></label>
+                            <select name="department_id" id="department_id" class="form-select px-3 py-2" required style="border-radius: 8px; border: 1.5px solid #cbd5e1;">
+                                <option value="">-- Select --</option>
                                 @foreach($departments as $dept)
                                     <option value="{{ $dept->id }}">{{ $dept->name }}</option>
                                 @endforeach
@@ -408,8 +414,8 @@
                         </div>
 
                         <div class="col-md-4 mb-3">
-                            <label for="type" class="form-label fw-semibold text-dark small">Material Type <span class="text-danger">*</span></label>
-                            <select name="type" id="type" class="form-control px-3 py-2" required style="border-radius: 10px; border: 1.5px solid #cbd5e1;">
+                            <label for="type" class="form-label text-dark small fw-medium">Type <span class="text-danger">*</span></label>
+                            <select name="type" id="type" class="form-select px-3 py-2" required style="border-radius: 8px; border: 1.5px solid #cbd5e1;">
                                 <option value="Ingredient">Ingredient</option>
                                 <option value="Chemical">Chemical</option>
                                 <option value="Powder">Powder</option>
@@ -419,32 +425,37 @@
                         </div>
 
                         <div class="col-md-4 mb-3">
-                            <label for="unit_id" class="form-label fw-semibold text-dark small">Base Unit <span class="text-danger">*</span></label>
-                            <select name="unit_id" id="unit_id" class="form-control px-3 py-2" required style="border-radius: 10px; border: 1.5px solid #cbd5e1;">
-                                <option value="">-- Select Unit --</option>
+                            <label for="unit_id" class="form-label text-dark small fw-medium">Base Unit <span class="text-danger">*</span></label>
+                            <select name="unit_id" id="unit_id" class="form-select px-3 py-2" required style="border-radius: 8px; border: 1.5px solid #cbd5e1;">
+                                <option value="">-- Select --</option>
                                 @foreach($units as $u)
                                     <option value="{{ $u->id }}">{{ $u->name }} ({{ $u->short_code }})</option>
                                 @endforeach
                             </select>
                         </div>
 
-                        <div class="col-md-6 mb-3">
-                            <label for="min_stock" class="form-label fw-semibold text-dark small">Min Stock Level</label>
-                            <input type="number" step="0.0001" name="min_stock" class="form-control px-3 py-2" id="min_stock" placeholder="0.00" style="border-radius: 10px; border: 1.5px solid #cbd5e1;" />
+                        <div class="col-md-4 mb-3">
+                            <label for="price" class="form-label text-dark small fw-medium">Price (Per Unit) <span class="text-danger">*</span></label>
+                            <input type="number" step="0.01" name="price" class="form-control px-3 py-2" id="price" placeholder="0.00" required style="border-radius: 8px; border: 1.5px solid #cbd5e1;" />
+                        </div>
+
+                        <div class="col-md-4 mb-3">
+                            <label for="min_stock" class="form-label text-dark small fw-medium">Min Stock Level</label>
+                            <input type="number" step="0.0001" name="min_stock" class="form-control px-3 py-2" id="min_stock" placeholder="0.00" style="border-radius: 8px; border: 1.5px solid #cbd5e1;" />
                         </div>
                         
-                        <div class="col-md-6 mb-3">
-                            <label for="reorder_level" class="form-label fw-semibold text-dark small">Reorder Level</label>
-                            <input type="number" step="0.0001" name="reorder_level" class="form-control px-3 py-2" id="reorder_level" placeholder="0.00" style="border-radius: 10px; border: 1.5px solid #cbd5e1;" />
+                        <div class="col-md-4 mb-3">
+                            <label for="reorder_level" class="form-label text-dark small fw-medium">Reorder Alert</label>
+                            <input type="number" step="0.0001" name="reorder_level" class="form-control px-3 py-2" id="reorder_level" placeholder="0.00" style="border-radius: 8px; border: 1.5px solid #cbd5e1;" />
                         </div>
 
                         <div class="col-md-12 mb-3">
-                            <label for="description" class="form-label fw-semibold text-dark small">Description</label>
-                            <textarea name="description" class="form-control px-3 py-2" id="description" rows="2" placeholder="Optional details..." style="border-radius: 10px; border: 1.5px solid #cbd5e1;"></textarea>
+                            <label for="description" class="form-label text-dark small fw-medium">Description</label>
+                            <textarea name="description" class="form-control px-3 py-2" id="description" rows="2" placeholder="Optional details..." style="border-radius: 8px; border: 1.5px solid #cbd5e1;"></textarea>
                         </div>
 
                         <div class="col-md-12 mb-1 d-flex align-items-center">
-                            <label class="form-label fw-semibold text-dark small mb-0 me-3">Status</label>
+                            <label class="form-label text-dark small fw-medium mb-0 me-3">Status</label>
                             <input type="hidden" name="status" value="0">
                             <label class="switch mb-0">
                                 <input type="checkbox" name="status" id="status" value="1" checked>
@@ -454,11 +465,12 @@
                         </div>
                     </div>
                 </div>
+                
                 <div class="modal-footer bg-light px-4 py-3 border-top">
-                    <button type="button" class="btn btn-outline-secondary px-4 fw-semibold" data-dismiss="modal" style="border-radius: 8px;">Close</button>
+                    <button type="button" class="btn btn-secondary px-4" data-dismiss="modal">Close</button>
                     @canany(['raw_materials.create', 'raw_materials.edit'])
-                        <button type="submit" class="btn btn-primary px-4 fw-bold save-btn" style="border-radius: 8px; background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%); border: none;">
-                            <i class="fas fa-check me-1"></i> Save Material
+                        <button type="submit" class="btn btn-primary px-4 save-btn">
+                            Save Material
                         </button>
                     @endcanany
                 </div>
@@ -498,6 +510,7 @@
         var dept_id = tr.find(".department").data('deptid');
         var type = tr.find(".type").text().trim();
         var unit_id = tr.find(".unit").data('unitid');
+        var price = tr.find(".price").text().replace(/,/g, '').trim();
         var min_stock = tr.find(".min_stock").text().trim();
         var reorder_level = tr.find(".reorder_level").text().trim();
         var desc = tr.find(".description").text().trim();
@@ -509,6 +522,7 @@
         $('#department_id').val(dept_id).trigger('change');
         $('#type').val(type).trigger('change');
         $('#unit_id').val(unit_id).trigger('change');
+        $('#price').val(price);
         $('#min_stock').val(min_stock);
         $('#reorder_level').val(reorder_level);
         $('#description').val(desc);
@@ -530,6 +544,7 @@
         $('#department_id').val('').trigger('change');
         $('#type').val('Ingredient').trigger('change');
         $('#unit_id').val('').trigger('change');
+        $('#price').val('');
         $('#min_stock').val('');
         $('#reorder_level').val('');
         $('#description').val('');

@@ -18,7 +18,7 @@ class Formulation extends Model
 
     public function department()
     {
-        return $this->belongsTo(Department::class);
+        return $this->belongsTo(\App\Models\Hr\Department::class, 'department_id');
     }
 
     public function batchUnit()

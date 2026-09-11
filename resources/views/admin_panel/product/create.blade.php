@@ -345,6 +345,15 @@
                                     </div>
                                     <div class="card-body-pro">
                                         <div class="row g-3">
+                                            <!-- Product Type -->
+                                            <div class="col-md-4">
+                                                <label class="form-label-pro">Product Type <span class="text-danger">*</span></label>
+                                                <select name="product_type" id="product_type" class="form-select-pro" required onchange="toggleProductType()">
+                                                    <option value="Finished Good">Finished Good</option>
+                                                    <option value="Raw Material">Raw Material</option>
+                                                </select>
+                                            </div>
+
                                             <!-- Product Name -->
                                             <div class="col-md-8">
                                                 <label class="form-label-pro">
@@ -425,7 +434,7 @@
                                 </div>
 
                                 <!-- Pricing & Stock Alerts Card -->
-                                <div class="section-card">
+                                <div class="section-card" id="pricing_card">
                                     <div class="card-header-pro">
                                         <h5 class="card-title-pro text-success">
                                             <i class="fa fa-tags"></i> 2. Pricing & Stock Alert Thresholds
@@ -724,10 +733,16 @@
                             </div>
                         </div>
 
-                        <div class="mb-2">
-                            <label class="form-label-pro">Min Stock Alert</label>
-                            <input type="number" id="q_rm_min_stock" name="min_stock" class="form-control-pro" value="10">
-                            <input type="hidden" name="status" value="1">
+                        <div class="row g-2 mb-2">
+                            <div class="col-md-6">
+                                <label class="form-label-pro">Price (Per Unit) <span class="text-danger">*</span></label>
+                                <input type="number" step="0.01" id="q_rm_price" name="price" class="form-control-pro" value="0.00" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label-pro">Min Stock Alert</label>
+                                <input type="number" id="q_rm_min_stock" name="min_stock" class="form-control-pro" value="10">
+                                <input type="hidden" name="status" value="1">
+                            </div>
                         </div>
                     </div>
 
@@ -848,6 +863,36 @@
             }
         }
 
+        function toggleProductType() {
+            let type = $('#product_type').val();
+            if(type === 'Finished Good') {
+                $('#pricing_card').show();
+                $('#sale_price_per_box').attr('required', 'required');
+                
+                // Hide steps in wizard
+                $('#step_tab_2, #step_line_2, #step_tab_3, #step_line_3').hide();
+                
+                // If we are past step 1, go back to step 1
+                if(currentWizardStep > 1) {
+                    switchStep(1);
+                } else {
+                    $('#btn_next_step').hide();
+                    $('#btn_submit_final').show();
+                }
+            } else {
+                $('#pricing_card').hide();
+                $('#sale_price_per_box').removeAttr('required');
+                
+                // Show steps in wizard
+                $('#step_tab_2, #step_line_2, #step_tab_3, #step_line_3').show();
+                
+                if(currentWizardStep === 1) {
+                    $('#btn_next_step').show().html('Next: Composition Recipe <i class="fa fa-arrow-right ms-1"></i>');
+                    $('#btn_submit_final').hide();
+                }
+            }
+        }
+
         function switchStep(step) {
             if (step > currentWizardStep) {
                 // Validate current step before proceeding forward
@@ -872,7 +917,8 @@
                         $('#category_id').focus();
                         return;
                     }
-                    if (price === '' || price === null || price === undefined) {
+                    let type = $('#product_type').val();
+                    if (type === 'Finished Good' && (price === '' || price === null || price === undefined)) {
                         showAlert('Required Field', 'Please enter Sale Price per unit.', 'warning');
                         $('#sale_price_per_box').focus();
                         return;
@@ -902,8 +948,13 @@
             // Update Navigation Footer Buttons
             if (step === 1) {
                 $('#btn_prev_step').hide();
-                $('#btn_next_step').show().html('Next: Composition Recipe <i class="fa fa-arrow-right ms-1"></i>');
-                $('#btn_submit_final').hide();
+                if ($('#product_type').val() === 'Finished Good') {
+                    $('#btn_next_step').hide();
+                    $('#btn_submit_final').show();
+                } else {
+                    $('#btn_next_step').show().html('Next: Composition Recipe <i class="fa fa-arrow-right ms-1"></i>');
+                    $('#btn_submit_final').hide();
+                }
             } else if (step === 2) {
                 $('#btn_prev_step').show();
                 $('#btn_next_step').show().html('Next: Review Profile <i class="fa fa-arrow-right ms-1"></i>');
@@ -1363,6 +1414,14 @@
         });
 
         $(document).ready(function() {
+            $('.form-select-pro').select2({
+                width: '100%',
+                placeholder: "-- Select --",
+                allowClear: false
+            });
+
+            toggleProductType();
+
             $('#addRmBtn').on('click', () => addRawMaterialRow());
             $('#addPmBtn').on('click', () => addPackagingRow());
 

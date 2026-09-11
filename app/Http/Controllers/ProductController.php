@@ -15,7 +15,7 @@ use App\Models\PackagingMaterial;
 use App\Models\Formulation;
 use App\Models\FormulationRawMaterial;
 use App\Models\FormulationPackagingMaterial;
-use App\Models\Department;
+use App\Models\Hr\Department;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -732,6 +732,7 @@ class ProductController extends Controller
                 'sub_category_id' => $request->sub_category_id,
                 'item_code' => $nextCode,
                 'item_name' => $request->product_name,
+                'product_type' => $request->product_type,
                 'barcode_path' => $request->barcode_path ?? rand(100000000000, 999999999999),
                 'unit_id' => $request->unit,
                 'brand_id' => $request->brand_id,
@@ -1085,6 +1086,7 @@ class ProductController extends Controller
                 'sub_category_id' => $request->sub_category_id,
                 'item_code' => $request->item_code ?? Product::where('id', $id)->value('item_code'),
                 'item_name' => $request->product_name,
+                'product_type' => $request->product_type,
                 'barcode_path' => $request->barcode_path ?? rand(100000000000, 999999999999),
                 'unit_id' => $request->unit,
                 'brand_id' => $request->brand_id,
@@ -1306,6 +1308,7 @@ class ProductController extends Controller
     {
         $rules = [
             'product_name' => 'required|string|max:255',
+            'product_type' => 'required|in:Finished Good,Raw Material',
             'category_id' => 'required',
             'sub_category_id' => 'nullable',
             'brand_id' => 'nullable',
@@ -1344,6 +1347,11 @@ class ProductController extends Controller
                 'sale_price_per_box' => 'required|numeric|min:0',
                 'purchase_price_per_piece' => 'nullable|numeric|min:0',
             ]);
+        }
+
+        if ($request->product_type === 'Raw Material') {
+            if (isset($rules['sale_price_per_box'])) $rules['sale_price_per_box'] = 'nullable|numeric|min:0';
+            if (isset($rules['price_per_m2'])) $rules['price_per_m2'] = 'nullable|numeric|min:0';
         }
 
         return \Illuminate\Support\Facades\Validator::make($request->all(), $rules);

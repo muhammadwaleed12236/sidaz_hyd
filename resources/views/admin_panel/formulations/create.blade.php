@@ -149,16 +149,17 @@
         @csrf
         
         <!-- Header Section -->
-        <div class="sup-card">
-            <div class="sup-card-header"><i class="fas fa-info-circle text-primary me-2"></i>General Information</div>
-            <div class="p-4">
-                <div class="row g-4">
-                    <div class="col-md-3">
-                        <label class="form-label">Formulation Code *</label>
-                        <input type="text" name="formulation_code" class="form-control" value="{{ old('formulation_code', $nextCode) }}" required readonly>
-                    </div>
+        <div class="sup-card border-primary" style="border-top: 3px solid #0284c7;">
+            <div class="sup-card-header bg-white pb-2 d-flex justify-content-between align-items-center">
+                <span class="fs-5 text-dark"><i class="fas fa-file-invoice text-primary me-2"></i>Batch Manufacturing Record (BMR)</span>
+                <span class="badge bg-light text-dark border px-3 py-2 fs-6">Doc: <input type="text" name="doc_no" class="border-0 bg-transparent text-end fw-bold text-dark" style="width: 120px; outline: none;" placeholder="DOC-001"></span>
+            </div>
+            <div class="p-4" style="background-color: #f8fafc;">
+                
+                <h6 class="fw-bold text-secondary text-uppercase mb-3" style="font-size: 0.75rem; letter-spacing: 0.05em;">Product Details</h6>
+                <div class="row g-3 mb-4 bg-white p-3 rounded shadow-sm border">
                     <div class="col-md-5">
-                        <label class="form-label">Product (Finished Good) *</label>
+                        <label class="form-label text-dark fw-bold small">Product Name <span class="text-danger">*</span></label>
                         <select name="product_id" class="form-select select2" required>
                             <option value="">Select Product...</option>
                             @foreach($products as $p)
@@ -166,42 +167,90 @@
                             @endforeach
                         </select>
                     </div>
+                    <div class="col-md-3">
+                        <label class="form-label text-dark fw-bold small">Batch No <span class="text-danger">*</span></label>
+                        <input type="text" name="batch_no" class="form-control fw-bold text-primary" required placeholder="e.g. SP26023B">
+                    </div>
                     <div class="col-md-4">
-                        <label class="form-label">Department</label>
+                        <label class="form-label text-dark fw-bold small">Brand / Company Name</label>
+                        <input type="text" name="company_name" class="form-control" placeholder="e.g. Sidaz Pharma">
+                    </div>
+                </div>
+
+                <h6 class="fw-bold text-secondary text-uppercase mb-3" style="font-size: 0.75rem; letter-spacing: 0.05em;">Batch Metrics & Size</h6>
+                <div class="row g-3 mb-4 bg-white p-3 rounded shadow-sm border">
+                    <div class="col-md-3">
+                        <label class="form-label text-dark fw-bold small">Qty of Dropper/Bottle <span class="text-danger">*</span></label>
+                        <input type="number" id="qty_of_dropper" name="qty_of_dropper" class="form-control fw-bold" required placeholder="1000">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label text-dark fw-bold small">Weight Per Bottle</label>
+                        <div class="input-group">
+                            <input type="number" step="0.01" id="weight_per_bottle" name="weight_per_bottle" class="form-control" placeholder="30">
+                            <span class="input-group-text bg-light">ML</span>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label text-success fw-bold small">Batch Size (Auto) <span class="text-danger">*</span></label>
+                        <input type="number" step="0.01" id="batch_size" name="batch_size" class="form-control border-success text-success fw-bold" value="{{ old('batch_size') }}" required placeholder="30">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label text-dark fw-bold small">Batch Unit <span class="text-danger">*</span></label>
+                        <select name="batch_unit_id" class="form-select select2" required>
+                            <option value="">Select Unit...</option>
+                            @foreach($units as $u)
+                                <option value="{{ $u->id }}" {{ old('batch_unit_id') == $u->id ? 'selected' : '' }}>{{ $u->name }} ({{ $u->short_code }})</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+
+                <h6 class="fw-bold text-secondary text-uppercase mb-3" style="font-size: 0.75rem; letter-spacing: 0.05em;">Dates & Status</h6>
+                <div class="row g-3 bg-white p-3 rounded shadow-sm border">
+                    <div class="col-md-3">
+                        <label class="form-label text-dark fw-bold small">BMR No</label>
+                        <input type="text" name="bmr_no" class="form-control" placeholder="SP060200">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label text-dark fw-bold small">Issue Date</label>
+                        <input type="date" name="issue_date" class="form-control" value="{{ date('Y-m-d') }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label text-dark fw-bold small">Mfg Date</label>
+                        <input type="date" name="mfg_date" class="form-control">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label text-dark fw-bold small">Exp Date</label>
+                        <input type="date" name="exp_date" class="form-control">
+                    </div>
+
+                    <div class="col-md-3 mt-4">
+                        <label class="form-label text-dark fw-bold small">Formulation Code</label>
+                        <input type="text" name="formulation_code" class="form-control bg-light" value="{{ old('formulation_code', $nextCode) }}" required readonly>
+                    </div>
+                    <div class="col-md-3 mt-4">
+                        <label class="form-label text-dark fw-bold small">Department</label>
                         <select name="department_id" class="form-select select2">
-                            <option value="">Select Department...</option>
+                            <option value="">Select Dept...</option>
                             @foreach($departments as $d)
                                 <option value="{{ $d->id }}" {{ old('department_id') == $d->id ? 'selected' : '' }}>{{ $d->name }}</option>
                             @endforeach
                         </select>
                     </div>
-
-                    <div class="col-md-3">
-                        <label class="form-label">Batch Size *</label>
-                        <input type="number" step="0.01" name="batch_size" class="form-control" value="{{ old('batch_size') }}" required placeholder="e.g. 100">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label">Batch Unit *</label>
-                        <select name="batch_unit_id" class="form-select select2" required>
-                            <option value="">Select Unit...</option>
-                            @foreach($units as $u)
-                                <option value="{{ $u->id }}" {{ old('batch_unit_id') == $u->id ? 'selected' : '' }}>{{ $u->name }} ({{ $u->short_name }})</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label">Version *</label>
+                    <div class="col-md-3 mt-4">
+                        <label class="form-label text-dark fw-bold small">Version</label>
                         <input type="text" name="version" class="form-control" value="{{ old('version', '1.0') }}" required>
                     </div>
-                    <div class="col-md-4">
-                        <label class="form-label">Status *</label>
+                    <div class="col-md-3 mt-4">
+                        <label class="form-label text-dark fw-bold small">Status</label>
                         <select name="status" class="form-select" required>
                             <option value="draft" {{ old('status') == 'draft' ? 'selected' : '' }}>Draft</option>
-                            <option value="active" {{ old('status') == 'active' ? 'selected' : '' }}>Active</option>
+                            <option value="active" {{ old('status') == 'active' ? 'selected' : '' }}>Active (In Production)</option>
                             <option value="inactive" {{ old('status') == 'inactive' ? 'selected' : '' }}>Inactive</option>
                         </select>
                     </div>
                 </div>
+
             </div>
         </div>
 
@@ -215,15 +264,16 @@
                 <table class="table table-custom mb-0" id="rawMaterialsTable">
                     <thead>
                         <tr>
-                            <th style="width: 35%">Raw Material *</th>
+                            <th style="width: 30%">Raw Material *</th>
                             <th style="width: 15%">Quantity *</th>
-                            <th style="width: 15%">Unit *</th>
-                            <th style="width: 15%">Waste %</th>
+                            <th style="width: 12%">Unit *</th>
+                            <th style="width: 12%">Cost/Rate</th>
+                            <th style="width: 12%">Waste %</th>
                             <th>Notes</th>
                             <th style="width: 50px"></th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="rawMaterialBody">
                         <!-- Rows will be added here via JS -->
                     </tbody>
                 </table>
@@ -278,7 +328,7 @@
                 <select name="raw_material_id[]" class="form-select dynamic-select2 rm-select" required>
                     <option value="">Select Raw Material...</option>
                     @foreach($rawMaterials as $rm)
-                        <option value="{{ $rm->id }}" data-unit="{{ $rm->unit_id }}">{{ $rm->name }}</option>
+                        <option value="{{ $rm->id }}" data-unit="{{ $rm->unit_id }}" data-price="{{ $rm->price }}">{{ $rm->name }}</option>
                     @endforeach
                 </select>
             </td>
@@ -292,6 +342,9 @@
                         <option value="{{ $u->id }}">{{ $u->short_name }}</option>
                     @endforeach
                 </select>
+            </td>
+            <td>
+                <input type="text" class="form-control rm-price" readonly placeholder="0.00" style="background-color: #f1f5f9; color: #16a34a; font-weight: bold;">
             </td>
             <td>
                 <input type="number" step="0.01" name="rm_waste_percent[]" class="form-control" value="0" placeholder="Waste %">
@@ -339,19 +392,40 @@
         addRawMaterialRow();
         addPackagingRow();
         
-        // Auto-select unit when raw material is chosen
+        // Auto-select unit & price when raw material is chosen
         $(document).on('change', '.rm-select', function() {
-            let unitId = $(this).find(':selected').data('unit');
+            let selected = $(this).find(':selected');
+            let unitId = selected.data('unit');
+            let price = selected.data('price');
             let tr = $(this).closest('tr');
+            
             if(unitId) {
                 tr.find('.rm-unit').val(unitId).trigger('change');
             }
+            if(price !== undefined) {
+                tr.find('.rm-price').val(parseFloat(price).toFixed(2));
+            } else {
+                tr.find('.rm-price').val('0.00');
+            }
         });
+
+        // Calculate Batch Size automatically
+        function calculateBatchSize() {
+            let qty = parseFloat($('#qty_of_dropper').val()) || 0;
+            let weight = parseFloat($('#weight_per_bottle').val()) || 0;
+            if(qty > 0 && weight > 0) {
+                // formula: (Qty * Weight) / 1000 = Liters/KGs
+                let batchSize = (qty * weight) / 1000;
+                $('#batch_size').val(batchSize.toFixed(2));
+            }
+        }
+
+        $('#qty_of_dropper, #weight_per_bottle').on('input', calculateBatchSize);
     });
 
     function addRawMaterialRow() {
         let template = $('#rawMaterialTemplate').html();
-        $('#rawMaterialsTable tbody').append(template);
+        $('#rawMaterialBody').append(template);
         initDynamicSelect2();
     }
 

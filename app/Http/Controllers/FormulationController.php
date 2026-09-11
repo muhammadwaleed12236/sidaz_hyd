@@ -6,7 +6,7 @@ use App\Models\Formulation;
 use App\Models\FormulationRawMaterial;
 use App\Models\FormulationPackagingMaterial;
 use App\Models\Product;
-use App\Models\Department;
+use App\Models\Hr\Department;
 use App\Models\Unit;
 use App\Models\RawMaterial;
 use App\Models\PackagingMaterial;
@@ -52,6 +52,16 @@ class FormulationController extends Controller
 
             $formulation = Formulation::create([
                 'formulation_code' => $request->formulation_code,
+                'doc_no' => $request->doc_no,
+                'batch_no' => $request->batch_no,
+                'qty_of_dropper' => $request->qty_of_dropper,
+                'weight_per_bottle' => $request->weight_per_bottle,
+                'bmr_no' => $request->bmr_no,
+                'total_packs' => $request->total_packs,
+                'issue_date' => $request->issue_date,
+                'mfg_date' => $request->mfg_date,
+                'exp_date' => $request->exp_date,
+                'company_name' => $request->company_name,
                 'product_id' => $request->product_id,
                 'department_id' => $request->department_id,
                 'batch_size' => $request->batch_size,

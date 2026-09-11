@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\PackagingMaterial;
-use App\Models\Department;
+use App\Models\Hr\Department;
 use App\Models\Unit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -16,7 +16,7 @@ class PackagingMaterialController extends Controller
     public function index()
     {
         $packagingMaterials = PackagingMaterial::with(['department', 'unit', 'capacityUnit'])->orderBy('id', 'desc')->get();
-        $departments = Department::where('status', 1)->get();
+        $departments = Department::get();
         $units = Unit::where('status', 1)->get();
         
         return view('admin_panel.packaging_material.index', compact('packagingMaterials', 'departments', 'units'));
@@ -32,7 +32,7 @@ class PackagingMaterialController extends Controller
             'code' => 'required|string|max:100|unique:packaging_materials,code,' . $request->edit_id,
             'packaging_type' => 'required|string|in:Bottle,Box,Cap,Label,Carton,Seal,Wrapper,Other',
             'variant' => 'nullable|string|max:100',
-            'department_id' => 'required|exists:departments,id',
+            'department_id' => 'required|exists:hr_departments,id',
             'unit_id' => 'required|exists:units,id',
             'capacity' => 'nullable|numeric|min:0',
             'capacity_unit_id' => 'nullable|exists:units,id',

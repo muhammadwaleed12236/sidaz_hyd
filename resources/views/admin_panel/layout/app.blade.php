@@ -474,12 +474,10 @@
                             </a>
                             <div class="submenu">
                                 <ul class="submenu-item">
-                                    @can('departments.view')
+                                    {{-- @can('departments.view')
                                         <li><a href="{{ route('departments.index') }}"><i class="fas fa-industry"></i> Departments</a></li>
-                                    @endcan
-                                    @can('units.view')
-                                        <li><a href="{{ route('Unit.home') }}"><i class="fas fa-balance-scale"></i> Units</a></li>
-                                    @endcan
+                                    @endcan --}}
+
                                     @can('raw_materials.view')
                                         <li><a href="{{ route('raw_materials.index') }}"><i class="fas fa-box-open"></i> Raw Materials</a></li>
                                     @endcan
@@ -530,6 +528,10 @@
 
                                                     @can('subcategories.view')
                                                         <li><a href="{{ route('subcategory.home') }}"><i class="fas fa-th-list"></i> Sub Category</a></li>
+                                                    @endcan
+
+                                                    @can('units.view')
+                                                        <li><a href="{{ route('Unit.home') }}"><i class="fas fa-balance-scale"></i> Units</a></li>
                                                     @endcan
 
                                                     @can('brands.view')
