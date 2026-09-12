@@ -76,6 +76,12 @@ class EmployeeController extends Controller
             $data['custom_end_time'] = null;
         }
 
+        // Handle per-employee weekly off days override
+        // If weekly_off_days submitted, save them; otherwise null (will use shift's off days)
+        $data['weekly_off_days'] = $request->has('employee_weekly_off_days')
+            ? $request->input('employee_weekly_off_days', [])
+            : null;
+
         if ($request->filled('edit_id')) {
             if (! auth()->user()->can('hr.employees.edit')) {
                 return response()->json(['error' => 'Unauthorized action.'], 403);

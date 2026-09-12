@@ -21,7 +21,7 @@
             background: #ffffff;
         }
 
-        #employeeModal .modal-header.gradient {
+        #employeeModal .mo dal-header.gradient {
             background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
             padding: 22px 28px;
             border-bottom: none;

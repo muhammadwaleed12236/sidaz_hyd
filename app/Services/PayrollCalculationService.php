@@ -150,8 +150,9 @@ class PayrollCalculationService
             ->whereBetween('date', [$startDate->format('Y-m-d'), $endDate->format('Y-m-d')])
             ->get();
 
-        // Calculate working days (excluding weekends)
-        $totalWorkingDays = $this->getWorkingDaysInRange($startDate, $endDate);
+        // Calculate working days (excluding employee's weekly off days)
+        $weeklyOffDays = $employee->getWeeklyOffDays();
+        $totalWorkingDays = $this->getWorkingDaysInRange($startDate, $endDate, $weeklyOffDays);
 
         // Attendance stats
         $daysPresent = $attendances->filter(fn ($att) => strtolower($att->status) === 'present')->count();
@@ -266,16 +267,17 @@ class PayrollCalculationService
     }
 
     /**
-     * Calculate working days in a date range (excluding weekends)
+     * Calculate working days in a date range (excluding employee-specific weekly off days)
+     * @param array $weeklyOffDays Day numbers (0=Sun, 1=Mon ... 6=Sat) to treat as off days
      */
-    private function getWorkingDaysInRange(Carbon $startDate, Carbon $endDate): int
+    private function getWorkingDaysInRange(Carbon $startDate, Carbon $endDate, array $weeklyOffDays = [0, 6]): int
     {
         $workingDays = 0;
         $current = $startDate->copy();
 
         while ($current->lte($endDate)) {
-            // Exclude Saturdays (6) and Sundays (0)
-            if (! in_array($current->dayOfWeek, [0, 6])) {
+            // Exclude configured weekly off days
+            if (! in_array($current->dayOfWeek, $weeklyOffDays)) {
                 $workingDays++;
             }
             $current->addDay();

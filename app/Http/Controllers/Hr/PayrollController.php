@@ -357,16 +357,17 @@ class PayrollController extends Controller
 
 
     /**
-     * Calculate working days in a date range (excluding weekends)
+     * Calculate working days in a date range (excluding employee-specific weekly off days)
+     * @param array $weeklyOffDays Day numbers (0=Sun, 1=Mon...6=Sat). Defaults to [0,6] (Sat+Sun)
      */
-    private function getWorkingDaysInRange($startDate, $endDate): int
+    private function getWorkingDaysInRange($startDate, $endDate, array $weeklyOffDays = [0, 6]): int
     {
         $workingDays = 0;
         $current = $startDate->copy();
         
         while ($current->lte($endDate)) {
-            // Exclude Saturdays (6) and Sundays (0)
-            if (!in_array($current->dayOfWeek, [0, 6])) {
+            // Exclude configured weekly off days
+            if (!in_array($current->dayOfWeek, $weeklyOffDays)) {
                 $workingDays++;
             }
             $current->addDay();

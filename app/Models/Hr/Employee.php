@@ -37,12 +37,14 @@ class Employee extends Model
         'last_device_sync_at',
         'punch_gap_minutes',
         'pending_deductions',
+        'weekly_off_days',
     ];
 
     protected $casts = [
         'face_encoding' => 'array',
         'fingerprint_enrolled_at' => 'datetime',
         'last_device_sync_at' => 'datetime',
+        'weekly_off_days' => 'array',
     ];
 
     public function documents()
@@ -186,6 +188,32 @@ class Employee extends Model
         }
 
         return '17:00:00';
+    }
+
+    /**
+     * Get the effective weekly off days for this employee.
+     * Employee-level override takes priority over shift's weekly_off_days.
+     * Falls back to shift's setting, then defaults to [0] (Sunday).
+     */
+    public function getWeeklyOffDays(): array
+    {
+        // Per-employee override
+        if (!empty($this->weekly_off_days)) {
+            return (array) $this->weekly_off_days;
+        }
+
+        // Shift-level setting
+        if ($this->shift && !empty($this->shift->weekly_off_days)) {
+            return (array) $this->shift->weekly_off_days;
+        }
+
+        // Global default shift
+        $defaultShift = Shift::getDefault();
+        if ($defaultShift && !empty($defaultShift->weekly_off_days)) {
+            return (array) $defaultShift->weekly_off_days;
+        }
+
+        return [0]; // Fallback: Sunday only
     }
 
     /**
