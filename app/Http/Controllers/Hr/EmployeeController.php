@@ -82,25 +82,52 @@ class EmployeeController extends Controller
             ? $request->input('employee_weekly_off_days', [])
             : null;
 
-        if ($request->filled('edit_id')) {
-            if (! auth()->user()->can('hr.employees.edit')) {
-                return response()->json(['error' => 'Unauthorized action.'], 403);
-            }
-            $employee = Employee::findOrFail($request->edit_id);
+        try {
+            if ($request->filled('edit_id')) {
+                if (! auth()->user()->can('hr.employees.edit')) {
+                    return response()->json(['error' => 'Unauthorized action.'], 403);
+                }
+                $employee = Employee::findOrFail($request->edit_id);
 
-            if ($hasPortalAccess) {
-                // Update or create User
-                if ($employee->user_id) {
-                    $user = \App\Models\User::find($employee->user_id);
-                    if ($user) {
-                        $user->email = $data['email'];
-                        $user->name = $request->first_name.' '.$request->last_name;
-                        if ($request->filled('password')) {
-                            $user->password = \Illuminate\Support\Facades\Hash::make($request->password);
+                if ($hasPortalAccess) {
+                    // Update or create User
+                    if ($employee->user_id) {
+                        $user = \App\Models\User::find($employee->user_id);
+                        if ($user) {
+                            $user->email = $data['email'];
+                            $user->name = $request->first_name.' '.$request->last_name;
+                            if ($request->filled('password')) {
+                                $user->password = \Illuminate\Support\Facades\Hash::make($request->password);
+                            }
+                            $user->save();
                         }
-                        $user->save();
+                    } else {
+                        $user = \App\Models\User::where('email', $data['email'])->first();
+                        if (! $user) {
+                            $user = \App\Models\User::create([
+                                'name' => $request->first_name.' '.$request->last_name,
+                                'email' => $data['email'],
+                                'password' => \Illuminate\Support\Facades\Hash::make($request->filled('password') ? $request->password : '12345678'),
+                            ]);
+                        } elseif ($request->filled('password')) {
+                            $user->password = \Illuminate\Support\Facades\Hash::make($request->password);
+                            $user->save();
+                        }
+                        $data['user_id'] = $user->id;
                     }
                 } else {
+                    // Portal access untoggled
+                    $data['user_id'] = null;
+                }
+
+                $employee->update($data);
+            } else {
+                if (! auth()->user()->can('hr.employees.create')) {
+                    return response()->json(['error' => 'Unauthorized action.'], 403);
+                }
+
+                if ($hasPortalAccess) {
+                    // Create or link User Account
                     $user = \App\Models\User::where('email', $data['email'])->first();
                     if (! $user) {
                         $user = \App\Models\User::create([
@@ -112,123 +139,81 @@ class EmployeeController extends Controller
                         $user->password = \Illuminate\Support\Facades\Hash::make($request->password);
                         $user->save();
                     }
+
                     $data['user_id'] = $user->id;
-                }
-            } else {
-                // Portal access untoggled
-                $data['user_id'] = null;
-            }
-
-            $employee->update($data);
-        } else {
-            if (! auth()->user()->can('hr.employees.create')) {
-                return response()->json(['error' => 'Unauthorized action.'], 403);
-            }
-
-            if ($hasPortalAccess) {
-                // Create or link User Account
-                $user = \App\Models\User::where('email', $data['email'])->first();
-                if (! $user) {
-                    $user = \App\Models\User::create([
-                        'name' => $request->first_name.' '.$request->last_name,
-                        'email' => $data['email'],
-                        'password' => \Illuminate\Support\Facades\Hash::make($request->filled('password') ? $request->password : '12345678'),
-                    ]);
-                } elseif ($request->filled('password')) {
-                    $user->password = \Illuminate\Support\Facades\Hash::make($request->password);
-                    $user->save();
+                } else {
+                    $data['user_id'] = null;
                 }
 
-                $data['user_id'] = $user->id;
-            } else {
-                $data['user_id'] = null;
+                $employee = Employee::create($data);
             }
 
-            $employee = Employee::create($data);
-        }
+            // Handle File Uploads (Create/Update in hr_employee_documents)
+            $fileFields = ['document_degree', 'document_certificate', 'document_hsc_marksheet', 'document_ssc_marksheet', 'document_cv'];
+            foreach ($fileFields as $field) {
+                if ($request->hasFile($field)) {
+                    $file = $request->file($field);
+                    $path = $file->store('employee_docs', 'public');
 
-        // Handle File Uploads (Create/Update in hr_employee_documents)
-        $fileFields = ['document_degree', 'document_certificate', 'document_hsc_marksheet', 'document_ssc_marksheet', 'document_cv'];
-        foreach ($fileFields as $field) {
-            if ($request->hasFile($field)) {
-                $file = $request->file($field);
-                $path = $file->store('employee_docs', 'public');
-
-                $employee->documents()->updateOrCreate(
-                    ['type' => str_replace('document_', '', $field)],
-                    ['file_path' => $path, 'file_name' => $file->getClientOriginalName()]
-                );
+                    $employee->documents()->updateOrCreate(
+                        ['type' => str_replace('document_', '', $field)],
+                        ['file_path' => $path, 'file_name' => $file->getClientOriginalName()]
+                    );
+                }
             }
-        }
 
-        // Handle Casual Leave Days Sync
-        if ($request->has('casual_leave_days')) {
-            $rawDates = $request->casual_leave_days ? explode(',', $request->casual_leave_days) : [];
-            $submittedDates = [];
-            foreach ($rawDates as $rawDate) {
-                $trimmed = trim($rawDate);
-                if (! empty($trimmed)) {
-                    try {
-                        $submittedDates[] = \Carbon\Carbon::parse($trimmed)->format('Y-m-d');
-                    } catch (\Exception $e) {
-                        // Skip unparseable dates
+            // Handle Casual Leave Days Sync
+            if ($request->has('casual_leave_days')) {
+                $rawDates = $request->casual_leave_days ? explode(',', $request->casual_leave_days) : [];
+                $submittedDates = [];
+                foreach ($rawDates as $rawDate) {
+                    $trimmed = trim($rawDate);
+                    if (! empty($trimmed)) {
+                        try {
+                            $submittedDates[] = \Carbon\Carbon::parse($trimmed)->format('Y-m-d');
+                        } catch (\Exception $e) {
+                            // Skip unparseable dates
+                        }
+                    }
+                }
+                $submittedDates = array_unique($submittedDates);
+
+                // Get existing single-day Casual leaves
+                $existingLeaves = $employee->leaves()
+                    ->where('leave_type', 'Casual')
+                    ->whereRaw('start_date = end_date')
+                    ->get();
+
+                $existingDates = $existingLeaves->pluck('start_date')->map(function ($d) {
+                    return \Carbon\Carbon::parse($d)->format('Y-m-d');
+                })->toArray();
+
+                // 1. Create new leaves
+                foreach ($submittedDates as $date) {
+                    if (! in_array($date, $existingDates)) {
+                        $employee->leaves()->create([
+                            'leave_type' => 'Casual',
+                            'start_date' => $date,
+                            'end_date' => $date,
+                            'reason' => 'Casual Leave assigned via Employee Form',
+                            'status' => 'approved',
+                        ]);
+                    }
+                }
+
+                // 2. Delete removed leaves
+                foreach ($existingLeaves as $leave) {
+                    $leaveDate = \Carbon\Carbon::parse($leave->start_date)->format('Y-m-d');
+                    if (! in_array($leaveDate, $submittedDates)) {
+                        $leave->delete();
                     }
                 }
             }
-            $submittedDates = array_unique($submittedDates);
 
-            // Get existing single-day Casual leaves
-            $existingLeaves = $employee->leaves()
-                ->where('leave_type', 'Casual')
-                ->whereRaw('start_date = end_date')
-                ->get();
-
-            $existingDates = $existingLeaves->pluck('start_date')->map(function ($d) {
-                return \Carbon\Carbon::parse($d)->format('Y-m-d');
-            })->toArray();
-
-            // 1. Create new leaves
-            foreach ($submittedDates as $date) {
-                if (! in_array($date, $existingDates)) {
-                    $employee->leaves()->create([
-                        'leave_type' => 'Casual',
-                        'start_date' => $date,
-                        'end_date' => $date,
-                        'reason' => 'Casual Leave assigned via Employee Form',
-                        'status' => 'approved',
-                    ]);
-                }
-            }
-
-            // 2. Delete removed leaves
-            foreach ($existingLeaves as $leave) {
-                $leaveDate = \Carbon\Carbon::parse($leave->start_date)->format('Y-m-d');
-                if (! in_array($leaveDate, $submittedDates)) {
-                    $leave->delete();
-                }
-            }
+            return response()->json(['success' => 'Employee saved successfully']);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage(), 'line' => $e->getLine(), 'file' => $e->getFile()], 500);
         }
-
-        // Auto-sync to biometric device when creating new employee
-        // Auto-sync to biometric device when creating new employee
-        // DISABLED FOR PERFORMANCE: This causes the request to hang if the device is slow.
-        // Users should sync manually from the Device Manager page.
-        /*
-        if (! $request->filled('edit_id')) {
-            try {
-                $activeDevice = \App\Models\BiometricDevice::active()->first();
-                if ($activeDevice) {
-                    $syncService = app(\App\Services\BiometricSyncService::class);
-                    $syncService->syncEmployeeToDevice($employee, $activeDevice);
-                }
-            } catch (\Exception $e) {
-                \Illuminate\Support\Facades\Log::warning('Failed to auto-sync employee to biometric device: '.$e->getMessage());
-                // Don't fail the employee creation if sync fails
-            }
-        }
-        */
-
-        return response()->json(['success' => 'Employee saved successfully']);
     }
 
     public function destroy(Employee $employee)

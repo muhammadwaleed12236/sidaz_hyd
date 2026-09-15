@@ -2,7 +2,7 @@
 
 @section('content')
     <!-- Script for Face API -->
-    <script src="{{ asset('assets/vendors/face-api/js/face-api.min.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.min.js"></script>
 
     @include('hr.partials.hr-styles')
 
