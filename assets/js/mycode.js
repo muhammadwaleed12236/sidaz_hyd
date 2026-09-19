@@ -88,6 +88,14 @@ function yourFunction(url,method) {
     }
     //post
     function myAjax(url, formData, method = 'post', callback, options = {}) {
+        try {
+            if (url && (url.indexOf('http://') === 0 || url.indexOf('https://') === 0)) {
+                var u = new URL(url);
+                if (u.hostname === window.location.hostname || u.hostname === '127.0.0.1' || u.hostname === 'localhost') {
+                    url = u.pathname + u.search;
+                }
+            }
+        } catch(err) {}
         $.ajax({
             url: url,
             method: method,
@@ -132,7 +140,9 @@ function yourFunction(url,method) {
                     return false;
                 }
 
-                callback(data)
+                if (typeof callback === 'function') {
+                    callback(data);
+                }
             },
             error: function (jqXHR, textStatus, errorThrown) {
                 ajaxErrorHandling(jqXHR, errorThrown);

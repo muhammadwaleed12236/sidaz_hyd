@@ -323,7 +323,7 @@
                 <h5 class="modal-title fw-bold text-dark" id="exampleModalLabel"><i class="fas fa-tag text-primary me-2"></i><span id="modalTitleText">Add Category</span></h5>
                 <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form class="myform" action="{{ route('store.category') }}" method="POST">
+            <form class="myform" action="{{ route('store.category', [], false) }}" method="POST">
                 @csrf
                 <div class="modal-body p-4">
                     <input type="hidden" name="edit_id" id="id" />
@@ -334,7 +334,7 @@
                 </div>
                 <div class="modal-footer bg-light px-4 py-3 border-top">
                     <button type="button" class="btn btn-outline-secondary px-4 fw-semibold" data-dismiss="modal" style="border-radius: 8px;">Close</button>
-                    @canany(['categories.add', 'categories.edit'])
+                    @canany(['categories.create', 'categories.edit'])
                         <button type="submit" class="btn btn-primary px-4 fw-bold save-btn" style="border-radius: 8px; background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%); border: none;">
                             <i class="fas fa-check me-1"></i> Save Category
                         </button>
@@ -348,6 +348,7 @@
 @endsection
 
 @section('js')
+<script src="{{ asset('assets/js/mycode.js') }}"></script>
 <script>
     // Fix ARIA focus warning on modal close
     $('.modal').on('hide.bs.modal', function () {
@@ -358,11 +359,18 @@
 
     $(document).on('submit', '.myform', function(e) {
         e.preventDefault();
-        var formdata = new FormData(this);
-        var url = $(this).attr('action');
-        var method = $(this).attr('method');
-        $(this).find(':submit').attr('disabled', true);
-        myAjax(url, formdata, method);
+        var form = this;
+        var formdata = new FormData(form);
+        var url = $(form).attr('action');
+        try {
+            if (url && (url.indexOf('http://') === 0 || url.indexOf('https://') === 0)) {
+                var u = new URL(url);
+                url = u.pathname + u.search;
+            }
+        } catch(err) {}
+        var method = $(form).attr('method') || 'POST';
+        $(form).find(':submit, .save-btn').prop('disabled', true);
+        myAjax(url, formdata, method, null, { form: form });
     });
 
     $(document).on('click', '.edit-btn', function() {

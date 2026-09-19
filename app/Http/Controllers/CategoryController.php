@@ -25,13 +25,18 @@ class CategoryController extends Controller
         'name' => 'required|unique:categories,name,' . $request->edit_id . ',id',
     ]);
 
-     if ($validator->fails()) {
+        if ($validator->fails()) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'error' => $validator->errors()->first()
+                ]);
+            }
 
-    return redirect()->back()
-        ->withErrors($validator)
-        ->withInput()
-        ->with('catagory_swal_error', $validator->errors()->first());
-}
+            return redirect()->back()
+                ->withErrors($validator)
+                ->withInput()
+                ->with('catagory_swal_error', $validator->errors()->first());
+        }
 
     /**
      * UPDATE CATEGORY
@@ -73,8 +78,8 @@ class CategoryController extends Controller
      * NORMAL FLOW
      */
     return response()->json([
-        'success'  => 'Category Created Successfully',
-        'redirect' => route('Category.home')
+        'success' => 'Category Created Successfully',
+        'reload'  => true
     ]);
 }
 

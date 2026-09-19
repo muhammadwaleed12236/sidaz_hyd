@@ -2643,4 +2643,139 @@ class ReportingController extends Controller
             'customers' => array_values($grouped)
         ]);
     }
+
+    public function raw_material_detail_report()
+    {
+        $rawMaterials = \App\Models\RawMaterial::with('unit')->orderBy('name')->get();
+        $units = \App\Models\Unit::orderBy('name')->get();
+
+        return view('admin_panel.reporting.raw_material_detail_report', compact('rawMaterials', 'units'));
+    }
+
+    public function fetchRawMaterialDetail(Request $request)
+    {
+        $rawMaterialId = $request->raw_material_id;
+        $dateFrom = $request->date_from;
+        $dateTo = $request->date_to;
+        $reportMode = $request->report_mode ?: 'summary';
+
+        $query = \App\Models\RawMaterial::with('unit');
+
+        if ($rawMaterialId) {
+            $query->where('id', $rawMaterialId);
+        }
+
+        $rawMaterials = $query->orderBy('name')->get();
+
+        if ($reportMode === 'summary') {
+            $rows = [];
+            $totalStockValue = 0;
+            $totalItems = count($rawMaterials);
+            $totalLowStock = 0;
+            $totalStockQty = 0;
+
+            foreach ($rawMaterials as $rm) {
+                $currentStock = (float) ($rm->current_stock ?? 0);
+                $unitPrice = (float) ($rm->price ?? 0);
+                $stockValue = $currentStock * $unitPrice;
+                $alertQty = (float) ($rm->alert_quantity ?? 0);
+
+                $totalStockValue += $stockValue;
+                $totalStockQty += $currentStock;
+
+                if ($alertQty > 0 && $currentStock <= $alertQty) {
+                    $totalLowStock++;
+                }
+
+                $movementsQuery = \App\Models\MaterialStockMovement::where('item_type', \App\Models\RawMaterial::class)
+                    ->where('item_id', $rm->id);
+
+                if ($dateFrom) {
+                    $movementsQuery->whereDate('created_at', '>=', $dateFrom);
+                }
+                if ($dateTo) {
+                    $movementsQuery->whereDate('created_at', '<=', $dateTo);
+                }
+
+                $movements = $movementsQuery->get();
+                $purchasedQty = $movements->where('type', 'in')->sum('qty');
+                $consumedQty = $movements->where('type', 'out')->sum('qty');
+
+                $status = 'healthy';
+                if ($currentStock <= 0) {
+                    $status = 'out';
+                } elseif ($alertQty > 0 && $currentStock <= $alertQty) {
+                    $status = 'low';
+                }
+
+                $rows[] = [
+                    'id' => $rm->id,
+                    'code' => $rm->code ?? 'N/A',
+                    'name' => $rm->name,
+                    'unit' => $rm->unit->name ?? ($rm->unit->short_name ?? 'Unit'),
+                    'price' => $unitPrice,
+                    'current_stock' => $currentStock,
+                    'alert_quantity' => $alertQty,
+                    'stock_value' => $stockValue,
+                    'purchased_qty' => (float) $purchasedQty,
+                    'consumed_qty' => (float) $consumedQty,
+                    'status' => $status,
+                ];
+            }
+
+            return response()->json([
+                'ok' => true,
+                'mode' => 'summary',
+                'summary' => [
+                    'total_items' => $totalItems,
+                    'total_stock_value' => $totalStockValue,
+                    'total_stock_qty' => $totalStockQty,
+                    'total_low_stock' => $totalLowStock,
+                ],
+                'data' => $rows,
+            ]);
+        } else {
+            $movementsQuery = \App\Models\MaterialStockMovement::where('item_type', \App\Models\RawMaterial::class)
+                ->with(['item.unit']);
+
+            if ($rawMaterialId) {
+                $movementsQuery->where('item_id', $rawMaterialId);
+            }
+            if ($dateFrom) {
+                $movementsQuery->whereDate('created_at', '>=', $dateFrom);
+            }
+            if ($dateTo) {
+                $movementsQuery->whereDate('created_at', '<=', $dateTo);
+            }
+
+            $movements = $movementsQuery->orderBy('created_at', 'desc')->get();
+
+            $rows = [];
+            foreach ($movements as $m) {
+                $rm = $m->item;
+                $unitPrice = $rm ? (float)($rm->price ?? 0) : 0;
+                $totalAmount = (float)$m->qty * $unitPrice;
+
+                $rows[] = [
+                    'id' => $m->id,
+                    'date' => $m->created_at ? $m->created_at->format('Y-m-d H:i:s') : '',
+                    'raw_material_name' => $rm ? $rm->name : 'N/A',
+                    'raw_material_code' => $rm ? ($rm->code ?? 'N/A') : 'N/A',
+                    'unit' => $rm && $rm->unit ? ($rm->unit->name ?? $rm->unit->short_name) : 'Unit',
+                    'type' => $m->type,
+                    'ref_type' => $m->ref_type ?? 'N/A',
+                    'qty' => (float)$m->qty,
+                    'unit_price' => $unitPrice,
+                    'total_amount' => $totalAmount,
+                    'note' => $m->note ?? '',
+                ];
+            }
+
+            return response()->json([
+                'ok' => true,
+                'mode' => 'ledger',
+                'data' => $rows,
+            ]);
+        }
+    }
 }

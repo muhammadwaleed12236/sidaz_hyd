@@ -149,17 +149,16 @@
         @csrf
         
         <!-- Header Section -->
-        <div class="sup-card border-primary" style="border-top: 3px solid #0284c7;">
-            <div class="sup-card-header bg-white pb-2 d-flex justify-content-between align-items-center">
-                <span class="fs-5 text-dark"><i class="fas fa-file-invoice text-primary me-2"></i>Batch Manufacturing Record (BMR)</span>
-                <span class="badge bg-light text-dark border px-3 py-2 fs-6">Doc: <input type="text" name="doc_no" class="border-0 bg-transparent text-end fw-bold text-dark" style="width: 120px; outline: none;" placeholder="DOC-001"></span>
-            </div>
-            <div class="p-4" style="background-color: #f8fafc;">
-                
-                <h6 class="fw-bold text-secondary text-uppercase mb-3" style="font-size: 0.75rem; letter-spacing: 0.05em;">Product Details</h6>
-                <div class="row g-3 mb-4 bg-white p-3 rounded shadow-sm border">
+        <div class="sup-card">
+            <div class="sup-card-header"><i class="fas fa-info-circle text-primary me-2"></i>General Information</div>
+            <div class="p-4">
+                <div class="row g-4">
+                    <div class="col-md-3">
+                        <label class="form-label text-dark fw-bold small">Formulation Code <span class="text-danger">*</span></label>
+                        <input type="text" name="formulation_code" class="form-control bg-light fw-bold" value="{{ old('formulation_code', $nextCode) }}" required readonly>
+                    </div>
                     <div class="col-md-5">
-                        <label class="form-label text-dark fw-bold small">Product Name <span class="text-danger">*</span></label>
+                        <label class="form-label text-dark fw-bold small">Product (Finished Good) <span class="text-danger">*</span></label>
                         <select name="product_id" class="form-select select2" required>
                             <option value="">Select Product...</option>
                             @foreach($products as $p)
@@ -167,90 +166,42 @@
                             @endforeach
                         </select>
                     </div>
-                    <div class="col-md-3">
-                        <label class="form-label text-dark fw-bold small">Batch No <span class="text-danger">*</span></label>
-                        <input type="text" name="batch_no" class="form-control fw-bold text-primary" required placeholder="e.g. SP26023B">
-                    </div>
                     <div class="col-md-4">
-                        <label class="form-label text-dark fw-bold small">Brand / Company Name</label>
-                        <input type="text" name="company_name" class="form-control" placeholder="e.g. Sidaz Pharma">
+                        <label class="form-label text-dark fw-bold small">Department</label>
+                        <select name="department_id" class="form-select select2">
+                            <option value="">Select Department...</option>
+                            @foreach($departments as $d)
+                                <option value="{{ $d->id }}" {{ old('department_id') == $d->id ? 'selected' : '' }}>{{ $d->name }}</option>
+                            @endforeach
+                        </select>
                     </div>
-                </div>
 
-                <h6 class="fw-bold text-secondary text-uppercase mb-3" style="font-size: 0.75rem; letter-spacing: 0.05em;">Batch Metrics & Size</h6>
-                <div class="row g-3 mb-4 bg-white p-3 rounded shadow-sm border">
                     <div class="col-md-3">
-                        <label class="form-label text-dark fw-bold small">Qty of Dropper/Bottle <span class="text-danger">*</span></label>
-                        <input type="number" id="qty_of_dropper" name="qty_of_dropper" class="form-control fw-bold" required placeholder="1000">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label text-dark fw-bold small">Weight Per Bottle</label>
-                        <div class="input-group">
-                            <input type="number" step="0.01" id="weight_per_bottle" name="weight_per_bottle" class="form-control" placeholder="30">
-                            <span class="input-group-text bg-light">ML</span>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label text-success fw-bold small">Batch Size (Auto) <span class="text-danger">*</span></label>
-                        <input type="number" step="0.01" id="batch_size" name="batch_size" class="form-control border-success text-success fw-bold" value="{{ old('batch_size') }}" required placeholder="30">
+                        <label class="form-label text-dark fw-bold small">Batch Size <span class="text-danger">*</span></label>
+                        <input type="number" step="0.01" name="batch_size" class="form-control fw-bold" value="{{ old('batch_size') }}" required placeholder="e.g. 100">
                     </div>
                     <div class="col-md-3">
                         <label class="form-label text-dark fw-bold small">Batch Unit <span class="text-danger">*</span></label>
                         <select name="batch_unit_id" class="form-select select2" required>
                             <option value="">Select Unit...</option>
                             @foreach($units as $u)
-                                <option value="{{ $u->id }}" {{ old('batch_unit_id') == $u->id ? 'selected' : '' }}>{{ $u->name }} ({{ $u->short_code }})</option>
+                                <option value="{{ $u->id }}" {{ old('batch_unit_id') == $u->id ? 'selected' : '' }}>{{ $u->name }} ({{ $u->short_code ?? $u->short_name }})</option>
                             @endforeach
                         </select>
                     </div>
-                </div>
-
-                <h6 class="fw-bold text-secondary text-uppercase mb-3" style="font-size: 0.75rem; letter-spacing: 0.05em;">Dates & Status</h6>
-                <div class="row g-3 bg-white p-3 rounded shadow-sm border">
-                    <div class="col-md-3">
-                        <label class="form-label text-dark fw-bold small">BMR No</label>
-                        <input type="text" name="bmr_no" class="form-control" placeholder="SP060200">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label text-dark fw-bold small">Issue Date</label>
-                        <input type="date" name="issue_date" class="form-control" value="{{ date('Y-m-d') }}">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label text-dark fw-bold small">Mfg Date</label>
-                        <input type="date" name="mfg_date" class="form-control">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label text-dark fw-bold small">Exp Date</label>
-                        <input type="date" name="exp_date" class="form-control">
-                    </div>
-
-                    <div class="col-md-3 mt-4">
-                        <label class="form-label text-dark fw-bold small">Formulation Code</label>
-                        <input type="text" name="formulation_code" class="form-control bg-light" value="{{ old('formulation_code', $nextCode) }}" required readonly>
-                    </div>
-                    <div class="col-md-3 mt-4">
-                        <label class="form-label text-dark fw-bold small">Department</label>
-                        <select name="department_id" class="form-select select2">
-                            <option value="">Select Dept...</option>
-                            @foreach($departments as $d)
-                                <option value="{{ $d->id }}" {{ old('department_id') == $d->id ? 'selected' : '' }}>{{ $d->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-md-3 mt-4">
-                        <label class="form-label text-dark fw-bold small">Version</label>
+                    <div class="col-md-2">
+                        <label class="form-label text-dark fw-bold small">Version <span class="text-danger">*</span></label>
                         <input type="text" name="version" class="form-control" value="{{ old('version', '1.0') }}" required>
                     </div>
-                    <div class="col-md-3 mt-4">
-                        <label class="form-label text-dark fw-bold small">Status</label>
+                    <div class="col-md-4">
+                        <label class="form-label text-dark fw-bold small">Status <span class="text-danger">*</span></label>
                         <select name="status" class="form-select" required>
+                            <option value="active" {{ old('status', 'active') == 'active' ? 'selected' : '' }}>Active (In Production)</option>
                             <option value="draft" {{ old('status') == 'draft' ? 'selected' : '' }}>Draft</option>
-                            <option value="active" {{ old('status') == 'active' ? 'selected' : '' }}>Active (In Production)</option>
                             <option value="inactive" {{ old('status') == 'inactive' ? 'selected' : '' }}>Inactive</option>
                         </select>
                     </div>
                 </div>
-
             </div>
         </div>
 

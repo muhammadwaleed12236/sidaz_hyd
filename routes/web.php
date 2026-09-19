@@ -497,7 +497,8 @@ Route::middleware('auth')->group(function () {
     Route::post('report/profit-loss/fetch', [ReportingController::class, 'fetchProfitLoss'])->middleware('permission:profit.loss.report.view')->name('report.profit_loss.fetch');
 
     Route::get('report/vendor/ledger', [ReportingController::class, 'vendor_ledger_report'])->middleware('permission:vendor.ledger.view')->name('report.vendor.ledger');
-    Route::get('report/vendor-ledger/fetch', [ReportingController::class, 'fetch_vendor_ledger'])->middleware('permission:vendor.ledger.view')->name('report.vendor.ledger.fetch');
+    Route::get('report/raw-material-detail', [ReportingController::class, 'raw_material_detail_report'])->name('report.raw_material_detail');
+    Route::post('report/raw-material-detail/fetch', [ReportingController::class, 'fetchRawMaterialDetail'])->name('report.raw_material_detail.fetch');
 
     Route::get('reports/onhand', [ReportingController::class, 'onhand'])->middleware('permission:inventory.onhand.view')->name('reports.onhand');
 

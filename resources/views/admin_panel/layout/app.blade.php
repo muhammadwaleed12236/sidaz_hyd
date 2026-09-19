@@ -9,6 +9,8 @@
 <html class="no-js" lang="zxx">
 
 <head>
+    <meta charset="UTF-8">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <style>
         /* ERP Mega Menu & Normal Submenu Compact Styling */
         .nav-item .submenu,
@@ -484,7 +486,7 @@
                                     @can('packaging_materials.view')
                                         <li><a href="{{ route('packaging_materials.index') }}"><i class="fas fa-boxes"></i> Packaging Materials</a></li>
                                     @endcan
-                                    <li><a href="{{ route('formulations.index') }}"><i class="fas fa-flask"></i> Formulations</a></li>
+                                    {{-- <li><a href="{{ route('formulations.index') }}"><i class="fas fa-flask"></i> Formulations</a></li> --}}
                                     <li><a href="{{ route('material-requisitions.index') }}"><i class="fas fa-industry"></i> Material Requisitions</a></li>
                                     <li><a href="{{ route('production.index') }}"><i class="fas fa-cogs"></i> Production Batches</a></li>
                                     <li><a href="{{ route('material-purchases.index') }}"><i class="fas fa-shopping-cart"></i> Material Purchases</a></li>
@@ -690,6 +692,8 @@
                                             <li><a href="{{ route('report.item_stock') }}"><i class="fa-solid fa-users"></i>
                                                     Item Stock Report</a></li>
                                         @endcan
+                                        <li><a href="{{ route('report.raw_material_detail') }}"><i class="fas fa-flask text-info"></i>
+                                                Raw Material Detail Report</a></li>
                                         @can('purchase.report.view')
                                             <li><a href="{{ route('report.purchase') }}"><i class="fa-solid fa-users"></i>
                                                     Purchase Report</a></li>
@@ -934,6 +938,7 @@
 
     {{-- SweetAlert2 JS - Local (all.min.js includes CSS+JS bundled) --}}
     <script src="{{ asset('assets/vendors/sweetalert2/js/sweetalert2.all.min.js') }}"></script>
+    <script src="{{ asset('assets/js/mycode.js') }}"></script>
 
     <!-- Global Delete Function -->
     <script>
