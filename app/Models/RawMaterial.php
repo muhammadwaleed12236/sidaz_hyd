@@ -16,6 +16,8 @@ class RawMaterial extends Model
         'department_id',
         'unit_id',
         'type',
+        'current_stock',
+        'price',
         'min_stock',
         'reorder_level',
         'description',

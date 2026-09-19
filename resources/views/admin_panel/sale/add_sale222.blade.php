@@ -505,9 +505,9 @@
                         <a href="{{ route('sale.index') }}" class="btn btn-sm btn-light border rounded-circle" title="Back"><i class="fas fa-arrow-left text-secondary"></i></a>
                         <div>
                             <h5 class="mb-0 fw-bold text-dark d-flex align-items-center gap-2" style="font-size: 1.05rem;">
-                                <i class="fas fa-shopping-cart text-primary"></i> New Sale
+                                <i class="fas fa-cart-plus text-primary"></i> Sale Invoice & Booking
                             </h5>
-                            <small class="text-muted" style="font-size: 0.7rem;">Create a new invoice</small>
+                            <small class="text-muted" style="font-size: 0.72rem;">Create Direct Sale Invoice, Sale Order (Booking), or Estimate</small>
                         </div>
                     </div>
                     <div class="d-flex align-items-center gap-2">
@@ -578,9 +578,9 @@
                             <label class="form-label fw-bold text-secondary mb-1" style="font-size:0.7rem;">Cr. Days</label>
                             <input type="number" class="form-control text-center fw-bold" name="credit_days" placeholder="0" min="0" value="{{ $sale->credit_days ?? '0' }}">
                         </div>
-                        <!-- M.Bill / Remarks -->
+                        <!-- Order Remarks / Ref -->
                         <div class="col-sm-2">
-                            <label class="form-label fw-bold text-secondary mb-1" style="font-size:0.7rem;">M.Bill / Remarks</label>
+                            <label class="form-label fw-bold text-secondary mb-1" style="font-size:0.7rem;">Order Remarks / Ref</label>
                             <input type="text" class="form-control" name="reference" id="remarks" placeholder="Enter remarks">
                         </div>
                         <!-- Customer & Walk-in Toggle -->
@@ -606,7 +606,7 @@
                                     <label class="form-check-label fw-bold ms-1" for="walkinToggle" style="color: #2563eb; font-size: 0.72rem; cursor: pointer;">Walk-in</label>
                                 </div>
                             </div>
-                            <button type="button" class="btn btn-sm btn-success w-100 fw-bold py-1 shadow-sm" id="btnHeaderSaveSale" style="font-size: 0.75rem;"><i class="fas fa-check me-1"></i>Save Sale</button>
+                            <button type="button" class="btn btn-sm btn-success w-100 fw-bold py-1 shadow-sm" id="btnHeaderSaveSale" style="font-size: 0.75rem;"><i class="fas fa-check me-1"></i>Save Direct Sale</button>
                         </div>
                     </div>
                 </div>
@@ -667,6 +667,19 @@
                                         </tr>
                                     </tfoot>
                                 </table>
+                            </div>
+
+                            <!-- RAW MATERIAL AVAILABILITY & SHORTAGE CARD -->
+                            <div class="card-panel p-3 bg-white mt-2 border rounded shadow-sm" id="rmCheckCard" style="display: none;">
+                                <div class="d-flex justify-content-between align-items-center mb-2 pb-1 border-bottom">
+                                    <span class="fw-bold text-dark" style="font-size:0.85rem;">
+                                        <i class="fas fa-flask text-warning me-1"></i> Live Production Raw Material Check
+                                    </span>
+                                    <span id="rmStatusBadge" class="badge bg-secondary rounded-pill px-2 py-1" style="font-size:0.7rem;">Checking...</span>
+                                </div>
+                                <div id="rmCheckContent">
+                                    <small class="text-muted">Select products to calculate raw material requirements...</small>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -755,18 +768,18 @@
                     </div>
 
                     <button type="button" class="btn btn-save-complete" id="btnSaveAndComplete2">
-                        <i class="fas fa-save me-2"></i>Save & Complete (F9)
+                        <i class="fas fa-save me-2"></i>Save & Complete Direct Sale (F9)
                     </button>
                 </div>
 
                 {{-- ACTION BUTTONS ROW --}}
                 <div class="d-flex flex-wrap gap-2 justify-content-center py-2 px-3 mt-2 border-top bg-white rounded-3 shadow-sm">
-                    <button type="button" class="btn btn-outline-primary btn-sm px-3 fw-bold" id="btnSave"><i class="fas fa-bookmark me-1"></i>Booking</button>
-                    <button type="button" class="btn btn-primary btn-sm px-4 fw-bold" id="btnPosted" disabled><i class="fas fa-shopping-cart me-1"></i>Sale</button>
-                    <button type="button" class="btn btn-outline-secondary btn-sm px-3 fw-bold" id="btnPrint"><i class="fas fa-print me-1"></i>A4 Print</button>
-                    <button type="button" class="btn btn-outline-secondary btn-sm px-3 fw-bold" id="btnEstimate"><i class="fas fa-file-invoice me-1"></i>Estimate</button>
-                    <button type="button" class="btn btn-outline-secondary btn-sm px-3 fw-bold" id="btnPrint2"><i class="fas fa-receipt me-1"></i>Thermal Print</button>
-                    <button type="button" class="btn btn-outline-secondary btn-sm px-3 fw-bold" id="btnDcThermal"><i class="fas fa-truck me-1"></i>DC</button>
+                    <button type="button" class="btn btn-outline-primary btn-sm px-3 fw-bold" id="btnSave" title="Save as Sale Order / Booking (No stock deduction yet)"><i class="fas fa-bookmark me-1"></i>Sale Order (Booking)</button>
+                    <button type="button" class="btn btn-primary btn-sm px-4 fw-bold" id="btnPosted" disabled title="Direct Sale & Post Invoice"><i class="fas fa-shopping-cart me-1"></i>Direct Sale (Post)</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm px-3 fw-bold" id="btnEstimate" title="Generate Estimate Only"><i class="fas fa-file-invoice me-1"></i>Estimate Invoice</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm px-3 fw-bold" id="btnPrint" title="Print A4 Invoice"><i class="fas fa-print me-1"></i>A4 Print</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm px-3 fw-bold" id="btnPrint2" title="Print Thermal Receipt"><i class="fas fa-receipt me-1"></i>Thermal Print</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm px-3 fw-bold" id="btnDcThermal" title="Print Delivery Challan"><i class="fas fa-truck me-1"></i>Delivery Challan (DC)</button>
                 </div>
             </form>
         </div>

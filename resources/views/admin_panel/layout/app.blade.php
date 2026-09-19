@@ -485,6 +485,8 @@
                                         <li><a href="{{ route('packaging_materials.index') }}"><i class="fas fa-boxes"></i> Packaging Materials</a></li>
                                     @endcan
                                     <li><a href="{{ route('formulations.index') }}"><i class="fas fa-flask"></i> Formulations</a></li>
+                                    <li><a href="{{ route('material-requisitions.index') }}"><i class="fas fa-industry"></i> Material Requisitions</a></li>
+                                    <li><a href="{{ route('production.index') }}"><i class="fas fa-cogs"></i> Production Batches</a></li>
                                     <li><a href="{{ route('material-purchases.index') }}"><i class="fas fa-shopping-cart"></i> Material Purchases</a></li>
                                     @can('vendors.view')
                                         <li><a href="{{ url('vendor') }}"><i class="fas fa-truck"></i> Vendors & Suppliers</a></li>
@@ -595,6 +597,8 @@
                                                     @can('sales.view')
                                                         <li><a href="{{ url('sale') }}"><i class="fas fa-receipt"></i>
                                                                 Sales</a></li>
+                                                        <li><a href="{{ route('dummy-invoices.index') }}"><i class="fas fa-file-signature"></i>
+                                                                Warranty Invoices</a></li>
                                                     @endcan
                                                     @can('sales.create')
                                                         <li><a href="{{ route('pos.index') }}"><i class="fas fa-cash-register"></i>

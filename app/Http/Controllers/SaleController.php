@@ -20,12 +20,20 @@ class SaleController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Sale::with(['customer_relation', 'items.product', 'returns'])
-            ->whereIn('sale_status', ['draft', 'booked', 'posted', 'returned']);
+        $query = Sale::with(['customer_relation', 'items.product', 'returns']);
 
         // Apply Status Filter
         if ($request->has('status') && $request->status != 'all') {
-            $query->where('sale_status', $request->status);
+            $st = $request->status;
+            if ($st === 'sale_order' || $st === 'booked') {
+                $query->whereIn('sale_status', ['booked', 'sale_order']);
+            } elseif ($st === 'ready') {
+                $query->whereIn('sale_status', ['ready', 'ready_for_delivery']);
+            } elseif ($st === 'delivered' || $st === 'posted') {
+                $query->whereIn('sale_status', ['posted', 'delivered', 'dispatched']);
+            } else {
+                $query->where('sale_status', $st);
+            }
         }
 
         // Apply Date Filters
@@ -1675,6 +1683,13 @@ class SaleController extends Controller
                 } catch (\Exception $e) {
                     \Log::error('Professional Ledger Posting Error: '.$e->getMessage());
                 }
+            }
+
+            // Trigger Production Raw Material Requisition check
+            try {
+                app(\App\Services\ProductionRequisitionService::class)->checkAndCreateRequisitionForSale($sale);
+            } catch (\Exception $e) {
+                \Log::error('Production Requisition Check Error: ' . $e->getMessage());
             }
 
             // If AJAX/JSON response needed

@@ -245,12 +245,33 @@ class MaterialPurchaseController extends Controller
 
             DB::commit();
 
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'ok' => true,
+                    'message' => 'Material Purchase saved successfully!',
+                    'redirect' => route('material-purchases.index')
+                ]);
+            }
+
             return redirect()->route('material-purchases.index')->with('success', 'Purchase saved successfully!');
 
         } catch (\Exception $e) {
             DB::rollBack();
-            \Log::error('Material Purchase Error: ' . $e->getMessage());
-            return back()->with('error', 'Error: ' . $e->getMessage())->withInput();
+            $errorMsg = $e->getMessage();
+            if ($e instanceof \Illuminate\Validation\ValidationException) {
+                $errorMsg = implode(', ', collect($e->errors())->flatten()->toArray());
+            } else {
+                \Log::error('Material Purchase Error: ' . $errorMsg);
+            }
+
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'ok' => false,
+                    'message' => $errorMsg
+                ], 422);
+            }
+
+            return back()->with('error', 'Error: ' . $errorMsg)->withInput();
         }
     }
 

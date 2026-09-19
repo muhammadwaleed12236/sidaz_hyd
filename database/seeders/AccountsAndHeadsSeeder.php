@@ -15,7 +15,7 @@ class AccountsAndHeadsSeeder extends Seeder
     public function run(): void
     {
         DB::transaction(function () {
-            // Create or get Bank head
+            // Create  or get Bank head
             $bankHead = AccountHead::firstOrCreate(
                 ['name' => 'Bank'],
                 ['opening_balance' => 0]

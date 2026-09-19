@@ -70,6 +70,14 @@ class VendorController extends Controller
             }
         }
 
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'ok' => true,
+                'message' => 'Vendor created successfully!',
+                'vendor' => $vendor
+            ]);
+        }
+
         return redirect()->route('vendors.index')->with('success', 'Saved Successfully');
     }
 

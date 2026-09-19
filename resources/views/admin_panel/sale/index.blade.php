@@ -2,139 +2,131 @@
 
 @section('content')
     <style>
-        /* Premium ERP Card & Container Styling */
-        .premium-card {
-            border: 2px solid #cbd5e1 !important;
+        /* Modern Executive ERP Dashboard Cards */
+        .sale-stat-card {
+            border: none !important;
             border-radius: 12px !important;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03) !important;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04) !important;
             background-color: #ffffff;
-            margin-top: 10px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
-        
-        /* Clean & Bold Filter Panel */
+        .sale-stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08) !important;
+        }
+
+        .stat-icon-wrapper {
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .premium-card {
+            border: 1px solid #e2e8f0 !important;
+            border-radius: 12px !important;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03) !important;
+            background-color: #ffffff;
+        }
+
         .filter-panel {
             background-color: #f8fafc !important;
-            border: 2px dashed #94a3b8 !important;
+            border: 1px solid #cbd5e1 !important;
             border-radius: 10px !important;
-            padding: 18px !important;
+            padding: 16px !important;
         }
-        
+
         .filter-panel label {
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 700 !important;
             color: #475569 !important;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
-        
+
         .filter-panel .form-control,
         .filter-panel .form-select {
-            border: 2px solid #cbd5e1 !important;
+            border: 1px solid #cbd5e1 !important;
             border-radius: 6px !important;
             font-weight: 500 !important;
             color: #1e293b !important;
-            transition: all 0.2s ease-in-out;
             height: 38px !important;
         }
-        
+
         .filter-panel .form-control:focus,
         .filter-panel .form-select:focus {
-            border-color: #3b82f6 !important;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
+            border-color: #2563eb !important;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12) !important;
         }
-        
-        /* Elegant & Bold Buttons */
+
         .btn-premium-primary {
             background-color: #2563eb !important;
-            border: 2px solid #1d4ed8 !important;
+            border: 1px solid #1d4ed8 !important;
             color: #ffffff !important;
             font-weight: 600 !important;
             border-radius: 6px !important;
             height: 38px !important;
             padding: 0 16px !important;
-            transition: all 0.2s;
         }
         .btn-premium-primary:hover {
             background-color: #1d4ed8 !important;
-            transform: translateY(-1px);
         }
-        
+
         .btn-premium-secondary {
             background-color: #ffffff !important;
-            border: 2px solid #cbd5e1 !important;
+            border: 1px solid #cbd5e1 !important;
             color: #475569 !important;
             font-weight: 600 !important;
             border-radius: 6px !important;
             height: 38px !important;
             padding: 0 16px !important;
-            transition: all 0.2s;
         }
         .btn-premium-secondary:hover {
             background-color: #f1f5f9 !important;
-            border-color: #94a3b8 !important;
             color: #1e293b !important;
         }
 
-        /* Compact Button Styling for Action List */
         .btn-xs {
             padding: 4px 8px !important;
             font-size: 11px !important;
-            border-radius: 4px !important;
-            font-weight: 700 !important;
+            border-radius: 5px !important;
+            font-weight: 600 !important;
             line-height: 1.2 !important;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            transition: all 0.2s;
-            margin: 2px !important;
-        }
-        .btn-xs i {
-            font-size: 10px !important;
-        }
-        .btn-xs:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.08) !important;
+            gap: 3px;
         }
 
-        /* Premium Bold Table Styling */
         .premium-table {
-            border: 2px solid #475569 !important; /* Bold outer border */
+            border: 1px solid #e2e8f0 !important;
             border-radius: 8px !important;
             overflow: hidden;
         }
-        
+
         .premium-table thead th {
-            background-color: #f1f5f9 !important;
-            color: #1e293b !important;
+            background-color: #f8fafc !important;
+            color: #334155 !important;
             font-weight: 700 !important;
             text-transform: uppercase;
             font-size: 11px;
             letter-spacing: 0.5px;
-            border-bottom: 3px solid #475569 !important; /* Thick bottom border under headers */
-            border-right: 2px solid #cbd5e1 !important;
+            border-bottom: 2px solid #cbd5e1 !important;
             padding: 12px 10px !important;
         }
-        
-        .premium-table thead th:last-child {
-            border-right: none !important;
-        }
-        
+
         .premium-table tbody td {
-            border: 2px solid #e2e8f0 !important; /* Bold borders between all cells */
+            border-bottom: 1px solid #f1f5f9 !important;
             padding: 12px 10px !important;
             font-size: 13px !important;
             color: #334155 !important;
-            background-color: #ffffff;
         }
-        
+
         .premium-table tbody tr:hover td {
-            background-color: #f8fafc !important; /* Elegant row hover background */
-        }
-        
-        /* Table Responsive border fix */
-        .table-responsive {
-            border-radius: 8px !important;
-            overflow: hidden;
+            background-color: #f8fafc !important;
         }
     </style>
 
@@ -142,50 +134,116 @@
         <div class="main-content-inner">
             <div class="container-fluid py-4">
 
-                <div class="d-flex justify-content-between align-items-center mb-4">
+                <!-- Header Title & Action Buttons -->
+                <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
                     <div>
-                        <h4 class="fw-bold mb-0 text-dark">Sales Management</h4>
-                        <p class="text-muted mb-0 small">View and manage your sales invoices and bookings</p>
+                        <h4 class="fw-bold mb-1 text-dark d-flex align-items-center gap-2">
+                            <i class="fas fa-chart-line text-primary"></i> Sales Management
+                        </h4>
+                        <p class="text-muted mb-0 small">Overview of all sales orders, direct sales invoices, and delivery statuses</p>
                     </div>
-                    <div class="d-flex gap-2">
-                        <a class="btn btn-outline-danger px-3 shadow-sm fw-medium align-items-center d-inline-flex gap-2"
+                    <div class="d-flex gap-2 flex-wrap">
+                        <a class="btn btn-outline-danger px-3 shadow-sm fw-bold align-items-center d-inline-flex gap-2"
                             href="{{ route('sale.return.index') }}">
-                            <i class="fas fa-undo"></i> All Returns
+                            <i class="fas fa-undo"></i> Sale Returns
                         </a>
-                        <a class="btn btn-outline-primary px-3 shadow-sm fw-medium align-items-center d-inline-flex gap-2"
-                            href="{{ url('bookings') }}">
-                            <i class="fas fa-bookmark"></i> All Bookings
+                        <a class="btn btn-outline-primary px-3 shadow-sm fw-bold align-items-center d-inline-flex gap-2"
+                            href="{{ route('sale.index', ['status' => 'sale_order']) }}">
+                            <i class="fas fa-file-invoice"></i> Sale Orders
                         </a>
                         @can('sales.create')
-                            <a class="btn btn-primary px-4 shadow-sm fw-medium align-items-center d-inline-flex gap-2 animate__animated animate__fadeIn"
+                            <a class="btn btn-primary px-4 shadow-sm fw-bold align-items-center d-inline-flex gap-2"
                                 href="{{ route('sale.add') }}">
-                                <i class="fas fa-plus"></i> Add Sale
+                                <i class="fas fa-plus-circle"></i> Create Sale
                             </a>
                         @endcan
                     </div>
                 </div>
 
-                {{-- Status Filters --}}
-                <div class="mb-4 d-flex gap-2">
+                <!-- KPI Summary Stat Cards -->
+                @php
+                    $totalCount = $sales->count();
+                    $netRevenueSum = $sales->sum('total_net');
+                    $bookedCount = $sales->filter(fn($s) => in_array($s->sale_status, ['booked', 'sale_order', 'pending']))->count();
+                    $deliveredCount = $sales->filter(fn($s) => in_array($s->sale_status, ['posted', 'delivered', 'dispatched']))->count();
+                @endphp
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-3 col-sm-6">
+                        <div class="card sale-stat-card p-3">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div>
+                                    <span class="text-muted small fw-bold text-uppercase">Total Invoices</span>
+                                    <h4 class="fw-bold text-dark mb-0 mt-1">{{ number_format($totalCount) }}</h4>
+                                </div>
+                                <div class="stat-icon-wrapper bg-primary-subtle text-primary">
+                                    <i class="fas fa-file-invoice-dollar"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6">
+                        <div class="card sale-stat-card p-3">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div>
+                                    <span class="text-muted small fw-bold text-uppercase">Total Revenue</span>
+                                    <h4 class="fw-bold text-success mb-0 mt-1">Rs. {{ number_format($netRevenueSum, 2) }}</h4>
+                                </div>
+                                <div class="stat-icon-wrapper bg-success-subtle text-success">
+                                    <i class="fas fa-wallet"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6">
+                        <div class="card sale-stat-card p-3">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div>
+                                    <span class="text-muted small fw-bold text-uppercase">Sale Orders (Booked)</span>
+                                    <h4 class="fw-bold text-primary mb-0 mt-1">{{ number_format($bookedCount) }}</h4>
+                                </div>
+                                <div class="stat-icon-wrapper bg-info-subtle text-info">
+                                    <i class="fas fa-bookmark"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6">
+                        <div class="card sale-stat-card p-3">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div>
+                                    <span class="text-muted small fw-bold text-uppercase">Delivered / Complete</span>
+                                    <h4 class="fw-bold text-emerald mb-0 mt-1" style="color: #059669;">{{ number_format($deliveredCount) }}</h4>
+                                </div>
+                                <div class="stat-icon-wrapper bg-success-subtle text-success">
+                                    <i class="fas fa-check-double"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Status Pills Filter --}}
+                <div class="mb-3 d-flex gap-2 flex-wrap">
                     <a href="{{ route('sale.index', ['status' => 'all']) }}"
-                        class="btn btn-sm {{ request('status') == 'all' || !request('status') ? 'btn-secondary' : 'btn-outline-secondary' }} rounded-3 shadow-sm">
-                        All
+                        class="btn btn-sm {{ request('status') == 'all' || !request('status') ? 'btn-dark' : 'btn-outline-secondary' }} rounded-pill px-3 shadow-sm fw-bold">
+                        All Sales
                     </a>
-                    <a href="{{ route('sale.index', ['status' => 'posted']) }}"
-                        class="btn btn-sm {{ request('status') == 'posted' ? 'btn-success' : 'btn-outline-success' }} rounded-3 shadow-sm">
-                        Posted
+                    <a href="{{ route('sale.index', ['status' => 'sale_order']) }}"
+                        class="btn btn-sm {{ request('status') == 'sale_order' || request('status') == 'booked' ? 'btn-primary text-white' : 'btn-outline-primary' }} rounded-pill px-3 shadow-sm fw-bold">
+                        <i class="fas fa-file-invoice me-1"></i> Sale Orders
                     </a>
-                    <a href="{{ route('sale.index', ['status' => 'draft']) }}"
-                        class="btn btn-sm {{ request('status') == 'draft' ? 'btn-warning text-dark' : 'btn-outline-warning' }} rounded-3 shadow-sm">
-                        Draft
+                    <a href="{{ route('sale.index', ['status' => 'ready']) }}"
+                        class="btn btn-sm {{ request('status') == 'ready' ? 'btn-warning text-dark' : 'btn-outline-warning' }} rounded-pill px-3 shadow-sm fw-bold">
+                        <i class="fas fa-box me-1"></i> Ready
                     </a>
-                    <a href="{{ route('sale.index', ['status' => 'booked']) }}"
-                        class="btn btn-sm {{ request('status') == 'booked' ? 'btn-info text-white' : 'btn-outline-info' }} rounded-3 shadow-sm">
-                        Booked
+                    <a href="{{ route('sale.index', ['status' => 'delivered']) }}"
+                        class="btn btn-sm {{ request('status') == 'delivered' || request('status') == 'posted' ? 'btn-success text-white' : 'btn-outline-success' }} rounded-pill px-3 shadow-sm fw-bold">
+                        <i class="fas fa-check-circle me-1"></i> Delivered / Complete
                     </a>
                     <a href="{{ route('sale.index', ['status' => 'returned']) }}"
-                        class="btn btn-sm {{ request('status') == 'returned' ? 'btn-danger' : 'btn-outline-danger' }} rounded-3 shadow-sm">
-                        Returned
+                        class="btn btn-sm {{ request('status') == 'returned' ? 'btn-danger' : 'btn-outline-danger' }} rounded-pill px-3 shadow-sm fw-bold">
+                        <i class="fas fa-undo me-1"></i> Returned
                     </a>
                 </div>
 
@@ -195,8 +253,7 @@
                             <div class="alert alert-success d-flex align-items-center gap-2 rounded-3 mb-4">
                                 <i class="fas fa-check-circle"></i>
                                 <span>{{ session('success') }}</span>
-                                <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"
-                                    aria-label="Close"></button>
+                                <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
                             </div>
                         @endif
 
@@ -204,8 +261,7 @@
                             <div class="alert alert-danger d-flex align-items-center gap-2 rounded-3 mb-4">
                                 <i class="fas fa-exclamation-circle"></i>
                                 <span>{{ session('error') }}</span>
-                                <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"
-                                    aria-label="Close"></button>
+                                <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
                             </div>
                         @endif
 
@@ -231,13 +287,9 @@
                                         <label class="form-label mb-1">To Date</label>
                                         <input type="text" class="form-control datepicker-custom bg-white" name="to_date" id="filter_to_date" placeholder="dd/mm/yyyy">
                                     </div>
-                                    <div class="col-md-1">
-                                        <label class="form-label mb-1">Bill#</label>
-                                        <input type="text" class="form-control" name="bill_no" id="filter_bill_no" placeholder="Search bill...">
-                                    </div>
-                                    <div class="col-md-1">
-                                        <label class="form-label mb-1">M.Bill# / Ref</label>
-                                        <input type="text" class="form-control" name="reference" id="filter_reference" placeholder="M.Bill...">
+                                    <div class="col-md-2">
+                                        <label class="form-label mb-1">Bill / Invoice #</label>
+                                        <input type="text" class="form-control" name="bill_no" id="filter_bill_no" placeholder="Search bill #...">
                                     </div>
                                     <div class="col-md-2">
                                         <label class="form-label mb-1">Customer</label>
@@ -264,18 +316,17 @@
                             <table id="sales-table" class="table table-hover align-middle datanew premium-table" style="width:100%">
                                 <thead class="bg-light">
                                     <tr>
-                                        <th class="py-3 ps-3 rounded-start text-secondary fw-semibold text-uppercase small">Bill#</th>
-                                        <th class="py-3 text-secondary fw-semibold text-uppercase small">Customer</th>
-                                        <th class="py-3 text-secondary fw-semibold text-uppercase small">M.Bill</th>
-                                        <th class="py-3 text-secondary fw-semibold text-uppercase small">Products</th>
-                                        <th class="py-3 text-secondary fw-semibold text-uppercase small text-center">Qty</th>
-                                        <th class="py-3 text-secondary fw-semibold text-uppercase small text-end">Gross</th>
-                                        <th class="py-3 text-secondary fw-semibold text-uppercase small text-end">Inline Disc</th>
-                                        <th class="py-3 text-secondary fw-semibold text-uppercase small text-end">Add. Disc</th>
-                                        <th class="py-3 text-secondary fw-semibold text-uppercase small text-end">Net Total</th>
-                                        <th class="py-3 text-secondary fw-semibold text-uppercase small">Date</th>
-                                        <th class="py-3 text-secondary fw-semibold text-uppercase small">Status</th>
-                                        <th class="py-3 pe-3 rounded-end text-secondary fw-semibold text-uppercase small text-center">Action</th>
+                                        <th class="py-3 ps-3 text-secondary fw-bold text-uppercase small">Bill #</th>
+                                        <th class="py-3 text-secondary fw-bold text-uppercase small">Customer</th>
+                                        <th class="py-3 text-secondary fw-bold text-uppercase small">Products</th>
+                                        <th class="py-3 text-secondary fw-bold text-uppercase small text-center">Qty</th>
+                                        <th class="py-3 text-secondary fw-bold text-uppercase small text-end">Gross</th>
+                                        <th class="py-3 text-secondary fw-bold text-uppercase small text-end">Inline Disc</th>
+                                        <th class="py-3 text-secondary fw-bold text-uppercase small text-end">Add. Disc</th>
+                                        <th class="py-3 text-secondary fw-bold text-uppercase small text-end">Net Total</th>
+                                        <th class="py-3 text-secondary fw-bold text-uppercase small">Date</th>
+                                        <th class="py-3 text-secondary fw-bold text-uppercase small">Status</th>
+                                        <th class="py-3 pe-3 text-secondary fw-bold text-uppercase small text-center">Action</th>
                                     </tr>
                                 </thead>
                                 <tbody id="salesTableBody">
@@ -295,119 +346,121 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         $(document).ready(function() {
-            // Function to initialize DataTable
             function initDataTable() {
                 if ($.fn.DataTable.isDataTable('.datanew')) {
                     $('.datanew').DataTable().destroy();
                 }
                 $('.datanew').DataTable({
-                    "pageLength": 10,
-                    "order": [],
+                    "bFilter": true,
+                    "sDom": 'fBtlpi',
+                    "ordering": true,
+                    "order": [[0, 'desc']],
                     "language": {
-                        "search": "",
-                        "searchPlaceholder": "Search sales..."
+                        search: ' ',
+                        sSearch: '',
+                        searchPlaceholder: "Search sales...",
+                        info: "_START_ - _END_ of _TOTAL_ items",
+                        paginate: {
+                            next: ' <i class="fa fa-angle-right"></i>',
+                            previous: '<i class="fa fa-angle-left"></i> '
+                        }
                     },
-                    "dom": "<'row mb-3'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-6'f>>" +
-                        "<'row'<'col-sm-12'tr>>" +
-                        "<'row mt-3'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
+                    initComplete: (settings, json) => {
+                        $('.dataTables_filter').appendTo('#tableSearch');
+                        $('.dataTables_filter font').remove();
+                    }
                 });
             }
 
-            // Initial call
             initDataTable();
 
-            // Submit form via AJAX
-            // Quick Filter Logic
-            $(document).on('change', '#quick_filter', function() {
-                let val = $(this).val();
-                let today = new Date();
-                let start = new Date();
-                let end = new Date();
+            // Datepickers
+            $('.datepicker-custom').datepicker({
+                dateFormat: 'dd/mm/yy',
+                autoclose: true,
+                todayHighlight: true
+            });
+
+            // Quick Filter Handler
+            $('#quick_filter').change(function() {
+                const val = $(this).val();
+                if (val === 'custom') return;
+
+                let fromDate = '', toDate = '';
+                const today = new Date();
+                const formatDate = (d) => {
+                    let day = ("0" + d.getDate()).slice(-2);
+                    let month = ("0" + (d.getMonth() + 1)).slice(-2);
+                    return `${day}/${month}/${d.getFullYear()}`;
+                };
 
                 if (val === 'daily') {
-                    // Start and end are both today
+                    fromDate = toDate = formatDate(today);
                 } else if (val === 'weekly') {
-                    // Start is first day of current week (let's use Monday)
-                    let day = today.getDay(); // 0 is Sunday, 1 is Monday
-                    let diff = today.getDate() - day + (day === 0 ? -6 : 1);
-                    start.setDate(diff);
+                    const first = today.getDate() - today.getDay();
+                    const firstDay = new Date(today.setDate(first));
+                    const lastDay = new Date(today.setDate(first + 6));
+                    fromDate = formatDate(firstDay);
+                    toDate = formatDate(lastDay);
                 } else if (val === 'monthly') {
-                    // Start is 1st of current month
-                    start.setDate(1);
+                    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+                    const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+                    fromDate = formatDate(firstDay);
+                    toDate = formatDate(lastDay);
                 } else if (val === 'yearly') {
-                    // Start is Jan 1st of current year
-                    start.setMonth(0, 1);
-                } else if (val === 'custom') {
-                    return; // Don't change dates for custom
+                    const firstDay = new Date(today.getFullYear(), 0, 1);
+                    const lastDay = new Date(today.getFullYear(), 11, 31);
+                    fromDate = formatDate(firstDay);
+                    toDate = formatDate(lastDay);
                 }
 
-                let pickerFrom = document.getElementById('filter_from_date')._flatpickr;
-                let pickerTo = document.getElementById('filter_to_date')._flatpickr;
-                if(pickerFrom) pickerFrom.setDate(start);
-                else $("#filter_from_date").val(start.toISOString().split('T')[0]);
-                
-                if(pickerTo) pickerTo.setDate(end);
-                else $("#filter_to_date").val(end.toISOString().split('T')[0]);
-                
-                $('#filterForm').trigger('submit');
+                $('#filter_from_date').val(fromDate);
+                $('#filter_to_date').val(toDate);
+                fetchFilteredSales();
             });
 
-            $('#filterForm').on('submit', function(e) {
+            // AJAX Filter Submit
+            $('#filterForm').submit(function(e) {
                 e.preventDefault();
-                const $btn = $('#btnSearch');
-                const origHtml = $btn.html();
-                $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span>Searching...');
+                fetchFilteredSales();
+            });
 
-                let formData = $(this).serialize();
-                let urlParams = new URLSearchParams(window.location.search);
-                if (urlParams.has('status')) {
-                    formData += '&status=' + urlParams.get('status');
-                }
+            $('#btnReset').click(function() {
+                $('#filterForm')[0].reset();
+                $('#quick_filter').val('custom');
+                fetchFilteredSales();
+            });
+
+            function fetchFilteredSales() {
+                const formData = $('#filterForm').serialize();
+                const currentStatus = "{{ request('status', 'all') }}";
 
                 $.ajax({
-                    url: '{{ route("sale.index") }}',
-                    method: 'GET',
-                    data: formData,
+                    url: "{{ route('sale.index') }}",
+                    type: "GET",
+                    data: formData + "&status=" + currentStatus,
                     success: function(response) {
-                        $btn.prop('disabled', false).html(origHtml);
-                        
-                        // 1. Destroy DataTable first to release DOM bindings
-                        if ($.fn.DataTable.isDataTable('.datanew')) {
-                            $('.datanew').DataTable().destroy();
-                        }
-                        
-                        // 2. Safely replace the table body HTML
                         $('#salesTableBody').html(response.html);
-                        
-                        // 3. Re-initialize the DataTable on the new HTML
                         initDataTable();
                     },
-                    error: function(err) {
-                        $btn.prop('disabled', false).html(origHtml);
-                        Swal.fire('Error', 'Failed to retrieve filtered list.', 'error');
+                    error: function() {
+                        Swal.fire('Error', 'Failed to fetch sales data.', 'error');
                     }
                 });
-            });
-
-            // Reset form
-            $('#btnReset').on('click', function() {
-                $('#filterForm')[0].reset();
-                $('#filterForm').trigger('submit');
-            });
+            }
 
             // Confirm Booking Action
             $(document).on('click', '.confirm-booking-btn', function(e) {
                 e.preventDefault();
-                let form = $(this).closest("form");
-
+                const form = $(this).closest('form');
                 Swal.fire({
-                    title: "Confirm Booking?",
-                    text: "Are you sure you want to convert this booking to a posted sale? This will update stocks and post ledgers.",
-                    icon: "warning",
+                    title: 'Confirm Sale Order?',
+                    text: "This will convert the sale order into a confirmed sale invoice.",
+                    icon: 'question',
                     showCancelButton: true,
-                    confirmButtonColor: "#28a745",
-                    cancelButtonColor: "#6c757d",
-                    confirmButtonText: "Yes, Confirm it!"
+                    confirmButtonColor: '#2563eb',
+                    cancelButtonColor: '#64748b',
+                    confirmButtonText: 'Yes, Confirm!'
                 }).then((result) => {
                     if (result.isConfirmed) {
                         form.submit();

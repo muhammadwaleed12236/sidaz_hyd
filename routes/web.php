@@ -35,6 +35,7 @@ use App\Http\Controllers\WarehouseStockController;
 use App\Http\Controllers\RawMaterialController;
 use App\Http\Controllers\PackagingMaterialController;
 use App\Http\Controllers\ZoneController;
+use App\Http\Controllers\DummyInvoiceController;
 use Illuminate\Support\Facades\Route;
 
 // test
@@ -227,6 +228,18 @@ Route::middleware('auth')->group(function () {
     // Formulations (Recipe Management)
     Route::resource('formulations', App\Http\Controllers\FormulationController::class);
 
+    // Production Material Requisitions
+    Route::get('/material-requisitions', [App\Http\Controllers\MaterialRequisitionController::class, 'index'])->name('material-requisitions.index');
+    Route::get('/material-requisitions/{id}', [App\Http\Controllers\MaterialRequisitionController::class, 'show'])->name('material-requisitions.show');
+    Route::post('/material-requisitions/{id}/status', [App\Http\Controllers\MaterialRequisitionController::class, 'updateStatus'])->name('material-requisitions.update-status');
+    Route::post('/sales/check-raw-materials', [App\Http\Controllers\MaterialRequisitionController::class, 'checkRawMaterialsAjax'])->name('sales.check-raw-materials');
+
+    // Production & Batch Manufacturing
+    Route::get('/production', [App\Http\Controllers\ProductionController::class, 'index'])->name('production.index');
+    Route::get('/production/create', [App\Http\Controllers\ProductionController::class, 'create'])->name('production.create');
+    Route::post('/production/store', [App\Http\Controllers\ProductionController::class, 'store'])->name('production.store');
+    Route::post('/production/{id}/dispatch', [App\Http\Controllers\ProductionController::class, 'dispatch'])->name('production.dispatch');
+
     // Warehouse Routes
     // ///
     Route::get('/warehouses/get/', [WarehouseController::class, 'getWarehouses'])->name('warehouses.get');
@@ -353,6 +366,15 @@ Route::middleware('auth')->group(function () {
     Route::get('/sales/{id}/dc', [SaleController::class, 'saledc'])->middleware('permission:sales.view')->name('sales.dc');
     Route::get('/sales/{id}/dc-thermal', [SaleController::class, 'saledcThermal'])->middleware('permission:sales.view')->name('sales.dc_thermal');
     Route::get('/sales/{id}/recepit', [SaleController::class, 'salereceipt'])->middleware('permission:sales.view')->name('sales.receipt');
+
+    // Dummy / Warranty Invoices (Stand-alone, No Stock or Ledger impact)
+    Route::get('/dummy-invoices', [DummyInvoiceController::class, 'index'])->name('dummy-invoices.index');
+    Route::get('/dummy-invoices/create', [DummyInvoiceController::class, 'create'])->name('dummy-invoices.create');
+    Route::post('/dummy-invoices/store', [DummyInvoiceController::class, 'store'])->name('dummy-invoices.store');
+    Route::get('/dummy-invoices/{id}/edit', [DummyInvoiceController::class, 'edit'])->name('dummy-invoices.edit');
+    Route::put('/dummy-invoices/{id}', [DummyInvoiceController::class, 'update'])->name('dummy-invoices.update');
+    Route::get('/dummy-invoices/{id}/print', [DummyInvoiceController::class, 'print'])->name('dummy-invoices.print');
+    Route::delete('/dummy-invoices/{id}', [DummyInvoiceController::class, 'destroy'])->name('dummy-invoices.destroy');
 
     // booking system
 

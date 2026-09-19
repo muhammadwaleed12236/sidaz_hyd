@@ -537,6 +537,89 @@
         } else {
             $('#cc_closing_bal_val, #cc_closing_bal_suffix').removeClass('text-danger').addClass('text-success');
         }
+
+        // Trigger live Raw Material availability check
+        checkLiveRawMaterials();
+    }
+
+    let rmDebounceTimer = null;
+    function checkLiveRawMaterials() {
+        clearTimeout(rmDebounceTimer);
+        rmDebounceTimer = setTimeout(function() {
+            let productIds = [];
+            let quantities = [];
+            let totalPiecesArr = [];
+
+            $('#salesTableBody tr').each(function() {
+                const $r = $(this);
+                const pid = $r.find('.product-select').val();
+                const qty = toNum($r.find('.qty-input').val());
+                const pcs = toNum($r.find('.total-pieces').val());
+
+                if (pid && (qty > 0 || pcs > 0)) {
+                    productIds.push(pid);
+                    quantities.push(qty);
+                    totalPiecesArr.push(pcs);
+                }
+            });
+
+            if (productIds.length === 0) {
+                $('#rmCheckCard').slideUp();
+                return;
+            }
+
+            $('#rmCheckCard').slideDown();
+            $('#rmStatusBadge').attr('class', 'badge bg-secondary text-white rounded-pill px-2 py-1').text('Calculating...');
+
+            $.ajax({
+                url: "{{ route('sales.check-raw-materials') }}",
+                type: 'POST',
+                data: {
+                    _token: "{{ csrf_token() }}",
+                    product_id: productIds,
+                    qty: quantities,
+                    total_pieces: totalPiecesArr
+                },
+                success: function(res) {
+                    if (!res.ok || !res.requirements || res.requirements.length === 0) {
+                        $('#rmCheckCard').slideUp();
+                        return;
+                    }
+
+                    let html = '<table class="table table-sm table-bordered text-center mb-0" style="font-size:0.75rem;">';
+                    html += '<thead class="bg-light"><tr><th class="text-start">Raw Material</th><th>Required</th><th>Available Stock (Rakha hai)</th><th>Shortage (Kam hai)</th><th>Status</th></tr></thead><tbody>';
+
+                    res.requirements.forEach(function(rm) {
+                        let statusBadge = rm.is_short 
+                            ? '<span class="badge bg-danger text-white">⚠️ Shortage (' + rm.shortage_qty + ' ' + rm.unit + ' Needed)</span>' 
+                            : '<span class="badge bg-success text-white">✅ Complete</span>';
+
+                        let trClass = rm.is_short ? 'table-warning' : 'table-light';
+
+                        html += '<tr class="' + trClass + '">';
+                        html += '<td class="text-start fw-bold">' + rm.name + ' <small class="text-muted">(' + rm.code + ')</small></td>';
+                        html += '<td class="fw-bold">' + rm.required_qty + ' ' + rm.unit + '</td>';
+                        html += '<td class="text-info fw-bold">' + rm.current_stock + ' ' + rm.unit + '</td>';
+                        html += '<td class="fw-bold ' + (rm.is_short ? 'text-danger' : 'text-success') + '">' + (rm.is_short ? '-' + rm.shortage_qty : '0') + ' ' + rm.unit + '</td>';
+                        html += '<td>' + statusBadge + '</td>';
+                        html += '</tr>';
+                    });
+
+                    html += '</tbody></table>';
+
+                    $('#rmCheckContent').html(html);
+
+                    if (res.has_shortage) {
+                        $('#rmStatusBadge').attr('class', 'badge bg-warning text-dark rounded-pill px-2 py-1').html('<i class="fas fa-exclamation-triangle me-1"></i> Shortage Alert');
+                    } else {
+                        $('#rmStatusBadge').attr('class', 'badge bg-success text-white rounded-pill px-2 py-1').html('<i class="fas fa-check-circle me-1"></i> Stock Complete');
+                    }
+                },
+                error: function() {
+                    $('#rmCheckCard').slideUp();
+                }
+            });
+        }, 400);
     }
 
 

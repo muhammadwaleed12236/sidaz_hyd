@@ -637,9 +637,9 @@
                             <input type="text" name="sale_date" class="form-control datepicker-custom" id="displayDateInput" value="{{ isset($sale) ? $sale->created_at->format('Y-m-d') : date('Y-m-d') }}" style="background-color: #ffffff; height: 26px !important; padding: 0 4px;">
                         </div>
                         
-                        <!-- M.Bill -->
+                        <!-- Order Remarks / Ref -->
                         <div class="col-sm-2">
-                            <label class="form-label fw-bold text-secondary mb-0" style="font-size: 0.72rem;">M.Bill:</label>
+                            <label class="form-label fw-bold text-secondary mb-0" style="font-size: 0.72rem;">Order Remarks / Ref:</label>
                             <input type="text" class="form-control" name="reference" id="remarks" placeholder="Remarks" style="height: 26px !important; padding: 0 4px;" value="{{ $sale->reference ?? '' }}">
                         </div>
                         
