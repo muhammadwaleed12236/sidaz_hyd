@@ -46,6 +46,12 @@ class MaterialRequisitionController extends Controller
             'notes' => $request->notes ?? $requisition->notes,
         ]);
 
+        if ($request->status === 'fulfilled') {
+            \App\Models\SystemNotification::where('source_type', 'App\Models\MaterialRequisition')
+                ->where('source_id', $requisition->id)
+                ->update(['is_read' => true]);
+        }
+
         return redirect()->back()->with('success', "Requisition status updated to {$request->status}.");
     }
 

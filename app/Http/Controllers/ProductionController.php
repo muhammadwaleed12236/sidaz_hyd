@@ -181,10 +181,19 @@ class ProductionController extends Controller
 
             // 6. Update linked Requisition and Customer Sale Order status
             if ($saleId) {
+                $reqs = MaterialRequisition::where('sale_id', $saleId)->get();
+                $reqIds = $reqs->pluck('id')->toArray();
+
                 MaterialRequisition::where('sale_id', $saleId)->update([
                     'status' => 'fulfilled',
                     'notes' => "Production completed via Batch #{$batch->batch_no}"
                 ]);
+
+                if (!empty($reqIds)) {
+                    SystemNotification::where('source_type', 'App\Models\MaterialRequisition')
+                        ->whereIn('source_id', $reqIds)
+                        ->delete();
+                }
 
                 Sale::where('id', $saleId)->update([
                     'sale_status' => 'ready'

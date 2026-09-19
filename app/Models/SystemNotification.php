@@ -61,6 +61,7 @@ class SystemNotification extends Model
     public static function getRecent(int $userId, int $limit = 10)
     {
         return self::where('user_id', $userId)
+            ->where('is_read', false)
             ->orderBy('created_at', 'desc')
             ->limit($limit)
             ->get();

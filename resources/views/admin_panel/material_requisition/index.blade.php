@@ -128,7 +128,12 @@
                                         </table>
                                     </td>
                                     <td class="align-middle">
-                                        @if($hasLiveShortage)
+                                        @if($req->status === 'fulfilled')
+                                            <span class="badge badge-secondary px-3 py-2">
+                                                <i class="fa fa-check-circle mr-1"></i> Production Completed
+                                            </span>
+                                            <small class="d-block text-muted mt-1">Requisition Fulfilled</small>
+                                        @elseif($hasLiveShortage)
                                             <span class="badge badge-danger px-3 py-2">
                                                 <i class="fa fa-exclamation-triangle mr-1"></i> Material Shortage
                                             </span>
@@ -141,7 +146,11 @@
                                         @endif
                                     </td>
                                     <td class="align-middle">
-                                        @if($hasLiveShortage)
+                                        @if($req->status === 'fulfilled')
+                                            <span class="badge badge-light text-success font-weight-bold p-2 border border-success">
+                                                <i class="fa fa-check-circle mr-1"></i> Batch Produced
+                                            </span>
+                                        @elseif($hasLiveShortage)
                                             <a href="{{ route('material-purchases.create') }}" class="btn btn-sm btn-outline-danger font-weight-bold">
                                                 <i class="fa fa-shopping-cart mr-1"></i> Purchase Material
                                             </a>
