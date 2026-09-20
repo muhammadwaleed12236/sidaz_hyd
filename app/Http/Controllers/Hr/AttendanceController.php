@@ -68,7 +68,8 @@ class AttendanceController extends Controller
             });
         }
 
-        $employees = $query->orderBy('first_name')->paginate(12)->withQueryString();
+        $perPage = (int) $request->get('per_page', 1000);
+        $employees = $query->orderBy('first_name')->paginate($perPage)->withQueryString();
 
         // Calculate summary
         // Calculate summary
@@ -172,9 +173,10 @@ class AttendanceController extends Controller
             }
         }
 
+        $perPage = (int) $request->get('per_page', 1000);
         $attendances = $query->orderBy('date', 'desc')
             ->orderBy('check_in_time', 'desc')
-            ->paginate(50)
+            ->paginate($perPage)
             ->withQueryString();
 
         // Calculate KPI summary for filtered dataset
