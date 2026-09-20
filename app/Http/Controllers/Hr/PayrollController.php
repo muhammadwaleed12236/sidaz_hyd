@@ -225,6 +225,7 @@ class PayrollController extends Controller
                 ->orderBy('date', 'asc')
                 ->get();
             
+            $hasData = $attendances->count() > 0;
             $daysLeave = $attendances->filter(fn($att) => strtolower($att->status) === 'leave')->count();
             $lateCheckIns = $attendances->filter(fn($att) => strtolower($att->status) === 'late' || $att->is_late)->count();
             $daysPresentOnTime = $attendances->filter(fn($att) => strtolower($att->status) === 'present' && !$att->is_late)->count();
