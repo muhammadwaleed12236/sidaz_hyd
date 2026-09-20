@@ -228,14 +228,16 @@ class PayrollController extends Controller
             // Check if attendance data is complete
             $hasData = $attendances->count() > 0;
             
-            $daysPresent = $attendances->filter(fn($att) => strtolower($att->status) === 'present')->count();
+            $daysLeave = $attendances->filter(fn($att) => strtolower($att->status) === 'leave')->count();
+            $daysPresent = $attendances->filter(fn($att) => in_array(strtolower($att->status), ['present', 'late']))->count();
             $daysAbsent = $attendances->filter(fn($att) => strtolower($att->status) === 'absent')->count();
-            $lateCheckIns = $attendances->where('is_late', true)->count();
-            $earlyCheckOuts = $attendances->where('is_early_leave', true)->count(); // Fixed: is_early_leave
+            $lateCheckIns = $attendances->filter(fn($att) => strtolower($att->status) === 'late' || $att->is_late)->count();
+            $earlyCheckOuts = $attendances->where('is_early_leave', true)->count();
             
             // Calculate deduction breakdown
             $lateMinutesTotal = $attendances->sum('late_minutes');
-            $earlyMinutesTotal = $attendances->sum('early_leave_minutes'); // Fixed: early_leave_minutes
+            $earlyMinutesTotal = $attendances->sum('early_leave_minutes');
+            $totalHoursWorked = round($attendances->sum('total_hours'), 1);
             
             // Calculate actual deduction amounts
             $absenceDeduction = $daysAbsent * $perDayDeduction;
@@ -266,18 +268,18 @@ class PayrollController extends Controller
                 return [
                     'date' => \Carbon\Carbon::parse($att->date)->format('d/m/Y'),
                     'day' => \Carbon\Carbon::parse($att->date)->format('l'),
-                    'check_in' => $att->clock_in ? \Carbon\Carbon::parse($att->clock_in)->format('h:i A') : 'N/A', // Fixed: clock_in
+                    'check_in' => $att->clock_in ? \Carbon\Carbon::parse($att->clock_in)->format('h:i A') : 'N/A',
                     'late_minutes' => $att->late_minutes ?? 0,
                     'deduction' => $latePenalty,
                 ];
             })->values()->toArray();
             
-            $earlyDays = $attendances->where('is_early_leave', true)->map(function ($att) use ($earlyPenalty) { // Fixed: is_early_leave
+            $earlyDays = $attendances->where('is_early_leave', true)->map(function ($att) use ($earlyPenalty) {
                 return [
                     'date' => \Carbon\Carbon::parse($att->date)->format('d/m/Y'),
                     'day' => \Carbon\Carbon::parse($att->date)->format('l'),
-                    'check_out' => $att->clock_out ? \Carbon\Carbon::parse($att->clock_out)->format('h:i A') : 'N/A', // Fixed: clock_out
-                    'early_minutes' => $att->early_leave_minutes ?? 0, // Fixed: early_leave_minutes
+                    'check_out' => $att->clock_out ? \Carbon\Carbon::parse($att->clock_out)->format('h:i A') : 'N/A',
+                    'early_minutes' => $att->early_leave_minutes ?? 0,
                     'deduction' => $earlyPenalty,
                 ];
             })->values()->toArray();
@@ -287,12 +289,17 @@ class PayrollController extends Controller
                 'data_message' => $hasData ? null : 'Attendance data incomplete for this period',
                 'has_attendance_deductions' => $payroll->attendance_deductions > 0,
                 'total_working_days' => $totalWorkingDays,
+                'total_days_in_month' => $startDate->daysInMonth,
+                'month_start_formatted' => $startDate->format('d/m/Y'),
+                'month_end_formatted' => $endDate->format('d/m/Y'),
                 'days_present' => $daysPresent,
                 'days_absent' => $daysAbsent,
+                'days_leave' => $daysLeave,
                 'late_check_ins' => $lateCheckIns,
                 'early_check_outs' => $earlyCheckOuts,
                 'late_minutes_total' => $lateMinutesTotal,
                 'early_minutes_total' => $earlyMinutesTotal,
+                'total_hours_worked' => $totalHoursWorked,
                 'total_deduction' => $payroll->attendance_deductions,
                 'deduction_details' => [
                     'absence_deduction' => $absenceDeduction,

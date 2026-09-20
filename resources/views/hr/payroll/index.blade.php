@@ -1227,8 +1227,75 @@
                     </div>
                 `;
 
+                var attendanceOverviewHtml = '';
+                if (data.payroll.payroll_type === 'monthly') {
+                    attendanceOverviewHtml = `
+                        <div class="card border-0 shadow-sm rounded-3 mb-3 p-3" style="background: #f8fafc; border: 1px solid #cbd5e1 !important;">
+                            <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2 mb-2 pb-2 border-bottom">
+                                <div>
+                                    <h6 class="font-weight-bold mb-0 text-dark" style="font-size: 0.95rem;">
+                                        <i class="fa fa-calendar-check text-primary me-2"></i>
+                                        Monthly Attendance Summary (1st to ${data.attendance_breakdown.total_days_in_month || 30} ${data.payroll_period.month || ''})
+                                    </h6>
+                                    <small class="text-muted">Period: <b>${data.attendance_breakdown.month_start_formatted || '01'} to ${data.attendance_breakdown.month_end_formatted || '30'}</b> • Working Days: <b>${data.attendance_breakdown.total_working_days || 0}</b></small>
+                                </div>
+                                <div>
+                                    <a href="{{ route('hr.attendance.ledger') }}?employee_id=${data.payroll.employee_id}&month=${data.payroll.month}" target="_blank" class="btn btn-sm btn-dark font-weight-bold px-3 shadow-sm">
+                                        <i class="fa fa-book-open me-1"></i> Movement Ledger <i class="fa fa-external-link-alt ms-1" style="font-size: 0.7rem;"></i>
+                                    </a>
+                                </div>
+                            </div>
+
+                            <div class="row g-2 text-center mt-1">
+                                <div class="col-4 col-md-2">
+                                    <div class="p-2 rounded bg-white border">
+                                        <div class="small text-muted font-weight-bold" style="font-size: 0.68rem;">PRESENT</div>
+                                        <div class="font-weight-bold text-success" style="font-size: 1.15rem;">${data.attendance_breakdown.days_present || 0}</div>
+                                        <div class="text-muted" style="font-size: 0.65rem;">Days</div>
+                                    </div>
+                                </div>
+                                <div class="col-4 col-md-2">
+                                    <div class="p-2 rounded bg-white border border-danger">
+                                        <div class="small text-danger font-weight-bold" style="font-size: 0.68rem;">ABSENT</div>
+                                        <div class="font-weight-bold text-danger" style="font-size: 1.15rem;">${data.attendance_breakdown.days_absent || 0}</div>
+                                        <div class="text-muted" style="font-size: 0.65rem;">Days</div>
+                                    </div>
+                                </div>
+                                <div class="col-4 col-md-2">
+                                    <div class="p-2 rounded bg-white border border-warning">
+                                        <div class="small text-warning font-weight-bold" style="font-size: 0.68rem;">LATE</div>
+                                        <div class="font-weight-bold text-warning" style="font-size: 1.15rem;">${data.attendance_breakdown.late_check_ins || 0}</div>
+                                        <div class="text-muted" style="font-size: 0.65rem;">(${data.attendance_breakdown.late_minutes_total || 0}m)</div>
+                                    </div>
+                                </div>
+                                <div class="col-4 col-md-2">
+                                    <div class="p-2 rounded bg-white border border-info">
+                                        <div class="small text-info font-weight-bold" style="font-size: 0.68rem;">LEAVE</div>
+                                        <div class="font-weight-bold text-info" style="font-size: 1.15rem;">${data.attendance_breakdown.days_leave || 0}</div>
+                                        <div class="text-muted" style="font-size: 0.65rem;">Days</div>
+                                    </div>
+                                </div>
+                                <div class="col-4 col-md-2">
+                                    <div class="p-2 rounded bg-white border">
+                                        <div class="small text-muted font-weight-bold" style="font-size: 0.68rem;">TOTAL HOURS</div>
+                                        <div class="font-weight-bold text-dark" style="font-size: 1.15rem;">${data.attendance_breakdown.total_hours_worked || 0}</div>
+                                        <div class="text-muted" style="font-size: 0.65rem;">Hours</div>
+                                    </div>
+                                </div>
+                                <div class="col-4 col-md-2">
+                                    <div class="p-2 rounded bg-white border border-danger">
+                                        <div class="small text-danger font-weight-bold" style="font-size: 0.68rem;">ATT. DEDUCT</div>
+                                        <div class="font-weight-bold text-danger" style="font-size: 1.05rem;">Rs. ${parseFloat(data.breakdown.deductions.attendance_deductions).toFixed(2)}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+
                 var html = `
                     ${headerHtml}
+                    ${attendanceOverviewHtml}
                     
                     <div class="row g-3">
                         <!-- Left Column: Earnings -->
