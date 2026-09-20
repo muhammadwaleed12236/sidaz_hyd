@@ -513,13 +513,20 @@
                         <h1 class="page-title"><i class="fa fa-users"></i> Employee Management</h1>
                         <p class="page-subtitle">Manage your organization's employee database, shifts, and credentials</p>
                     </div>
-                    @can('hr.employees.create')
-                        <button type="button" class="btn btn-create btn-primary px-4 py-2" id="createBtn"
-                            data-toggle="modal" data-target="#employeeModal"
-                            data-bs-toggle="modal" data-bs-target="#employeeModal">
-                            <i class="fa fa-user-plus me-1"></i> Add Employee
-                        </button>
-                    @endcan
+                    <div class="d-flex align-items-center gap-2">
+                        @can('hr.attendance.view')
+                            <a href="{{ route('hr.attendance.ledger') }}" class="btn btn-outline-primary font-weight-bold px-3 py-2">
+                                <i class="fa fa-book-open me-1"></i> Attendance Ledger
+                            </a>
+                        @endcan
+                        @can('hr.employees.create')
+                            <button type="button" class="btn btn-create btn-primary px-4 py-2" id="createBtn"
+                                data-toggle="modal" data-target="#employeeModal"
+                                data-bs-toggle="modal" data-bs-target="#employeeModal">
+                                <i class="fa fa-user-plus me-1"></i> Add Employee
+                            </button>
+                        @endcan
+                    </div>
                 </div>
 
                 <!-- Stats Row -->
@@ -641,6 +648,10 @@
                                         </div>
                                     </div>
                                     <div class="hr-actions">
+                                        <button type="button" class="btn btn-info btn-sm view-monthly-detail-btn" data-id="{{ $emp->id }}"
+                                            data-name="{{ $emp->first_name }} {{ $emp->last_name }}" title="View Monthly Attendance & Payroll Report">
+                                            <i class="fa fa-calendar-alt me-1"></i> Detail
+                                        </button>
                                         @can('hr.employees.edit')
                                             <button class="btn btn-success btn-sm register-face-btn" data-id="{{ $emp->id }}"
                                                 data-name="{{ $emp->first_name }} {{ $emp->last_name }}" title="Register Face ID">
@@ -1545,6 +1556,270 @@
                 $('#face_status').empty();
                 $('#btn-capture-face').prop('disabled', true).html('<i class="fa fa-camera me-1"></i> Capture & Save Face ID');
             });
+
+            // Employee Monthly Detail Modal Logic
+            let currentDetailEmpId = null;
+
+            $(document).on('click', '.view-monthly-detail-btn', function() {
+                let empId = $(this).data('id');
+                currentDetailEmpId = empId;
+                
+                let now = new Date();
+                let monthStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+                $('#empDetailMonthPicker').val(monthStr);
+
+                loadEmployeeMonthlyDetail(empId, monthStr);
+                $('#monthlyDetailModal').modal('show');
+            });
+
+            $('#empDetailFetchBtn').on('click', function() {
+                let monthStr = $('#empDetailMonthPicker').val();
+                if (currentDetailEmpId && monthStr) {
+                    loadEmployeeMonthlyDetail(currentDetailEmpId, monthStr);
+                }
+            });
+
+            $('#empDetailCurrentMonthBtn').on('click', function() {
+                let now = new Date();
+                let monthStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+                $('#empDetailMonthPicker').val(monthStr);
+                if (currentDetailEmpId) {
+                    loadEmployeeMonthlyDetail(currentDetailEmpId, monthStr);
+                }
+            });
+
+            $('#empDetailPrevMonthBtn').on('click', function() {
+                let currentVal = $('#empDetailMonthPicker').val();
+                if (!currentVal) return;
+                let parts = currentVal.split('-');
+                let year = parseInt(parts[0]);
+                let month = parseInt(parts[1]) - 1;
+                if (month === 0) {
+                    month = 12;
+                    year--;
+                }
+                let monthStr = year + '-' + String(month).padStart(2, '0');
+                $('#empDetailMonthPicker').val(monthStr);
+                if (currentDetailEmpId) {
+                    loadEmployeeMonthlyDetail(currentDetailEmpId, monthStr);
+                }
+            });
+
+            function loadEmployeeMonthlyDetail(empId, monthStr) {
+                $('#empDetailLoader').show();
+                $('#empDetailContent').hide();
+
+                $.ajax({
+                    url: '/hr/employees/' + empId + '/monthly-detail',
+                    type: 'GET',
+                    data: { month: monthStr },
+                    success: function(res) {
+                        $('#empDetailLoader').hide();
+                        $('#empDetailContent').show();
+
+                        if (res.success) {
+                            let emp = res.employee;
+                            let sum = res.summary;
+
+                            $('#empDetailName').text(emp.name + ' - Monthly Detail (' + sum.month_name + ')');
+                            $('#empDetailMeta').html('<i class="fa fa-building me-1"></i>' + emp.department + ' &nbsp;•&nbsp; <i class="fa fa-briefcase me-1"></i>' + emp.designation + ' &nbsp;•&nbsp; <i class="fa fa-clock me-1"></i>Shift: ' + emp.shift + ' &nbsp;•&nbsp; ID #' + emp.id);
+
+                            $('#kpiTotalDays').text(sum.total_days);
+                            $('#kpiPresent').text(sum.present);
+                            $('#kpiLate').text(sum.late);
+                            $('#kpiLateMins').text(sum.total_late_minutes + ' mins');
+                            $('#kpiAbsent').text(sum.absent);
+                            $('#kpiLeave').text(sum.leave);
+                            $('#kpiHours').text(sum.total_hours + ' hrs');
+                            $('#empDetailMonthName').text(sum.month_name);
+
+                            // Payroll Box
+                            if (res.payroll) {
+                                $('#payrollStatusBadge').text(res.payroll.status).removeClass('bg-success bg-warning bg-danger').addClass(res.payroll.status.toLowerCase() === 'paid' ? 'bg-success' : 'bg-warning');
+                                $('#payrollGross').text('Rs. ' + res.payroll.gross_salary);
+                                $('#payrollAllowances').text('+ Rs. ' + res.payroll.total_allowances);
+                                $('#payrollDeductions').text('- Rs. ' + res.payroll.total_deductions);
+                                $('#payrollNet').text('Rs. ' + res.payroll.net_salary);
+                                $('#empPayrollBox').show();
+                            } else {
+                                $('#empPayrollBox').hide();
+                            }
+
+                            // Daily records table
+                            let rowsHtml = '';
+                            res.daily_records.forEach(function(r) {
+                                let badgeClass = 'bg-' + r.status_badge;
+                                rowsHtml += `
+                                    <tr>
+                                        <td class="fw-bold">${r.date}</td>
+                                        <td>${r.day}</td>
+                                        <td><span class="badge ${badgeClass}">${r.status}</span></td>
+                                        <td>${r.clock_in}</td>
+                                        <td>${r.clock_out}</td>
+                                        <td class="fw-semibold">${r.hours > 0 ? r.hours + ' hrs' : '-'}</td>
+                                        <td class="${r.late_mins > 0 ? 'text-warning font-weight-bold' : ''}">${r.late_mins > 0 ? r.late_mins + 'm' : '-'}</td>
+                                        <td class="small text-muted">${r.notes || '-'}</td>
+                                    </tr>
+                                `;
+                            });
+                            $('#empDetailTableBody').html(rowsHtml);
+                        }
+                    },
+                    error: function(err) {
+                        $('#empDetailLoader').hide();
+                        alert('Failed to load employee monthly details.');
+                    }
+                });
+            }
         });
     </script>
+
+    <!-- Single Employee Monthly Detail Modal -->
+    <div class="modal fade" id="monthlyDetailModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 18px; overflow: hidden;">
+                <div class="modal-header text-white" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); padding: 20px 28px;">
+                    <div class="d-flex align-items-center gap-3">
+                        <div style="width: 46px; height: 46px; border-radius: 12px; background: rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; font-size: 1.3rem; color: #38bdf8;">
+                            <i class="fa fa-calendar-check"></i>
+                        </div>
+                        <div>
+                            <h5 class="modal-title font-weight-bold text-white mb-0" id="empDetailName">Employee Monthly Report</h5>
+                            <p class="small text-white-50 mb-0" id="empDetailMeta">Department • Designation</p>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-dismiss="modal" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4" style="background: #f8fafc; max-height: 80vh; overflow-y: auto;">
+                    
+                    <!-- Month Selection & Filter Bar -->
+                    <div class="bg-white p-3 rounded-3 shadow-sm border mb-4 d-flex flex-wrap align-items-center justify-content-between gap-3">
+                        <div class="d-flex align-items-center gap-2">
+                            <label class="fw-bold text-secondary small mb-0"><i class="fa fa-filter text-primary me-1"></i> SELECT MONTH:</label>
+                            <input type="month" id="empDetailMonthPicker" class="form-control form-control-sm font-weight-bold" style="width: 170px; border-radius: 8px;">
+                            <button type="button" class="btn btn-sm btn-primary px-3" id="empDetailFetchBtn" style="border-radius: 8px;">
+                                <i class="fa fa-search me-1"></i> Load Month
+                            </button>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <button type="button" class="btn btn-sm btn-outline-secondary px-3" id="empDetailCurrentMonthBtn" style="border-radius: 8px;">
+                                <i class="fa fa-calendar-day me-1"></i> Current Month
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary px-3" id="empDetailPrevMonthBtn" style="border-radius: 8px;">
+                                <i class="fa fa-arrow-left me-1"></i> Previous Month
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Loader -->
+                    <div id="empDetailLoader" class="text-center py-5">
+                        <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;"></div>
+                        <p class="text-muted mt-2 fw-semibold">Fetching monthly attendance & payroll records...</p>
+                    </div>
+
+                    <!-- Content Container (Hidden initially) -->
+                    <div id="empDetailContent" style="display: none;">
+                        
+                        <!-- KPI Cards Row -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-6 col-md-2">
+                                <div class="bg-white p-3 rounded-3 border shadow-sm text-center">
+                                    <div class="text-muted small fw-bold">TOTAL DAYS</div>
+                                    <div class="h4 font-weight-bold text-dark mt-1 mb-0" id="kpiTotalDays">0</div>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-2">
+                                <div class="bg-white p-3 rounded-3 border border-success shadow-sm text-center">
+                                    <div class="text-success small fw-bold"><i class="fa fa-check-circle me-1"></i> PRESENT</div>
+                                    <div class="h4 font-weight-bold text-success mt-1 mb-0" id="kpiPresent">0</div>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-2">
+                                <div class="bg-white p-3 rounded-3 border border-warning shadow-sm text-center">
+                                    <div class="text-warning small fw-bold"><i class="fa fa-exclamation-triangle me-1"></i> LATE</div>
+                                    <div class="h4 font-weight-bold text-warning mt-1 mb-0" id="kpiLate">0</div>
+                                    <div class="small text-muted" id="kpiLateMins">0 mins</div>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-2">
+                                <div class="bg-white p-3 rounded-3 border border-danger shadow-sm text-center">
+                                    <div class="text-danger small fw-bold"><i class="fa fa-times-circle me-1"></i> ABSENT</div>
+                                    <div class="h4 font-weight-bold text-danger mt-1 mb-0" id="kpiAbsent">0</div>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-2">
+                                <div class="bg-white p-3 rounded-3 border border-info shadow-sm text-center">
+                                    <div class="text-info small fw-bold"><i class="fa fa-umbrella-beach me-1"></i> LEAVE</div>
+                                    <div class="h4 font-weight-bold text-info mt-1 mb-0" id="kpiLeave">0</div>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-2">
+                                <div class="bg-white p-3 rounded-3 border shadow-sm text-center" style="border-color: #7c3aed !important;">
+                                    <div class="small fw-bold" style="color:#7c3aed"><i class="fa fa-clock me-1"></i> WORKING HRS</div>
+                                    <div class="h4 font-weight-bold mt-1 mb-0" style="color:#7c3aed" id="kpiHours">0</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Payroll Summary Box -->
+                        <div id="empPayrollBox" class="bg-white p-3 rounded-3 border shadow-sm mb-4" style="display: none;">
+                            <div class="d-flex align-items-center justify-content-between border-bottom pb-2 mb-3">
+                                <span class="fw-bold text-dark"><i class="fa fa-file-invoice-dollar text-primary me-2"></i> Payroll Status for Month</span>
+                                <span class="badge bg-success" id="payrollStatusBadge">Paid</span>
+                            </div>
+                            <div class="row text-center g-2">
+                                <div class="col-md-3">
+                                    <span class="text-muted small">Gross Salary:</span>
+                                    <div class="fw-bold text-dark" id="payrollGross">Rs. 0</div>
+                                </div>
+                                <div class="col-md-3">
+                                    <span class="text-muted small">Allowances:</span>
+                                    <div class="fw-bold text-success" id="payrollAllowances">+ Rs. 0</div>
+                                </div>
+                                <div class="col-md-3">
+                                    <span class="text-muted small">Deductions:</span>
+                                    <div class="fw-bold text-danger" id="payrollDeductions">- Rs. 0</div>
+                                </div>
+                                <div class="col-md-3">
+                                    <span class="text-muted small">Net Payable:</span>
+                                    <div class="h5 fw-bold text-primary mb-0" id="payrollNet">Rs. 0</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Daily Attendance Table -->
+                        <div class="bg-white rounded-3 border shadow-sm overflow-hidden">
+                            <div class="px-3 py-2 bg-light border-bottom fw-bold text-dark d-flex align-items-center justify-content-between">
+                                <span><i class="fa fa-list me-2 text-primary"></i> Daily Attendance Log (<span id="empDetailMonthName">Month</span>)</span>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-hover table-striped align-middle mb-0" style="font-size: 0.88rem;">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Day</th>
+                                            <th>Status</th>
+                                            <th>Check In</th>
+                                            <th>Check Out</th>
+                                            <th>Hours</th>
+                                            <th>Late Mins</th>
+                                            <th>Notes / Location</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="empDetailTableBody">
+                                        <!-- Dynamic Rows -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+                <div class="modal-footer bg-light px-4 py-3 border-top">
+                    <button type="button" class="btn btn-secondary px-4 font-weight-bold" data-dismiss="modal" data-bs-dismiss="modal" style="border-radius: 8px;">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
 @endpush

@@ -296,4 +296,184 @@ class EmployeeController extends Controller
 
         return response()->json(['success' => 'Face registered successfully for '.$employee->full_name]);
     }
+
+    /**
+     * Get monthly attendance and payroll details for a single employee
+     */
+    public function monthlyDetail(Employee $employee, Request $request)
+    {
+        if (! auth()->user()->can('hr.employees.view') && ! auth()->user()->can('hr.attendance.view')) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $monthStr = $request->get('month', \Carbon\Carbon::now()->format('Y-m'));
+        $startDate = \Carbon\Carbon::parse($monthStr . '-01')->startOfMonth();
+        $endDate = $startDate->copy()->endOfMonth();
+        $today = \Carbon\Carbon::today();
+
+        $employee->load(['department', 'designation', 'shift', 'salaryStructure']);
+
+        // Attendance records for the month
+        $attendances = \App\Models\Hr\Attendance::where('employee_id', $employee->id)
+            ->whereBetween('date', [$startDate->format('Y-m-d'), $endDate->format('Y-m-d')])
+            ->get()
+            ->keyBy(function($item) {
+                return \Carbon\Carbon::parse($item->date)->format('Y-m-d');
+            });
+
+        // Leaves for the month
+        $leaves = \App\Models\Hr\Leave::where('employee_id', $employee->id)
+            ->where('status', 'approved')
+            ->whereDate('start_date', '<=', $endDate->format('Y-m-d'))
+            ->whereDate('end_date', '>=', $startDate->format('Y-m-d'))
+            ->get();
+
+        // Holidays for the month
+        $holidays = \App\Models\Hr\Holiday::whereBetween('date', [$startDate->format('Y-m-d'), $endDate->format('Y-m-d')])
+            ->get()
+            ->keyBy(function($item) {
+                return \Carbon\Carbon::parse($item->date)->format('Y-m-d');
+            });
+
+        // Weekly off days
+        $weeklyOffDays = $employee->weekly_off_days ?? ($employee->shift->weekly_off_days ?? ['Sunday']);
+
+        // Build daily timeline
+        $dailyRecords = [];
+        $presentCount = 0;
+        $lateCount = 0;
+        $absentCount = 0;
+        $leaveCount = 0;
+        $holidayCount = 0;
+        $offDayCount = 0;
+        $totalWorkingHours = 0;
+        $totalLateMinutes = 0;
+
+        $currentDate = $startDate->copy();
+        while ($currentDate->lte($endDate)) {
+            $dateFormatted = $currentDate->format('Y-m-d');
+            $dayName = $currentDate->format('l');
+            $isPastOrToday = $currentDate->lte($today);
+
+            $att = $attendances[$dateFormatted] ?? null;
+            $holiday = $holidays[$dateFormatted] ?? null;
+            $leave = $leaves->first(function($l) use ($dateFormatted) {
+                return $dateFormatted >= \Carbon\Carbon::parse($l->start_date)->format('Y-m-d') &&
+                       $dateFormatted <= \Carbon\Carbon::parse($l->end_date)->format('Y-m-d');
+            });
+
+            $status = 'upcoming';
+            $statusBadge = 'secondary';
+            $clockIn = '-';
+            $clockOut = '-';
+            $hours = 0;
+            $lateMins = 0;
+            $notes = '';
+
+            if ($att) {
+                $clockIn = $att->check_in_time ? \Carbon\Carbon::parse($att->check_in_time)->format('h:i A') : ($att->clock_in ?? '-');
+                $clockOut = $att->check_out_time ? \Carbon\Carbon::parse($att->check_out_time)->format('h:i A') : ($att->clock_out ?? '-');
+                $hours = (float)($att->total_hours ?? 0);
+                $lateMins = (int)($att->late_minutes ?? 0);
+                $notes = $att->check_in_location ?? '';
+
+                if ($att->status == 'late' || ($att->status == 'present' && $att->is_late)) {
+                    $status = 'late';
+                    $statusBadge = 'warning';
+                    $lateCount++;
+                    $totalLateMinutes += $lateMins;
+                    $totalWorkingHours += $hours;
+                } elseif ($att->status == 'present') {
+                    $status = 'present';
+                    $statusBadge = 'success';
+                    $presentCount++;
+                    $totalWorkingHours += $hours;
+                } elseif ($att->status == 'leave') {
+                    $status = 'leave';
+                    $statusBadge = 'info';
+                    $leaveCount++;
+                } else {
+                    $status = 'absent';
+                    $statusBadge = 'danger';
+                    if ($isPastOrToday) $absentCount++;
+                }
+            } elseif ($leave) {
+                $status = 'leave (' . $leave->leave_type . ')';
+                $statusBadge = 'info';
+                $notes = $leave->reason ?? 'Approved Leave';
+                if ($isPastOrToday) $leaveCount++;
+            } elseif ($holiday) {
+                $status = 'holiday';
+                $statusBadge = 'primary';
+                $notes = $holiday->name;
+                if ($isPastOrToday) $holidayCount++;
+            } elseif (in_array($dayName, $weeklyOffDays)) {
+                $status = 'off-day';
+                $statusBadge = 'dark';
+                $notes = 'Weekly Off (' . $dayName . ')';
+                if ($isPastOrToday) $offDayCount++;
+            } elseif ($isPastOrToday) {
+                $status = 'absent';
+                $statusBadge = 'danger';
+                $absentCount++;
+            }
+
+            $dailyRecords[] = [
+                'date' => $currentDate->format('d/m/Y'),
+                'day' => $dayName,
+                'status' => ucfirst($status),
+                'status_badge' => $statusBadge,
+                'clock_in' => $clockIn,
+                'clock_out' => $clockOut,
+                'hours' => $hours,
+                'late_mins' => $lateMins,
+                'notes' => $notes,
+            ];
+
+            $currentDate->addDay();
+        }
+
+        // Fetch Payroll record for this month if available
+        $payroll = \App\Models\Hr\Payroll::where('employee_id', $employee->id)
+            ->where('month', $monthStr)
+            ->latest()
+            ->first();
+
+        $summary = [
+            'month_name' => $startDate->format('F Y'),
+            'month_code' => $monthStr,
+            'total_days' => $startDate->daysInMonth,
+            'present' => $presentCount,
+            'late' => $lateCount,
+            'absent' => $absentCount,
+            'leave' => $leaveCount,
+            'holiday' => $holidayCount,
+            'off_day' => $offDayCount,
+            'total_hours' => round($totalWorkingHours, 2),
+            'total_late_minutes' => $totalLateMinutes,
+        ];
+
+        return response()->json([
+            'success' => true,
+            'employee' => [
+                'id' => $employee->id,
+                'name' => $employee->full_name,
+                'department' => $employee->department->name ?? 'N/A',
+                'designation' => $employee->designation->name ?? 'N/A',
+                'shift' => $employee->shift->name ?? 'Default',
+                'joining_date' => $employee->joining_date ? \Carbon\Carbon::parse($employee->joining_date)->format('d/m/Y') : 'N/A',
+            ],
+            'summary' => $summary,
+            'daily_records' => $dailyRecords,
+            'payroll' => $payroll ? [
+                'id' => $payroll->id,
+                'status' => ucfirst($payroll->status ?? 'pending'),
+                'gross_salary' => number_format($payroll->gross_salary ?? 0, 2),
+                'total_allowances' => number_format($payroll->total_allowances ?? 0, 2),
+                'total_deductions' => number_format($payroll->total_deductions ?? 0, 2),
+                'net_salary' => number_format($payroll->net_salary ?? 0, 2),
+                'payment_type' => ucfirst($payroll->payroll_type ?? 'monthly'),
+            ] : null
+        ]);
+    }
 }

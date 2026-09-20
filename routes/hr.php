@@ -36,6 +36,7 @@ Route::middleware(['auth'])->prefix('hr')->name('hr.')->group(function () {
     // Employees
     Route::middleware(['permission:hr.employees.view'])->group(function () {
         Route::get('employees', [EmployeeController::class, 'index'])->name('employees.index');
+        Route::get('employees/{employee}/monthly-detail', [EmployeeController::class, 'monthlyDetail'])->name('employees.monthly-detail');
     });
     Route::post('employees', [EmployeeController::class, 'store'])->name('employees.store')->middleware('permission:hr.employees.create|hr.employees.edit');
     Route::delete('employees/{employee}', [EmployeeController::class, 'destroy'])->name('employees.destroy')->middleware('permission:hr.employees.delete');
@@ -58,6 +59,7 @@ Route::middleware(['auth'])->prefix('hr')->name('hr.')->group(function () {
 
     // Attendance
     Route::get('attendance', [AttendanceController::class, 'index'])->name('attendance.index')->middleware('permission:hr.attendance.view');
+    Route::get('attendance/ledger', [AttendanceController::class, 'ledger'])->name('attendance.ledger')->middleware('permission:hr.attendance.view');
     Route::post('attendance', [AttendanceController::class, 'store'])->name('attendance.store')->middleware('permission:hr.attendance.create');
     Route::get('attendance/kiosk', [AttendanceController::class, 'kiosk'])->name('attendance.kiosk')->middleware('permission:hr.attendance.create');
     Route::post('attendance/mark', [AttendanceController::class, 'markAttendance'])->name('attendance.mark')->middleware('permission:hr.attendance.create');

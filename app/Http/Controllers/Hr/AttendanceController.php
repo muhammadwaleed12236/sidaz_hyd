@@ -121,6 +121,101 @@ class AttendanceController extends Controller
         ));
     }
 
+    /**
+     * Complete Attendance Movement & History Ledger Report
+     */
+    public function ledger(Request $request)
+    {
+        if (! auth()->user()->can('hr.attendance.view')) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        // Handle Month filter or Date Range filter
+        $monthStr = $request->get('month');
+        if ($monthStr) {
+            $startDate = Carbon::parse($monthStr . '-01')->startOfMonth()->format('Y-m-d');
+            $endDate = Carbon::parse($monthStr . '-01')->endOfMonth()->format('Y-m-d');
+        } else {
+            $startDate = $request->get('date_from', Carbon::now()->startOfMonth()->format('Y-m-d'));
+            $endDate = $request->get('date_to', Carbon::today()->format('Y-m-d'));
+        }
+
+        $selectedEmployee = $request->get('employee_id');
+        $selectedDepartment = $request->get('department_id');
+        $selectedStatus = $request->get('status');
+
+        $query = Attendance::with(['employee.department', 'employee.designation', 'employee.shift'])
+            ->whereBetween('date', [$startDate, $endDate]);
+
+        if ($selectedEmployee) {
+            $query->where('employee_id', $selectedEmployee);
+        }
+
+        if ($selectedDepartment) {
+            $query->whereHas('employee', function($q) use ($selectedDepartment) {
+                $q->where('department_id', $selectedDepartment);
+            });
+        }
+
+        if ($selectedStatus) {
+            if ($selectedStatus == 'late') {
+                $query->where(function($q) {
+                    $q->where('status', 'late')
+                      ->orWhere(function($sq) {
+                          $sq->where('status', 'present')->where('is_late', true);
+                      });
+                });
+            } elseif ($selectedStatus == 'present') {
+                $query->where('status', 'present')->where('is_late', false);
+            } else {
+                $query->where('status', $selectedStatus);
+            }
+        }
+
+        $attendances = $query->orderBy('date', 'desc')
+            ->orderBy('check_in_time', 'desc')
+            ->paginate(50)
+            ->withQueryString();
+
+        // Calculate KPI summary for filtered dataset
+        $summaryQuery = Attendance::whereBetween('date', [$startDate, $endDate]);
+        if ($selectedEmployee) {
+            $summaryQuery->where('employee_id', $selectedEmployee);
+        }
+        if ($selectedDepartment) {
+            $summaryQuery->whereHas('employee', function($q) use ($selectedDepartment) {
+                $q->where('department_id', $selectedDepartment);
+            });
+        }
+        $summaryLogs = $summaryQuery->get();
+
+        $presentCount = $summaryLogs->where('status', 'present')->where('is_late', false)->count();
+        $lateCount = $summaryLogs->filter(fn($a) => $a->status == 'late' || ($a->status == 'present' && $a->is_late))->count();
+        $absentCount = $summaryLogs->where('status', 'absent')->count();
+        $leaveCount = $summaryLogs->where('status', 'leave')->count();
+        $totalHours = round($summaryLogs->sum('total_hours'), 2);
+        $totalLateMins = $summaryLogs->sum('late_minutes');
+
+        $summary = [
+            'total_logs' => $summaryLogs->count(),
+            'present' => $presentCount,
+            'late' => $lateCount,
+            'absent' => $absentCount,
+            'leave' => $leaveCount,
+            'total_hours' => $totalHours,
+            'total_late_mins' => $totalLateMins,
+        ];
+
+        $employees = Employee::orderBy('first_name')->get();
+        $departments = Department::orderBy('name')->get();
+
+        return view('hr.attendance.ledger', compact(
+            'attendances', 'employees', 'departments', 'summary',
+            'startDate', 'endDate', 'monthStr',
+            'selectedEmployee', 'selectedDepartment', 'selectedStatus'
+        ));
+    }
+
     public function store(Request $request)
     {
         if (! auth()->user()->can('hr.attendance.create')) {

@@ -797,6 +797,8 @@
                                         @can('hr.attendance.view')
                                             <li><a href="{{ route('hr.attendance.index') }}"><i
                                                         class="fa-solid fa-clock"></i> Attendance</a></li>
+                                            <li><a href="{{ route('hr.attendance.ledger') }}"><i
+                                                        class="fa-solid fa-book-open"></i> Attendance Ledger</a></li>
                                         @endcan
                                         @can('hr.payroll.view')
                                             <li><a href="{{ route('hr.payroll.index') }}"><i

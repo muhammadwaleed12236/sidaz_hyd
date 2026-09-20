@@ -235,6 +235,9 @@
                         <p class="page-subtitle">{{ \Carbon\Carbon::parse($selectedDate)->format('d/m/Y') }}</p>
                     </div>
                     <div class="d-flex gap-2">
+                        <a href="{{ route('hr.attendance.ledger') }}" class="btn btn-dark fw-bold">
+                            <i class="fa fa-book-open me-1"></i> Attendance Ledger
+                        </a>
                         <button type="button" class="btn btn-light border" data-bs-toggle="modal"
                             data-bs-target="#attendanceGuideModal">
                             <i class="fa fa-question-circle text-primary me-1"></i> System Guide
@@ -393,11 +396,15 @@
                                 <option value="leave" {{ $selectedStatus == 'leave' ? 'selected' : '' }}>Leave</option>
                             </select>
                         </div>
-                        <div>
-                            <button type="submit" class="btn btn-primary"><i class="fa fa-filter me-1"></i>
-                                Apply</button>
-                            <a href="{{ route('hr.attendance.index') }}" class="btn btn-light border"><i
-                                    class="fa fa-sync"></i></a>
+                        <div class="d-flex align-items-center gap-2">
+                            <button type="submit" class="btn btn-primary"><i class="fa fa-filter me-1"></i> Apply</button>
+                            <a href="{{ route('hr.attendance.index') }}" class="btn btn-light border"><i class="fa fa-sync"></i></a>
+                            
+                            <!-- View Switcher -->
+                            <div class="btn-group ms-2" role="group" aria-label="View Switcher">
+                                <button type="button" class="btn btn-outline-secondary active" id="btnGridView" title="Cards View"><i class="fa fa-th-large me-1"></i> Cards</button>
+                                <button type="button" class="btn btn-outline-secondary" id="btnTableView" title="List View"><i class="fa fa-list me-1"></i> List</button>
+                            </div>
                         </div>
                     </form>
                 </div>
@@ -649,6 +656,104 @@
                         @endforelse
                     </div>
 
+                    <!-- Attendance List / Table View -->
+                    <div class="table-responsive bg-white rounded-3 border shadow-sm mt-3 p-0" id="attendanceTableContainer" style="display: none;">
+                        <table class="table table-hover table-striped align-middle mb-0" style="font-size: 0.88rem;">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th style="width: 50px;">#</th>
+                                    <th>Employee</th>
+                                    <th>Department & Shift</th>
+                                    <th style="width: 150px;">Status</th>
+                                    <th style="width: 130px;">Check In</th>
+                                    <th style="width: 130px;">Check Out</th>
+                                    <th>Total Hours</th>
+                                    <th>Late / Early</th>
+                                    <th>Notes / Location</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse ($employees as $empIndex => $emp)
+                                    @php
+                                        $att = $emp->attendances->first();
+                                        $appLeave = $emp->leaves->first();
+                                        $st = $att->status ?? 'absent';
+                                        if ($appLeave && !$att) $st = 'leave';
+                                        if ($att && $att->status == 'present' && $att->is_late) $st = 'late';
+                                        if (!$att && $isHoliday) $st = 'holiday';
+
+                                        $stClass = match ($st) {
+                                            'present' => 'status-present',
+                                            'absent' => 'status-absent',
+                                            'late' => 'status-late',
+                                            'leave' => 'status-leave',
+                                            default => 'status-absent',
+                                        };
+                                    @endphp
+                                    <tr>
+                                        <td class="fw-bold text-muted">{{ $empIndex + 1 }}</td>
+                                        <td>
+                                            <div class="d-flex align-items-center gap-2">
+                                                <div class="hr-avatar" style="width: 34px; height: 34px; font-size: 0.8rem; background: linear-gradient(135deg, #667eea, #764ba2);">
+                                                    {{ strtoupper(substr($emp->first_name, 0, 1) . substr($emp->last_name, 0, 1)) }}
+                                                </div>
+                                                <div>
+                                                    <div class="fw-bold text-dark">{{ $emp->full_name }}</div>
+                                                    <div class="small text-muted">{{ $emp->designation->name ?? 'N/A' }}</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="small fw-semibold text-dark">{{ $emp->department->name ?? 'N/A' }}</div>
+                                            <div class="small text-muted"><i class="fa fa-clock me-1"></i>{{ $emp->shift->name ?? 'Default' }}</div>
+                                        </td>
+                                        <td>
+                                            <select name="attendance[{{ $emp->id }}][status]"
+                                                class="form-select form-select-sm status-select {{ $stClass }}"
+                                                onchange="showSaveBar(this)">
+                                                <option value="present" {{ ($att && $att->status == 'present' && !$att->is_late) || (!$att && $st == 'present') ? 'selected' : '' }}>Present</option>
+                                                <option value="absent" {{ ($att && $att->status == 'absent') || (!$att && $st == 'absent') ? 'selected' : '' }}>Absent</option>
+                                                <option value="late" {{ ($att && ($att->status == 'late' || ($att->status == 'present' && $att->is_late))) || (!$att && $st == 'late') ? 'selected' : '' }}>Late</option>
+                                                <option value="leave" {{ ($att && $att->status == 'leave') || (!$att && $st == 'leave') ? 'selected' : '' }}>Leave</option>
+                                            </select>
+                                        </td>
+                                        <td>
+                                            <input type="time" name="attendance[{{ $emp->id }}][clock_in]"
+                                                class="form-control form-control-sm time-field" onchange="showSaveBar(this)"
+                                                {{ $st == 'absent' || $st == 'leave' ? 'disabled style=opacity:0.5;background-color:#f1f5f9' : '' }}
+                                                value="{{ $att && $att->check_in_time ? \Carbon\Carbon::parse($att->check_in_time)->format('H:i') : '' }}">
+                                        </td>
+                                        <td>
+                                            <input type="time" name="attendance[{{ $emp->id }}][clock_out]"
+                                                class="form-control form-control-sm time-field" onchange="showSaveBar(this)"
+                                                {{ $st == 'absent' || $st == 'leave' ? 'disabled style=opacity:0.5;background-color:#f1f5f9' : '' }}
+                                                value="{{ $att && $att->check_out_time ? \Carbon\Carbon::parse($att->check_out_time)->format('H:i') : '' }}">
+                                        </td>
+                                        <td class="fw-semibold">
+                                            {{ $att && $att->total_hours > 0 ? number_format($att->total_hours, 2) . ' hrs' : '-' }}
+                                        </td>
+                                        <td>
+                                            @if($att && $att->is_late)
+                                                <span class="badge bg-warning text-dark"><i class="fa fa-exclamation-circle me-1"></i>Late {{ $att->late_minutes }}m</span>
+                                            @elseif($att && $att->is_early_leave)
+                                                <span class="badge bg-info"><i class="fa fa-clock me-1"></i>Early Leave {{ $att->early_leave_minutes }}m</span>
+                                            @else
+                                                <span class="text-muted">-</span>
+                                            @endif
+                                        </td>
+                                        <td class="small text-muted">
+                                            {{ $att->check_in_location ?? ($appLeave ? 'Leave: ' . $appLeave->reason : '-') }}
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="9" class="text-center py-4 text-muted">No attendance records found.</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+
                     <div class="d-flex justify-content-center mt-4">
                         {{ $employees->links() }}
                     </div>
@@ -864,6 +969,28 @@
                     }
                 });
             });
+
+            // View Mode Switcher (Grid Cards vs Table List)
+            $('#btnGridView').on('click', function() {
+                $(this).addClass('active');
+                $('#btnTableView').removeClass('active');
+                $('.hr-grid').show();
+                $('#attendanceTableContainer').hide();
+                localStorage.setItem('attendance_view_mode', 'grid');
+            });
+
+            $('#btnTableView').on('click', function() {
+                $(this).addClass('active');
+                $('#btnGridView').removeClass('active');
+                $('.hr-grid').hide();
+                $('#attendanceTableContainer').show();
+                localStorage.setItem('attendance_view_mode', 'table');
+            });
+
+            // Restore view preference
+            if (localStorage.getItem('attendance_view_mode') === 'table') {
+                $('#btnTableView').trigger('click');
+            }
         });
     </script>
 @endsection
