@@ -206,11 +206,46 @@ class AttendanceController extends Controller
             'total_late_mins' => $totalLateMins,
         ];
 
+        // Calculate employee-wise summary table for master view
+        $employeeSummaries = Employee::with(['department', 'designation', 'shift'])
+            ->when($selectedDepartment, fn($q) => $q->where('department_id', $selectedDepartment))
+            ->orderBy('first_name')
+            ->get()
+            ->map(function ($emp) use ($startDate, $endDate) {
+                $logs = Attendance::where('employee_id', $emp->id)
+                    ->whereBetween('date', [$startDate, $endDate])
+                    ->get();
+
+                $presentOnTime = $logs->where('status', 'present')->where('is_late', false)->count();
+                $late = $logs->filter(fn($a) => $a->status == 'late' || ($a->status == 'present' && $a->is_late))->count();
+                $absent = $logs->where('status', 'absent')->count();
+                $leave = $logs->where('status', 'leave')->count();
+
+                return (object) [
+                    'id' => $emp->id,
+                    'full_name' => $emp->full_name,
+                    'code' => $emp->employee_code ?? ('#' . $emp->id),
+                    'department_name' => $emp->department->name ?? 'N/A',
+                    'designation_name' => $emp->designation->name ?? 'N/A',
+                    'shift_name' => $emp->shift->name ?? 'Default',
+                    'total_logs' => $logs->count(),
+                    'present_on_time' => $presentOnTime,
+                    'late' => $late,
+                    'total_attended' => $presentOnTime + $late,
+                    'absent' => $absent,
+                    'leave' => $leave,
+                    'total_hours' => round($logs->sum('total_hours'), 1),
+                    'total_late_mins' => $logs->sum('late_minutes'),
+                ];
+            });
+
+        $selectedEmployeeModel = $selectedEmployee ? Employee::with(['department', 'designation', 'shift'])->find($selectedEmployee) : null;
+
         $employees = Employee::orderBy('first_name')->get();
         $departments = Department::orderBy('name')->get();
 
         return view('hr.attendance.ledger', compact(
-            'attendances', 'employees', 'departments', 'summary',
+            'attendances', 'employees', 'departments', 'summary', 'employeeSummaries', 'selectedEmployeeModel',
             'startDate', 'endDate', 'monthStr',
             'selectedEmployee', 'selectedDepartment', 'selectedStatus'
         ));

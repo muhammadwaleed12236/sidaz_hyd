@@ -48,6 +48,15 @@
         .status-badge-absent { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
         .status-badge-leave { background: #e0f2fe; color: #075985; border: 1px solid #bae6fd; }
 
+        .emp-row-clickable {
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .emp-row-clickable:hover {
+            background-color: #f1f5f9 !important;
+        }
+
         @media print {
             .no-print { display: none !important; }
             .ledger-header { background: #ffffff !important; color: #000000 !important; }
@@ -64,7 +73,7 @@
                 <div class="ledger-header rounded-3 mb-4 d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
                     <div>
                         <h2 class="text-white font-weight-bold mb-1"><i class="fa fa-book-open me-2 text-info"></i> Employee Attendance Ledger</h2>
-                        <p class="text-white-50 mb-0">Complete movement and check-in / check-out log history of employees</p>
+                        <p class="text-white-50 mb-0">Complete employee list summary and detailed check-in / check-out log history</p>
                     </div>
                     <div class="d-flex align-items-center gap-2 no-print">
                         <button type="button" class="btn btn-light text-dark font-weight-bold" onclick="window.print();">
@@ -102,8 +111,8 @@
                             {{-- Employee Select --}}
                             <div class="col-12 col-sm-6 col-md-2">
                                 <label class="form-label text-muted small font-weight-bold">EMPLOYEE</label>
-                                <select name="employee_id" class="form-select form-select-sm">
-                                    <option value="">All Employees</option>
+                                <select name="employee_id" class="form-select form-select-sm" onchange="this.form.submit()">
+                                    <option value="">All Employees (List)</option>
                                     @foreach ($employees as $emp)
                                         <option value="{{ $emp->id }}" {{ $selectedEmployee == $emp->id ? 'selected' : '' }}>
                                             {{ $emp->full_name }} (#{{ $emp->id }})
@@ -115,7 +124,7 @@
                             {{-- Department Select --}}
                             <div class="col-12 col-sm-6 col-md-2">
                                 <label class="form-label text-muted small font-weight-bold">DEPARTMENT</label>
-                                <select name="department_id" class="form-select form-select-sm">
+                                <select name="department_id" class="form-select form-select-sm" onchange="this.form.submit()">
                                     <option value="">All Departments</option>
                                     @foreach ($departments as $dept)
                                         <option value="{{ $dept->id }}" {{ $selectedDepartment == $dept->id ? 'selected' : '' }}>
@@ -128,9 +137,9 @@
                             {{-- Status Select --}}
                             <div class="col-12 col-sm-6 col-md-2">
                                 <label class="form-label text-muted small font-weight-bold">STATUS</label>
-                                <select name="status" class="form-select form-select-sm">
+                                <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
                                     <option value="">All Statuses</option>
-                                    <option value="present" {{ $selectedStatus == 'present' ? 'selected' : '' }}>Present</option>
+                                    <option value="present" {{ $selectedStatus == 'present' ? 'selected' : '' }}>Present (On-Time)</option>
                                     <option value="late" {{ $selectedStatus == 'late' ? 'selected' : '' }}>Late</option>
                                     <option value="absent" {{ $selectedStatus == 'absent' ? 'selected' : '' }}>Absent</option>
                                     <option value="leave" {{ $selectedStatus == 'leave' ? 'selected' : '' }}>Leave</option>
@@ -147,6 +156,30 @@
                     </form>
                 </div>
 
+                {{-- Single Employee Active Banner (If Employee Selected) --}}
+                @if($selectedEmployeeModel)
+                    <div class="card border-0 shadow-sm rounded-4 mb-4 p-3 bg-white no-print border-start border-4 border-primary">
+                        <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center font-weight-bold" style="width: 48px; height: 48px; font-size: 1.2rem;">
+                                    {{ strtoupper(substr($selectedEmployeeModel->first_name, 0, 1)) }}
+                                </div>
+                                <div>
+                                    <h5 class="mb-0 font-weight-bold text-dark">{{ $selectedEmployeeModel->full_name }}</h5>
+                                    <div class="text-muted small">
+                                        ID: <b>#{{ $selectedEmployeeModel->id }}</b> • Department: <b>{{ $selectedEmployeeModel->department->name ?? 'N/A' }}</b> • Shift: <b>{{ $selectedEmployeeModel->shift->name ?? 'Default' }}</b>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <a href="{{ route('hr.attendance.ledger', ['month' => $monthStr, 'date_from' => $startDate, 'date_to' => $endDate, 'department_id' => $selectedDepartment]) }}" class="btn btn-outline-dark btn-sm font-weight-bold">
+                                    <i class="fa fa-arrow-left me-1"></i> Back to All Employees List
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                @endif
+
                 {{-- Summary KPI Cards --}}
                 <div class="row g-3 mb-4">
                     <div class="col-6 col-md-2">
@@ -157,9 +190,9 @@
                     </div>
                     <div class="col-6 col-md-2">
                         <div class="kpi-box border-success">
-                            <div class="kpi-title text-success"><i class="fa fa-check-circle me-1"></i> PRESENT</div>
+                            <div class="kpi-title text-success"><i class="fa fa-check-circle me-1"></i> PRESENT (ON-TIME)</div>
                             <div class="kpi-value text-success">{{ number_format($summary['present']) }}</div>
-                            <div class="small text-muted" style="font-size: 0.72rem;">({{ number_format($summary['present'] + $summary['late']) }} Attended)</div>
+                            <div class="small text-muted" style="font-size: 0.72rem;">({{ number_format($summary['present'] + $summary['late']) }} Total Attended)</div>
                         </div>
                     </div>
                     <div class="col-6 col-md-2">
@@ -189,10 +222,96 @@
                     </div>
                 </div>
 
-                {{-- Ledger Table Card --}}
+                {{-- Employees Summary List Card (Show when no specific employee is selected) --}}
+                @if(!$selectedEmployee)
+                    <div class="ledger-card mb-4 no-print">
+                        <div class="px-4 py-3 bg-white border-bottom d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-3">
+                            <div>
+                                <h5 class="fw-bold text-dark mb-0"><i class="fa fa-users me-2 text-primary"></i> Employee Attendance Directory</h5>
+                                <small class="text-muted">Click on any employee row to view their full daily check-in / check-out movement log</small>
+                            </div>
+                            <div style="min-width: 240px;">
+                                <input type="text" id="employeeSearchInput" class="form-control form-control-sm" placeholder="🔍 Search employee by name...">
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0" id="employeeSummaryTable" style="font-size: 0.88rem;">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th style="width: 45px;" class="text-center">#</th>
+                                        <th>Employee</th>
+                                        <th>Department & Shift</th>
+                                        <th class="text-center">Present (On-Time)</th>
+                                        <th class="text-center">Late</th>
+                                        <th class="text-center">Total Attended</th>
+                                        <th class="text-center">Absent</th>
+                                        <th class="text-center">Leave</th>
+                                        <th class="text-center">Total Hours</th>
+                                        <th class="text-end pe-4">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse ($employeeSummaries as $index => $empSum)
+                                        @php
+                                            $ledgerUrl = route('hr.attendance.ledger', array_merge(request()->query(), ['employee_id' => $empSum->id]));
+                                        @endphp
+                                        <tr class="emp-row-clickable" onclick="window.location.href='{{ $ledgerUrl }}'">
+                                            <td class="text-center text-muted fw-bold">{{ $index + 1 }}</td>
+                                            <td>
+                                                <div class="fw-bold text-dark">{{ $empSum->full_name }}</div>
+                                                <div class="small text-muted">{{ $empSum->code }} • {{ $empSum->designation_name }}</div>
+                                            </td>
+                                            <td>
+                                                <div class="small fw-semibold text-dark">{{ $empSum->department_name }}</div>
+                                                <div class="small text-muted"><i class="fa fa-clock me-1"></i>{{ $empSum->shift_name }}</div>
+                                            </td>
+                                            <td class="text-center">
+                                                <span class="badge px-3 py-1 status-badge-present">{{ $empSum->present_on_time }} Days</span>
+                                            </td>
+                                            <td class="text-center">
+                                                <span class="badge px-3 py-1 status-badge-late">{{ $empSum->late }} Days</span>
+                                                @if($empSum->total_late_mins > 0)
+                                                    <div class="small text-muted" style="font-size: 0.7rem;">({{ $empSum->total_late_mins }}m)</div>
+                                                @endif
+                                            </td>
+                                            <td class="text-center">
+                                                <span class="badge bg-primary text-white px-3 py-1">{{ $empSum->total_attended }} Days</span>
+                                            </td>
+                                            <td class="text-center">
+                                                <span class="badge px-3 py-1 status-badge-absent">{{ $empSum->absent }} Days</span>
+                                            </td>
+                                            <td class="text-center">
+                                                <span class="badge px-3 py-1 status-badge-leave">{{ $empSum->leave }} Days</span>
+                                            </td>
+                                            <td class="text-center fw-bold text-dark">
+                                                {{ $empSum->total_hours }} hrs
+                                            </td>
+                                            <td class="text-end pe-4">
+                                                <a href="{{ $ledgerUrl }}" class="btn btn-sm btn-primary font-weight-bold px-3 shadow-sm" onclick="event.stopPropagation();">
+                                                    <i class="fa fa-list me-1"></i> View Detail Log <i class="fa fa-arrow-right ms-1"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="10" class="text-center py-4 text-muted">
+                                                No employees found.
+                                            </td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                @endif
+
+                {{-- Ledger Detailed Movement Log Table Card --}}
                 <div class="ledger-card mb-4">
                     <div class="px-4 py-3 bg-white border-bottom d-flex align-items-center justify-content-between">
-                        <div class="fw-bold text-dark"><i class="fa fa-list me-2 text-primary"></i> Attendance Movement Ledger Log</div>
+                        <div class="fw-bold text-dark">
+                            <i class="fa fa-list me-2 text-primary"></i> 
+                            {{ $selectedEmployeeModel ? ($selectedEmployeeModel->full_name . " - Movement Log Details") : "All Attendance Movement Ledger Logs" }}
+                        </div>
                         <div class="text-muted small">Showing {{ $attendances->firstItem() ?? 0 }} - {{ $attendances->lastItem() ?? 0 }} of {{ $attendances->total() }} entries</div>
                     </div>
                     <div class="table-responsive">
@@ -235,7 +354,9 @@
                                         </td>
                                         <td>
                                             @if($emp)
-                                                <div class="fw-bold text-dark">{{ $emp->full_name }}</div>
+                                                <a href="{{ route('hr.attendance.ledger', array_merge(request()->query(), ['employee_id' => $emp->id])) }}" class="fw-bold text-dark text-decoration-none">
+                                                    {{ $emp->full_name }}
+                                                </a>
                                                 <div class="small text-muted">ID: #{{ $emp->id }} • {{ $emp->designation->name ?? 'N/A' }}</div>
                                             @else
                                                 <span class="text-muted">N/A</span>
@@ -304,4 +425,21 @@
             </div>
         </div>
     </div>
+
+    {{-- Live Search Script for Employee Directory --}}
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const searchInput = document.getElementById('employeeSearchInput');
+            if (searchInput) {
+                searchInput.addEventListener('input', function () {
+                    const filter = this.value.toLowerCase().trim();
+                    const rows = document.querySelectorAll('#employeeSummaryTable tbody tr');
+                    rows.forEach(row => {
+                        const text = row.textContent.toLowerCase();
+                        row.style.display = text.includes(filter) ? '' : 'none';
+                    });
+                });
+            }
+        });
+    </script>
 @endsection
