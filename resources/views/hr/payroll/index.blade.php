@@ -1202,6 +1202,20 @@
                 });
             });
 
+            function formatMinsToHours(minutes) {
+                var mins = parseInt(minutes) || 0;
+                if (mins <= 0) return '0m';
+                var hrs = Math.floor(mins / 60);
+                var rem = mins % 60;
+                if (hrs > 0 && rem > 0) {
+                    return hrs + 'hrs ' + rem + 'm';
+                } else if (hrs > 0) {
+                    return hrs + 'hrs';
+                } else {
+                    return rem + 'm';
+                }
+            }
+
             function renderDetails(data) {
                 // Compact Header with Period & Employee
                 var headerHtml = `
@@ -1265,7 +1279,7 @@
                                     <div class="p-2 rounded bg-white border border-warning">
                                         <div class="small text-warning font-weight-bold" style="font-size: 0.68rem;">LATE</div>
                                         <div class="font-weight-bold text-warning" style="font-size: 1.15rem;">${data.attendance_breakdown.late_check_ins || 0}</div>
-                                        <div class="text-muted" style="font-size: 0.65rem;">(${data.attendance_breakdown.late_minutes_total || 0}m)</div>
+                                        <div class="text-muted" style="font-size: 0.65rem;">(${formatMinsToHours(data.attendance_breakdown.late_minutes_total)})</div>
                                     </div>
                                 </div>
                                 <div class="col-4 col-md-2">
@@ -1382,7 +1396,7 @@
                                                                 ${data.attendance_breakdown.check_in || '--:--'}
                                                             </div>
                                                             ${data.attendance_breakdown.is_late ? `
-                                                                                <div class="badge bg-warning text-dark mt-1" style="font-size: 0.7rem;">Late (${data.attendance_breakdown.late_minutes}m)</div>
+                                                                                <div class="badge bg-warning text-dark mt-1" style="font-size: 0.7rem;">Late (${formatMinsToHours(data.attendance_breakdown.late_minutes)})</div>
                                                                             ` : ''}
                                                         </div>
                                                         
@@ -1395,7 +1409,7 @@
                                                                 ${data.attendance_breakdown.check_out || '--:--'}
                                                             </div>
                                                             ${data.attendance_breakdown.is_early_out ? `
-                                                                                <div class="badge bg-info text-white mt-1" style="font-size: 0.7rem;">Early (${data.attendance_breakdown.early_checkout_minutes}m)</div>
+                                                                                <div class="badge bg-info text-white mt-1" style="font-size: 0.7rem;">Early (${formatMinsToHours(data.attendance_breakdown.early_checkout_minutes)})</div>
                                                                             ` : ''}
                                                         </div>
                                                     </div>
@@ -1462,7 +1476,7 @@
                                                                     <div>
                                                                         <span class="text-muted">${record.date}</span>
                                                                         <span class="badge bg-warning text-dark ms-1">${record.check_in}</span>
-                                                                        <span class="text-muted small ms-1">(${record.late_minutes} min late)</span>
+                                                                        <span class="text-muted small ms-1">(${formatMinsToHours(record.late_minutes)} late)</span>
                                                                     </div>
                                                                     <span class="text-danger fw-bold">-Rs. ${parseFloat(record.deduction).toFixed(2)}</span>
                                                                 </div>

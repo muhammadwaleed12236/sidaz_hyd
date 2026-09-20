@@ -3,6 +3,24 @@
 @section('content')
     @include('hr.partials.hr-styles')
 
+    @php
+        if (!function_exists('formatMinsToHours')) {
+            function formatMinsToHours($minutes) {
+                $mins = (int) $minutes;
+                if ($mins <= 0) return '0m';
+                $hrs = floor($mins / 60);
+                $rem = $mins % 60;
+                if ($hrs > 0 && $rem > 0) {
+                    return "{$hrs}hrs {$rem}m";
+                } elseif ($hrs > 0) {
+                    return "{$hrs}hrs";
+                } else {
+                    return "{$rem}m";
+                }
+            }
+        }
+    @endphp
+
     <style>
         .ledger-card {
             background: #ffffff;
@@ -199,7 +217,7 @@
                         <div class="kpi-box border-warning">
                             <div class="kpi-title text-warning"><i class="fa fa-exclamation-triangle me-1"></i> LATE</div>
                             <div class="kpi-value text-warning">{{ number_format($summary['late']) }}</div>
-                            <div class="small text-muted" style="font-size: 0.72rem;">{{ number_format($summary['total_late_mins']) }} mins</div>
+                            <div class="small text-muted" style="font-size: 0.72rem;">({{ formatMinsToHours($summary['total_late_mins']) }})</div>
                         </div>
                     </div>
                     <div class="col-6 col-md-2">
@@ -271,7 +289,7 @@
                                             <td class="text-center">
                                                 <span class="badge px-3 py-1 status-badge-late">{{ $empSum->late }} Days</span>
                                                 @if($empSum->total_late_mins > 0)
-                                                    <div class="small text-muted" style="font-size: 0.7rem;">({{ $empSum->total_late_mins }}m)</div>
+                                                    <div class="small text-muted" style="font-size: 0.7rem;">({{ formatMinsToHours($empSum->total_late_mins) }})</div>
                                                 @endif
                                             </td>
                                             <td class="text-center">
@@ -394,9 +412,9 @@
                                         </td>
                                         <td>
                                             @if($isLate && $att->late_minutes > 0)
-                                                <span class="badge bg-warning text-dark"><i class="fa fa-exclamation-triangle me-1"></i>Late {{ $att->late_minutes }}m</span>
+                                                <span class="badge bg-warning text-dark"><i class="fa fa-exclamation-triangle me-1"></i>Late {{ formatMinsToHours($att->late_minutes) }}</span>
                                             @elseif($att->is_early_leave && $att->early_leave_minutes > 0)
-                                                <span class="badge bg-info"><i class="fa fa-clock me-1"></i>Early {{ $att->early_leave_minutes }}m</span>
+                                                <span class="badge bg-info"><i class="fa fa-clock me-1"></i>Early {{ formatMinsToHours($att->early_leave_minutes) }}</span>
                                             @else
                                                 <span class="text-muted">-</span>
                                             @endif
