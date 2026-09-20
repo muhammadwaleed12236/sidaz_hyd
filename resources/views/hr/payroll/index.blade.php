@@ -1248,10 +1248,10 @@
 
                             <div class="row g-2 text-center mt-1">
                                 <div class="col-4 col-md-2">
-                                    <div class="p-2 rounded bg-white border">
-                                        <div class="small text-muted font-weight-bold" style="font-size: 0.68rem;">PRESENT</div>
+                                    <div class="p-2 rounded bg-white border border-success">
+                                        <div class="small text-success font-weight-bold" style="font-size: 0.68rem;">PRESENT</div>
                                         <div class="font-weight-bold text-success" style="font-size: 1.15rem;">${data.attendance_breakdown.days_present || 0}</div>
-                                        <div class="text-muted" style="font-size: 0.65rem;">Days</div>
+                                        <div class="text-muted" style="font-size: 0.65rem;">(${data.attendance_breakdown.days_present_total || 0} Attended)</div>
                                     </div>
                                 </div>
                                 <div class="col-4 col-md-2">
@@ -1410,13 +1410,16 @@
                                                                 <!-- Summary Badges -->
                                                                 <div class="d-flex flex-wrap gap-2 justify-content-center py-2 border-bottom mb-2">
                                                                      <span class="badge bg-white text-muted border border-light shadow-sm">
-                                                                        Present: <b class="text-success">${data.attendance_breakdown.days_present || 0}</b>
-                                                                     </span>
-                                                                     <span class="badge bg-white text-muted border border-light shadow-sm">
-                                                                        Absent: <b class="text-danger">${data.attendance_breakdown.days_absent || 0}</b>
+                                                                        Present (On-Time): <b class="text-success">${data.attendance_breakdown.days_present || 0}</b>
                                                                      </span>
                                                                      <span class="badge bg-white text-muted border border-light shadow-sm">
                                                                         Late: <b class="text-warning">${data.attendance_breakdown.late_check_ins || 0}</b>
+                                                                     </span>
+                                                                     <span class="badge bg-white text-muted border border-light shadow-sm">
+                                                                        Total Attended: <b class="text-primary">${data.attendance_breakdown.days_present_total || 0}</b>
+                                                                     </span>
+                                                                     <span class="badge bg-white text-muted border border-light shadow-sm">
+                                                                        Absent: <b class="text-danger">${data.attendance_breakdown.days_absent || 0}</b>
                                                                      </span>
                                                                      <span class="badge bg-white text-muted border border-light shadow-sm">
                                                                         Early Out: <b class="text-info">${data.attendance_breakdown.early_check_outs || 0}</b>

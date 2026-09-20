@@ -159,6 +159,7 @@
                         <div class="kpi-box border-success">
                             <div class="kpi-title text-success"><i class="fa fa-check-circle me-1"></i> PRESENT</div>
                             <div class="kpi-value text-success">{{ number_format($summary['present']) }}</div>
+                            <div class="small text-muted" style="font-size: 0.72rem;">({{ number_format($summary['present'] + $summary['late']) }} Attended)</div>
                         </div>
                     </div>
                     <div class="col-6 col-md-2">

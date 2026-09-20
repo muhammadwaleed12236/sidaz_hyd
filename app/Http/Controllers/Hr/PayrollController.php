@@ -225,13 +225,11 @@ class PayrollController extends Controller
                 ->orderBy('date', 'asc')
                 ->get();
             
-            // Check if attendance data is complete
-            $hasData = $attendances->count() > 0;
-            
             $daysLeave = $attendances->filter(fn($att) => strtolower($att->status) === 'leave')->count();
-            $daysPresent = $attendances->filter(fn($att) => in_array(strtolower($att->status), ['present', 'late']))->count();
-            $daysAbsent = $attendances->filter(fn($att) => strtolower($att->status) === 'absent')->count();
             $lateCheckIns = $attendances->filter(fn($att) => strtolower($att->status) === 'late' || $att->is_late)->count();
+            $daysPresentOnTime = $attendances->filter(fn($att) => strtolower($att->status) === 'present' && !$att->is_late)->count();
+            $daysPresentTotal = $daysPresentOnTime + $lateCheckIns;
+            $daysAbsent = $attendances->filter(fn($att) => strtolower($att->status) === 'absent')->count();
             $earlyCheckOuts = $attendances->where('is_early_leave', true)->count();
             
             // Calculate deduction breakdown
@@ -292,7 +290,8 @@ class PayrollController extends Controller
                 'total_days_in_month' => $startDate->daysInMonth,
                 'month_start_formatted' => $startDate->format('d/m/Y'),
                 'month_end_formatted' => $endDate->format('d/m/Y'),
-                'days_present' => $daysPresent,
+                'days_present' => $daysPresentOnTime,
+                'days_present_total' => $daysPresentTotal,
                 'days_absent' => $daysAbsent,
                 'days_leave' => $daysLeave,
                 'late_check_ins' => $lateCheckIns,
