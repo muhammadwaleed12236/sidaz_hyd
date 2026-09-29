@@ -725,6 +725,14 @@ class ProductController extends Controller
                 }
             }
 
+            $unitVal = $request->unit;
+            if (!empty($unitVal) && !is_numeric($unitVal)) {
+                $unitObj = \App\Models\Unit::firstOrCreate(['name' => trim($unitVal)]);
+                $unitVal = (string) $unitObj->id;
+            } else {
+                $unitVal = is_numeric($unitVal) ? (string) $unitVal : null;
+            }
+
             // Create product
             $product = Product::create([
                 'creater_id' => $userId,
@@ -734,7 +742,7 @@ class ProductController extends Controller
                 'item_name' => $request->product_name,
                 'product_type' => $request->product_type,
                 'barcode_path' => $request->barcode_path ?? rand(100000000000, 999999999999),
-                'unit_id' => $request->unit,
+                'unit_id' => $unitVal,
                 'brand_id' => $request->brand_id,
                 'model' => $request->model,
                 'image' => $imagePath,
@@ -1080,6 +1088,14 @@ class ProductController extends Controller
                 $final_color = Product::where('id', $id)->value('color');
             }
 
+            $unitVal = $request->unit;
+            if (!empty($unitVal) && !is_numeric($unitVal)) {
+                $unitObj = \App\Models\Unit::firstOrCreate(['name' => trim($unitVal)]);
+                $unitVal = (string) $unitObj->id;
+            } else {
+                $unitVal = is_numeric($unitVal) ? (string) $unitVal : null;
+            }
+
             Product::where('id', $id)->update([
                 'creater_id' => $userId,
                 'category_id' => $request->category_id,
@@ -1088,7 +1104,7 @@ class ProductController extends Controller
                 'item_name' => $request->product_name,
                 'product_type' => $request->product_type,
                 'barcode_path' => $request->barcode_path ?? rand(100000000000, 999999999999),
-                'unit_id' => $request->unit,
+                'unit_id' => $unitVal,
                 'brand_id' => $request->brand_id,
                 'model' => $request->model,
                 'image' => $imagePath,

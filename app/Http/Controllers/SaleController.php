@@ -1216,9 +1216,18 @@ class SaleController extends Controller
                     $storedQtyBox = $ppb > 0 ? ($totalPieces / $ppb) : 0;
                     
                     $productName = $product->item_name;
-                    $brandId = $product->brand_id;
-                    $unitId = $product->unit_id;
+                    $brandId = is_numeric($product->brand_id) ? (int) $product->brand_id : null;
                     $sizeMode = $product->size_mode;
+
+                    $unitId = $product->unit_id;
+                    if (!empty($unitId) && !is_numeric($unitId)) {
+                        $unitObj = \App\Models\Unit::firstOrCreate(['name' => trim($unitId)]);
+                        $unitId = $unitObj->id;
+                        $product->unit_id = (string) $unitId;
+                        $product->save();
+                    } else {
+                        $unitId = is_numeric($unitId) ? (int) $unitId : null;
+                    }
                 }
 
                 $discount = (float) ($discounts[$index] ?? 0);

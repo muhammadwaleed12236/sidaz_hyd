@@ -191,6 +191,38 @@ class AttendanceController extends Controller
         }
         $summaryLogs = $summaryQuery->get();
 
+        // Self-healing / Recalculate any corrupted late_minutes
+        foreach ($summaryLogs as $att) {
+            if ($att->check_in_time) {
+                $emp = $att->employee;
+                $shift = $emp ? ($emp->shift ?? Shift::where('is_default', true)->first()) : null;
+                if ($shift) {
+                    $timeStr = $emp->custom_start_time ?: ($shift->start_time ? Carbon::parse($shift->start_time)->format('H:i:s') : null);
+                    if ($timeStr) {
+                        $shiftStart = Carbon::parse($att->date . ' ' . $timeStr);
+                        $graceEnd = $shiftStart->copy()->addMinutes($shift->grace_minutes ?? 0);
+                        $checkIn = Carbon::parse($att->date . ' ' . Carbon::parse($att->check_in_time)->format('H:i:s'));
+                        if ($checkIn->gt($graceEnd)) {
+                            $realLateMins = min(300, (int) $shiftStart->diffInMinutes($checkIn));
+                            if ($att->late_minutes != $realLateMins || !$att->is_late) {
+                                $att->is_late = true;
+                                $att->late_minutes = $realLateMins;
+                                $att->status = 'late';
+                                $att->save();
+                            }
+                        } else {
+                            if ($att->is_late || $att->late_minutes > 0) {
+                                $att->is_late = false;
+                                $att->late_minutes = 0;
+                                if ($att->status == 'late') $att->status = 'present';
+                                $att->save();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         $presentCount = $summaryLogs->where('status', 'present')->where('is_late', false)->count();
         $lateCount = $summaryLogs->filter(fn($a) => $a->status == 'late' || ($a->status == 'present' && $a->is_late))->count();
         $absentCount = $summaryLogs->where('status', 'absent')->count();
