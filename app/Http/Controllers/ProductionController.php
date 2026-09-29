@@ -109,6 +109,29 @@ class ProductionController extends Controller
                 ];
             }
 
+            // 2.5 Verify packaging materials stock availability
+            $pmConsumption = [];
+            foreach ($formulation->packagingMaterials as $fpm) {
+                $pm = $fpm->packagingMaterial;
+                if (!$pm) continue;
+
+                $qtyPerPiece = ($fpm->quantity / $batchSize) * (1 + (($fpm->waste_percent ?? 0) / 100));
+                $requiredPMQty = round($qtyPerPiece * $qtyToProduce, 4);
+
+                $currentPMStock = (float) ($pm->current_stock ?? 0);
+                if ($currentPMStock < $requiredPMQty) {
+                    $shortage = $requiredPMQty - $currentPMStock;
+                    $unitName = $pm->unit ? $pm->unit->name : 'units';
+                    throw new \Exception("Insufficient Packaging Material '{$pm->name}'. Required: {$requiredPMQty} {$unitName}, Available: {$currentPMStock} {$unitName}. (Shortage: {$shortage} {$unitName})");
+                }
+
+                $pmConsumption[] = [
+                    'pm' => $pm,
+                    'required_qty' => $requiredPMQty,
+                    'unit' => $pm->unit ? $pm->unit->name : 'Unit',
+                ];
+            }
+
             // Determine status: If customer sale order linked -> ready_for_delivery, else -> produced
             $status = $saleId ? 'ready_for_delivery' : 'produced';
 
@@ -144,6 +167,26 @@ class ProductionController extends Controller
                 MaterialStockMovement::create([
                     'item_type' => RawMaterial::class,
                     'item_id' => $rm->id,
+                    'type' => 'out',
+                    'qty' => $consumedQty,
+                    'ref_type' => 'PRODUCTION',
+                    'ref_id' => $batch->id,
+                    'note' => "Consumed for Batch #{$batch->batch_no} ({$product->item_name})"
+                ]);
+            }
+
+            // 4.5 Consume Packaging Materials
+            foreach ($pmConsumption as $cons) {
+                $pm = $cons['pm'];
+                $consumedQty = $cons['required_qty'];
+
+                // Deduct current_stock directly from packaging_materials table
+                \App\Models\PackagingMaterial::where('id', $pm->id)->decrement('current_stock', $consumedQty);
+
+                // Add material movement log
+                MaterialStockMovement::create([
+                    'item_type' => \App\Models\PackagingMaterial::class,
+                    'item_id' => $pm->id,
                     'type' => 'out',
                     'qty' => $consumedQty,
                     'ref_type' => 'PRODUCTION',

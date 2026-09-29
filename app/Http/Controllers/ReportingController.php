@@ -2647,38 +2647,74 @@ class ReportingController extends Controller
     public function raw_material_detail_report()
     {
         $rawMaterials = \App\Models\RawMaterial::with('unit')->orderBy('name')->get();
+        $packagingMaterials = \App\Models\PackagingMaterial::with('unit')->orderBy('name')->get();
         $units = \App\Models\Unit::orderBy('name')->get();
 
-        return view('admin_panel.reporting.raw_material_detail_report', compact('rawMaterials', 'units'));
+        return view('admin_panel.reporting.raw_material_detail_report', compact('rawMaterials', 'packagingMaterials', 'units'));
     }
 
     public function fetchRawMaterialDetail(Request $request)
     {
-        $rawMaterialId = $request->raw_material_id;
+        $rawMaterialIdRaw = $request->raw_material_id;
         $dateFrom = $request->date_from;
         $dateTo = $request->date_to;
         $reportMode = $request->report_mode ?: 'summary';
 
-        $query = \App\Models\RawMaterial::with('unit');
-
-        if ($rawMaterialId) {
-            $query->where('id', $rawMaterialId);
+        $filterType = null;
+        $filterId = null;
+        if ($rawMaterialIdRaw) {
+            if (str_starts_with($rawMaterialIdRaw, 'rm_')) {
+                $filterType = \App\Models\RawMaterial::class;
+                $filterId = str_replace('rm_', '', $rawMaterialIdRaw);
+            } elseif (str_starts_with($rawMaterialIdRaw, 'pm_')) {
+                $filterType = \App\Models\PackagingMaterial::class;
+                $filterId = str_replace('pm_', '', $rawMaterialIdRaw);
+            } else {
+                $filterType = \App\Models\RawMaterial::class;
+                $filterId = $rawMaterialIdRaw;
+            }
         }
 
-        $rawMaterials = $query->orderBy('name')->get();
+        $allItems = collect();
+
+        if (!$filterType || $filterType === \App\Models\RawMaterial::class) {
+            $q = \App\Models\RawMaterial::with('unit');
+            if ($filterId) {
+                $q->where('id', $filterId);
+            }
+            $rawMaterials = $q->orderBy('name')->get();
+            foreach ($rawMaterials as $item) {
+                $item->model_type = \App\Models\RawMaterial::class;
+                $item->display_type = 'Raw Material';
+                $allItems->push($item);
+            }
+        }
+
+        if (!$filterType || $filterType === \App\Models\PackagingMaterial::class) {
+            $q = \App\Models\PackagingMaterial::with('unit');
+            if ($filterId) {
+                $q->where('id', $filterId);
+            }
+            $packagingMaterials = $q->orderBy('name')->get();
+            foreach ($packagingMaterials as $item) {
+                $item->model_type = \App\Models\PackagingMaterial::class;
+                $item->display_type = 'Packaging Material';
+                $allItems->push($item);
+            }
+        }
 
         if ($reportMode === 'summary') {
             $rows = [];
             $totalStockValue = 0;
-            $totalItems = count($rawMaterials);
+            $totalItems = $allItems->count();
             $totalLowStock = 0;
             $totalStockQty = 0;
 
-            foreach ($rawMaterials as $rm) {
+            foreach ($allItems as $rm) {
                 $currentStock = (float) ($rm->current_stock ?? 0);
                 $unitPrice = (float) ($rm->price ?? 0);
                 $stockValue = $currentStock * $unitPrice;
-                $alertQty = (float) ($rm->alert_quantity ?? 0);
+                $alertQty = (float) ($rm->alert_quantity ?? $rm->min_stock ?? 0);
 
                 $totalStockValue += $stockValue;
                 $totalStockQty += $currentStock;
@@ -2687,7 +2723,7 @@ class ReportingController extends Controller
                     $totalLowStock++;
                 }
 
-                $movementsQuery = \App\Models\MaterialStockMovement::where('item_type', \App\Models\RawMaterial::class)
+                $movementsQuery = \App\Models\MaterialStockMovement::where('item_type', $rm->model_type)
                     ->where('item_id', $rm->id);
 
                 if ($dateFrom) {
@@ -2711,7 +2747,7 @@ class ReportingController extends Controller
                 $rows[] = [
                     'id' => $rm->id,
                     'code' => $rm->code ?? 'N/A',
-                    'name' => $rm->name,
+                    'name' => $rm->name . ' <small class="text-muted">(' . $rm->display_type . ')</small>',
                     'unit' => $rm->unit->name ?? ($rm->unit->short_name ?? 'Unit'),
                     'price' => $unitPrice,
                     'current_stock' => $currentStock,
@@ -2735,12 +2771,20 @@ class ReportingController extends Controller
                 'data' => $rows,
             ]);
         } else {
-            $movementsQuery = \App\Models\MaterialStockMovement::where('item_type', \App\Models\RawMaterial::class)
-                ->with(['item.unit']);
+            $movementsQuery = \App\Models\MaterialStockMovement::with(['item.unit']);
 
-            if ($rawMaterialId) {
-                $movementsQuery->where('item_id', $rawMaterialId);
+            if ($filterType) {
+                $movementsQuery->where('item_type', $filterType);
+                if ($filterId) {
+                    $movementsQuery->where('item_id', $filterId);
+                }
+            } else {
+                $movementsQuery->whereIn('item_type', [
+                    \App\Models\RawMaterial::class,
+                    \App\Models\PackagingMaterial::class
+                ]);
             }
+
             if ($dateFrom) {
                 $movementsQuery->whereDate('created_at', '>=', $dateFrom);
             }
@@ -2755,11 +2799,12 @@ class ReportingController extends Controller
                 $rm = $m->item;
                 $unitPrice = $rm ? (float)($rm->price ?? 0) : 0;
                 $totalAmount = (float)$m->qty * $unitPrice;
+                $displayType = $m->item_type === \App\Models\PackagingMaterial::class ? 'Packaging Material' : 'Raw Material';
 
                 $rows[] = [
                     'id' => $m->id,
                     'date' => $m->created_at ? $m->created_at->format('Y-m-d H:i:s') : '',
-                    'raw_material_name' => $rm ? $rm->name : 'N/A',
+                    'raw_material_name' => $rm ? $rm->name . ' <small class="text-muted">(' . $displayType . ')</small>' : 'N/A',
                     'raw_material_code' => $rm ? ($rm->code ?? 'N/A') : 'N/A',
                     'unit' => $rm && $rm->unit ? ($rm->unit->name ?? $rm->unit->short_name) : 'Unit',
                     'type' => $m->type,

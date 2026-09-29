@@ -32,6 +32,26 @@ class VendorController extends Controller
     // Store or update vendor information
     public function store(Request $request)
     {
+        $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'phone' => 'required|string|max:255',
+            'credit_limit' => 'nullable|numeric',
+            'opening_balance' => 'nullable|numeric',
+        ]);
+
+        if ($validator->fails()) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['error' => $validator->errors()->first()], 422);
+            }
+            return back()->with('error', $validator->errors()->first())->withInput();
+        }
+
+        // Set default values for nullable numeric fields to prevent SQL errors
+        $request->merge([
+            'credit_limit' => $request->credit_limit ?? 0,
+            'opening_balance' => $request->opening_balance ?? 0,
+        ]);
+
         if ($request->id) {
             // Update existing vendor (prevent balance update)
             Vendor::findOrFail($request->id)->update($request->except('opening_balance'));

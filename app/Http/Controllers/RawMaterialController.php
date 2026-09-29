@@ -30,7 +30,7 @@ class RawMaterialController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'code' => 'required|string|max:100|unique:raw_materials,code,' . $request->edit_id,
-            'department_id' => 'required|exists:hr_departments,id',
+            'department_id' => 'nullable|exists:hr_departments,id',
             'unit_id' => 'required|exists:units,id',
             'type' => 'required|string|in:Ingredient,Chemical,Powder,Liquid,Other',
             'price' => 'required|numeric|min:0',

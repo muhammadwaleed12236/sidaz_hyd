@@ -395,17 +395,17 @@
                     
                     <div class="row g-3">
                         <div class="col-md-6 mb-3">
-                            <label for="name" class="form-label text-dark small fw-medium">Material Name <span class="text-danger">*</span></label>
-                            <input type="text" name="name" class="form-control px-3 py-2" id="name" placeholder="e.g. Paracetamol API" required style="border-radius: 8px; border: 1.5px solid #cbd5e1;" />
+                            <label for="name" class="form-label text-dark small fw-medium d-block mb-1">Material Name <span class="text-danger">*</span></label>
+                            <input type="text" name="name" class="form-control px-3 py-2 w-100" id="name" placeholder="e.g. Paracetamol API" required style="border-radius: 8px; border: 1.5px solid #cbd5e1;" />
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label for="code" class="form-label text-dark small fw-medium">Material Code <span class="text-danger">*</span></label>
-                            <input type="text" name="code" class="form-control px-3 py-2 text-uppercase" id="code" placeholder="RM-001" required style="border-radius: 8px; border: 1.5px solid #cbd5e1;" />
+                            <label for="code" class="form-label text-dark small fw-medium d-block mb-1">Material Code <span class="text-danger">*</span></label>
+                            <input type="text" name="code" class="form-control px-3 py-2 w-100 text-uppercase" id="code" placeholder="RM-001" required style="border-radius: 8px; border: 1.5px solid #cbd5e1;" />
                         </div>
 
                         <div class="col-md-4 mb-3">
-                            <label for="department_id" class="form-label text-dark small fw-medium">Department <span class="text-danger">*</span></label>
-                            <select name="department_id" id="department_id" class="form-select px-3 py-2" required style="border-radius: 8px; border: 1.5px solid #cbd5e1;">
+                            <label for="department_id" class="form-label text-dark small fw-medium d-block mb-1">Department</label>
+                            <select name="department_id" id="department_id" class="form-select px-3 py-2 w-100" style="border-radius: 8px; border: 1.5px solid #cbd5e1;">
                                 <option value="">-- Select --</option>
                                 @foreach($departments as $dept)
                                     <option value="{{ $dept->id }}">{{ $dept->name }}</option>
@@ -414,8 +414,8 @@
                         </div>
 
                         <div class="col-md-4 mb-3">
-                            <label for="type" class="form-label text-dark small fw-medium">Type <span class="text-danger">*</span></label>
-                            <select name="type" id="type" class="form-select px-3 py-2" required style="border-radius: 8px; border: 1.5px solid #cbd5e1;">
+                            <label for="type" class="form-label text-dark small fw-medium d-block mb-1">Type <span class="text-danger">*</span></label>
+                            <select name="type" id="type" class="form-select px-3 py-2 w-100" required style="border-radius: 8px; border: 1.5px solid #cbd5e1;">
                                 <option value="Ingredient">Ingredient</option>
                                 <option value="Chemical">Chemical</option>
                                 <option value="Powder">Powder</option>
@@ -425,8 +425,8 @@
                         </div>
 
                         <div class="col-md-4 mb-3">
-                            <label for="unit_id" class="form-label text-dark small fw-medium">Base Unit <span class="text-danger">*</span></label>
-                            <select name="unit_id" id="unit_id" class="form-select px-3 py-2" required style="border-radius: 8px; border: 1.5px solid #cbd5e1;">
+                            <label for="unit_id" class="form-label text-dark small fw-medium d-block mb-1">Base Unit <span class="text-danger">*</span></label>
+                            <select name="unit_id" id="unit_id" class="form-select px-3 py-2 w-100" required style="border-radius: 8px; border: 1.5px solid #cbd5e1;">
                                 <option value="">-- Select --</option>
                                 @foreach($units as $u)
                                     <option value="{{ $u->id }}">{{ $u->name }} ({{ $u->short_code }})</option>
@@ -435,23 +435,23 @@
                         </div>
 
                         <div class="col-md-4 mb-3">
-                            <label for="price" class="form-label text-dark small fw-medium">Price (Per Unit) <span class="text-danger">*</span></label>
-                            <input type="number" step="0.01" name="price" class="form-control px-3 py-2" id="price" placeholder="0.00" required style="border-radius: 8px; border: 1.5px solid #cbd5e1;" />
+                            <label for="price" class="form-label text-dark small fw-medium d-block mb-1">Price (Per Unit) <span class="text-danger">*</span></label>
+                            <input type="number" step="0.01" name="price" class="form-control px-3 py-2 w-100" id="price" placeholder="0.00" required style="border-radius: 8px; border: 1.5px solid #cbd5e1;" />
                         </div>
 
                         <div class="col-md-4 mb-3">
-                            <label for="min_stock" class="form-label text-dark small fw-medium">Min Stock Level</label>
-                            <input type="number" step="0.0001" name="min_stock" class="form-control px-3 py-2" id="min_stock" placeholder="0.00" style="border-radius: 8px; border: 1.5px solid #cbd5e1;" />
+                            <label for="min_stock" class="form-label text-dark small fw-medium d-block mb-1">Min Stock Level</label>
+                            <input type="number" step="0.0001" name="min_stock" class="form-control px-3 py-2 w-100" id="min_stock" placeholder="0.00" style="border-radius: 8px; border: 1.5px solid #cbd5e1;" />
                         </div>
                         
                         <div class="col-md-4 mb-3">
-                            <label for="reorder_level" class="form-label text-dark small fw-medium">Reorder Alert</label>
-                            <input type="number" step="0.0001" name="reorder_level" class="form-control px-3 py-2" id="reorder_level" placeholder="0.00" style="border-radius: 8px; border: 1.5px solid #cbd5e1;" />
+                            <label for="reorder_level" class="form-label text-dark small fw-medium d-block mb-1">Reorder Alert</label>
+                            <input type="number" step="0.0001" name="reorder_level" class="form-control px-3 py-2 w-100" id="reorder_level" placeholder="0.00" style="border-radius: 8px; border: 1.5px solid #cbd5e1;" />
                         </div>
 
                         <div class="col-md-12 mb-3">
-                            <label for="description" class="form-label text-dark small fw-medium">Description</label>
-                            <textarea name="description" class="form-control px-3 py-2" id="description" rows="2" placeholder="Optional details..." style="border-radius: 8px; border: 1.5px solid #cbd5e1;"></textarea>
+                            <label for="description" class="form-label text-dark small fw-medium d-block mb-1">Description</label>
+                            <textarea name="description" class="form-control px-3 py-2 w-100" id="description" rows="2" placeholder="Optional details..." style="border-radius: 8px; border: 1.5px solid #cbd5e1;"></textarea>
                         </div>
 
                         <div class="col-md-12 mb-1 d-flex align-items-center">

@@ -128,12 +128,19 @@
         <form id="filterForm">
             <div class="row g-2 align-items-end">
                 <div class="col-md-3">
-                    <label class="rpt-flabel">Raw Material</label>
+                    <label class="rpt-flabel">Material</label>
                     <select name="raw_material_id" id="filterRawMaterial" class="rpt-finput select2">
-                        <option value="">-- All Raw Materials --</option>
+                        <option value="">-- All Materials --</option>
+                        <optgroup label="Raw Materials">
                         @foreach($rawMaterials as $rm)
-                            <option value="{{ $rm->id }}">{{ $rm->name }} ({{ $rm->code ?? 'N/A' }})</option>
+                            <option value="rm_{{ $rm->id }}">{{ $rm->name }} ({{ $rm->code ?? 'N/A' }})</option>
                         @endforeach
+                        </optgroup>
+                        <optgroup label="Packaging Materials">
+                        @foreach($packagingMaterials as $pm)
+                            <option value="pm_{{ $pm->id }}">{{ $pm->name }} ({{ $pm->code ?? 'N/A' }})</option>
+                        @endforeach
+                        </optgroup>
                     </select>
                 </div>
 
@@ -254,7 +261,7 @@ $(document).ready(function() {
         let headHtml = `
             <th>#</th>
             <th>Code</th>
-            <th>Raw Material Name</th>
+            <th>Material Name</th>
             <th class="text-center">Unit</th>
             <th class="text-end">Cost Rate</th>
             <th class="text-end">Current Stock</th>
@@ -303,7 +310,7 @@ $(document).ready(function() {
         let headHtml = `
             <th>#</th>
             <th>Date & Time</th>
-            <th>Raw Material</th>
+            <th>Material Name</th>
             <th>Type</th>
             <th>Reference / Note</th>
             <th class="text-end">Quantity</th>

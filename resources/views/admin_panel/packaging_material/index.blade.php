@@ -428,8 +428,8 @@
                         </div>
 
                         <div class="col-md-4 mb-3">
-                            <label for="department_id" class="form-label fw-semibold text-dark small">Department <span class="text-danger">*</span></label>
-                            <select name="department_id" id="department_id" class="form-control px-3 py-2" required style="border-radius: 10px; border: 1.5px solid #cbd5e1;">
+                            <label for="department_id" class="form-label fw-semibold text-dark small d-block mb-1">Department</label>
+                            <select name="department_id" id="department_id" class="form-control px-3 py-2 w-100" style="border-radius: 10px; border: 1.5px solid #cbd5e1;">
                                 <option value="">-- Select Department --</option>
                                 @foreach($departments as $dept)
                                     <option value="{{ $dept->id }}">{{ $dept->name }}</option>

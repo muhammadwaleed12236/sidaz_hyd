@@ -32,7 +32,7 @@ class PackagingMaterialController extends Controller
             'code' => 'required|string|max:100|unique:packaging_materials,code,' . $request->edit_id,
             'packaging_type' => 'required|string|in:Bottle,Box,Cap,Label,Carton,Seal,Wrapper,Other',
             'variant' => 'nullable|string|max:100',
-            'department_id' => 'required|exists:hr_departments,id',
+            'department_id' => 'nullable|exists:hr_departments,id',
             'unit_id' => 'required|exists:units,id',
             'capacity' => 'nullable|numeric|min:0',
             'capacity_unit_id' => 'nullable|exists:units,id',
