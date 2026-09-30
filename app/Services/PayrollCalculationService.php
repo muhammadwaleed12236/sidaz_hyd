@@ -143,7 +143,13 @@ class PayrollCalculationService
         $endDate = Carbon::parse($month.'-01')->endOfMonth();
 
         $policy = $structure->attendance_deduction_policy ?? [];
-        $perDayDeduction = $structure->leave_salary_per_day ?? 0;
+        $baseSalary = floatval($structure->base_salary ?? 0);
+        $perDayDeduction = floatval($structure->leave_salary_per_day ?? 0);
+        
+        // Fallback per-day deduction rate to Basic Salary / 30 if not explicitly set
+        if ($perDayDeduction <= 0 && $baseSalary > 0) {
+            $perDayDeduction = round($baseSalary / 30, 2);
+        }
 
         // Fetch attendance records for the period
         $attendances = Attendance::where('employee_id', $employee->id)
@@ -157,10 +163,12 @@ class PayrollCalculationService
         // Attendance stats
         $daysPresent = $attendances->filter(fn ($att) => strtolower($att->status) === 'present')->count();
         $daysAbsent = $attendances->filter(fn ($att) => strtolower($att->status) === 'absent')->count();
+        $daysLeave = $attendances->filter(fn ($att) => strtolower($att->status) === 'leave')->count();
+        $totalDeductionDays = $daysAbsent + $daysLeave;
         $lateCheckIns = $attendances->where('is_late', true)->count();
-        $earlyCheckOuts = $attendances->where('is_early_leave', true)->count(); // Fixed: is_early_leave
+        $earlyCheckOuts = $attendances->where('is_early_leave', true)->count();
         $totalLateMinutes = $attendances->sum('late_minutes');
-        $totalEarlyMinutes = $attendances->sum('early_leave_minutes'); // Fixed: early_leave_minutes
+        $totalEarlyMinutes = $attendances->sum('early_leave_minutes');
 
         // If no attendance data exists
         $hasAttendanceData = $attendances->count() > 0;
@@ -171,13 +179,28 @@ class PayrollCalculationService
         $earlyDeduction = 0;
         $deductionDetails = [];
 
-        // Absence deduction (absent days × per-day deduction)
-        if ($daysAbsent > 0 && $perDayDeduction > 0) {
-            $absenceDeduction = $daysAbsent * $perDayDeduction;
+        // Absence & Leave deduction (total absent + leave days × per-day deduction)
+        if ($totalDeductionDays > 0 && ($perDayDeduction > 0 || $baseSalary > 0)) {
+            $customRate = floatval($structure->leave_salary_per_day ?? 0);
+            if ($customRate > 0) {
+                $absenceDeduction = round($totalDeductionDays * $customRate, 2);
+            } else {
+                $absenceDeduction = round(($totalDeductionDays * $baseSalary) / 30, 2);
+            }
+            
+            $detailName = "Absence & Leave Deduction ({$totalDeductionDays} days)";
+            if ($daysAbsent > 0 && $daysLeave > 0) {
+                $detailDesc = "{$totalDeductionDays} days ({$daysAbsent} absent, {$daysLeave} leave) × Rs. " . number_format($perDayDeduction, 2) . " (Salary / 30)";
+            } elseif ($daysLeave > 0) {
+                $detailDesc = "{$daysLeave} leave days × Rs. " . number_format($perDayDeduction, 2) . " (Salary / 30)";
+            } else {
+                $detailDesc = "{$daysAbsent} absent days × Rs. " . number_format($perDayDeduction, 2) . " (Salary / 30)";
+            }
+
             $deductionDetails[] = [
-                'name' => "Absence Deduction ({$daysAbsent} days)",
+                'name' => $detailName,
                 'amount' => $absenceDeduction,
-                'description' => "{$daysAbsent} absent days × Rs. {$perDayDeduction}",
+                'description' => $detailDesc,
             ];
         }
 

@@ -211,7 +211,10 @@ class PayrollController extends Controller
         // Get salary structure for deduction policy
         $structure = $this->payrollService->getEffectiveSalaryStructure($employee);
         $policy = $structure ? ($structure->attendance_deduction_policy ?? []) : [];
-        $perDayDeduction = $structure ? ($structure->leave_salary_per_day ?? 0) : 0;
+        $perDayDeduction = floatval($structure ? ($structure->leave_salary_per_day ?? 0) : 0);
+        if ($perDayDeduction <= 0 && $payroll->basic_salary > 0) {
+            $perDayDeduction = round($payroll->basic_salary / 30, 2);
+        }
         
         if ($payroll->payroll_type === 'monthly') {
             // For monthly payroll, get attendance stats for the entire month
@@ -231,6 +234,7 @@ class PayrollController extends Controller
             $daysPresentOnTime = $attendances->filter(fn($att) => strtolower($att->status) === 'present' && !$att->is_late)->count();
             $daysPresentTotal = $daysPresentOnTime + $lateCheckIns;
             $daysAbsent = $attendances->filter(fn($att) => strtolower($att->status) === 'absent')->count();
+            $totalDeductionDays = $daysAbsent + $daysLeave;
             $earlyCheckOuts = $attendances->where('is_early_leave', true)->count();
             
             // Calculate deduction breakdown
@@ -238,8 +242,13 @@ class PayrollController extends Controller
             $earlyMinutesTotal = $attendances->sum('early_leave_minutes');
             $totalHoursWorked = round($attendances->sum('total_hours'), 1);
             
-            // Calculate actual deduction amounts
-            $absenceDeduction = $daysAbsent * $perDayDeduction;
+            // Calculate actual deduction amounts (absent + leave)
+            $customRate = floatval($structure ? ($structure->leave_salary_per_day ?? 0) : 0);
+            if ($customRate > 0) {
+                $absenceDeduction = round($totalDeductionDays * $customRate, 2);
+            } else {
+                $absenceDeduction = round(($totalDeductionDays * $payroll->basic_salary) / 30, 2);
+            }
             
             $lateDeduction = 0;
             $latePenalty = $policy['late_penalty_per_instance'] ?? 0;
@@ -253,12 +262,13 @@ class PayrollController extends Controller
                 $earlyDeduction = $earlyCheckOuts * $earlyPenalty;
             }
             
-            // Build detailed records for each issue type
-            $absentDays = $attendances->filter(fn($att) => strtolower($att->status) === 'absent')
+            // Build detailed records for absent & leave days
+            $absentDays = $attendances->filter(fn($att) => in_array(strtolower($att->status), ['absent', 'leave']))
                 ->map(function ($att) use ($perDayDeduction) {
                     return [
                         'date' => \Carbon\Carbon::parse($att->date)->format('d/m/Y'),
                         'day' => \Carbon\Carbon::parse($att->date)->format('l'),
+                        'status' => ucfirst($att->status),
                         'deduction' => $perDayDeduction,
                     ];
                 })->values()->toArray();
@@ -660,12 +670,6 @@ class PayrollController extends Controller
         }
 
         $payroll = Payroll::findOrFail($id);
-
-        if (! $payroll->canEdit()) {
-            return response()->json([
-                'error' => 'Cannot edit paid payroll.',
-            ], 403);
-        }
 
         $validator = Validator::make($request->all(), [
             'manual_allowances' => 'nullable|numeric|min:0',

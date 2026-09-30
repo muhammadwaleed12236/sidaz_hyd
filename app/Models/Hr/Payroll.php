@@ -97,7 +97,7 @@ class Payroll extends Model
      */
     public function canEdit()
     {
-        return $this->status !== 'paid';
+        return true;
     }
 
     public function canMarkReviewed()
