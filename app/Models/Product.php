@@ -32,6 +32,11 @@ class Product extends Model
             ->where('status', 1); // only active discount
     }
 
+    public function formulations()
+    {
+        return $this->hasMany(Formulation::class);
+    }
+
     public function category_relation()
     {
         return $this->belongsTo(Category::class, 'category_id');

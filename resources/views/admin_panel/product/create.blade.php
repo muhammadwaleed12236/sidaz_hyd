@@ -25,10 +25,68 @@
             color: var(--text-main);
         }
 
+        /* Prevent number input spin buttons & scroll-wheel accidental changes */
+        input[type=number]::-webkit-inner-spin-button,
+        input[type=number]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+
         .wizard-page-container {
             max-width: 1280px;
             margin: 0 auto;
-            padding: 20px 15px;
+            padding: 15px 15px 30px;
+        }
+
+        /* --- Sleek Compact Header Bar --- */
+        .wizard-top-bar {
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 14px 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .wizard-top-title-box {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .wizard-icon-badge {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.15rem;
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
+        }
+
+        .wizard-main-heading {
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: var(--text-main);
+            margin: 0;
+            line-height: 1.2;
+        }
+
+        .wizard-sub-heading {
+            font-size: 0.76rem;
+            color: var(--text-muted);
+            margin: 0;
         }
 
         /* --- Wizard Navigation Bar --- */
@@ -39,7 +97,7 @@
             background: #ffffff;
             border: 1px solid var(--border-color);
             border-radius: var(--radius-lg);
-            padding: 16px 28px;
+            padding: 14px 24px;
             margin-bottom: 24px;
             box-shadow: 0 4px 14px rgba(0, 0, 0, 0.03);
         }
@@ -50,7 +108,7 @@
             gap: 12px;
             cursor: pointer;
             user-select: none;
-            opacity: 0.6;
+            opacity: 0.55;
             transition: all 0.25s ease;
         }
 
@@ -63,13 +121,13 @@
         }
 
         .step-icon-circle {
-            width: 44px;
-            height: 44px;
-            border-radius: 12px;
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
             background: #f1f5f9;
             color: #64748b;
             font-weight: 700;
-            font-size: 1.1rem;
+            font-size: 1rem;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -80,7 +138,7 @@
         .wizard-step-item.active .step-icon-circle {
             background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
             color: #ffffff;
-            box-shadow: 0 6px 16px rgba(79, 70, 229, 0.3);
+            box-shadow: 0 4px 14px rgba(79, 70, 229, 0.3);
         }
 
         .wizard-step-item.completed .step-icon-circle {
@@ -95,7 +153,7 @@
         }
 
         .step-badge-text {
-            font-size: 0.68rem;
+            font-size: 0.65rem;
             font-weight: 800;
             text-transform: uppercase;
             letter-spacing: 0.06em;
@@ -107,7 +165,7 @@
         }
 
         .step-name-text {
-            font-size: 0.95rem;
+            font-size: 0.88rem;
             font-weight: 700;
             color: #1e293b;
         }
@@ -116,7 +174,7 @@
             flex: 1;
             height: 2px;
             background: #e2e8f0;
-            margin: 0 20px;
+            margin: 0 16px;
             border-radius: 2px;
         }
 
@@ -135,7 +193,7 @@
         }
 
         .card-header-pro {
-            padding: 14px 22px;
+            padding: 12px 20px;
             border-bottom: 1px solid var(--border-color);
             background: #f8fafc;
             display: flex;
@@ -146,7 +204,7 @@
         }
 
         .card-title-pro {
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             font-weight: 700;
             color: var(--text-main);
             display: flex;
@@ -158,11 +216,11 @@
         }
 
         .card-body-pro {
-            padding: 24px;
+            padding: 20px;
         }
 
         .form-label-pro {
-            font-size: 0.76rem;
+            font-size: 0.74rem;
             font-weight: 700;
             text-transform: uppercase;
             color: var(--text-muted);
@@ -209,6 +267,47 @@
             background: #ffffff;
             border-color: #cbd5e1;
             box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+        }
+
+        /* Live Cost Summary Widget */
+        .cost-calculator-card {
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            color: #ffffff;
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            box-shadow: 0 6px 20px rgba(15, 23, 42, 0.15);
+            margin-bottom: 20px;
+        }
+
+        .cost-stat-box {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            padding: 14px 18px;
+            backdrop-filter: blur(10px);
+        }
+
+        .cost-stat-label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #94a3b8;
+            margin-bottom: 4px;
+        }
+
+        .cost-stat-val {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: #38bdf8;
+            line-height: 1.1;
+        }
+
+        .cost-stat-val-highlight {
+            font-size: 1.45rem;
+            font-weight: 900;
+            color: #4ade80;
+            line-height: 1.1;
         }
 
         /* Image Upload Box */
@@ -280,15 +379,18 @@
         <div class="main-content-inner">
             <div class="container wizard-page-container">
 
-                <!-- Page Banner Header -->
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <div>
-                        <h2 class="font-weight-bold text-dark mb-1" style="font-size: 1.45rem;">
-                            <i class="fa fa-boxes text-primary me-2"></i> Create Product Profile & Composition
-                        </h2>
-                        <p class="text-muted small mb-0">Follow the 3-step wizard to create a product and its raw material composition recipe (BOM)</p>
+                <!-- Sleek Top Header Bar (Subtle & Compact) -->
+                <div class="wizard-top-bar">
+                    <div class="wizard-top-title-box">
+                        <div class="wizard-icon-badge">
+                            <i class="fa fa-boxes"></i>
+                        </div>
+                        <div>
+                            <h2 class="wizard-main-heading">Create Product Profile & Composition</h2>
+                            <p class="wizard-sub-heading">3-step wizard for product setup, recipe composition (BOM) & cost estimation</p>
+                        </div>
                     </div>
-                    <a href="{{ route('product') }}" class="btn btn-light btn-sm font-weight-bold px-3 py-2 border" style="border-radius: 9px;">
+                    <a href="{{ route('product') }}" class="btn btn-light btn-sm font-weight-bold px-3 py-2 border shadow-sm" style="border-radius: 9px; font-size: 0.82rem;">
                         <i class="fa fa-arrow-left me-1"></i> Back to Products
                     </a>
                 </div>
@@ -299,7 +401,7 @@
                         <div class="step-icon-circle">1</div>
                         <div class="step-label-box">
                             <span class="step-badge-text">STEP 1</span>
-                            <span class="step-name-text">Product Profile</span>
+                            <span class="step-name-text">Product Specs</span>
                         </div>
                     </div>
 
@@ -309,7 +411,7 @@
                         <div class="step-icon-circle">2</div>
                         <div class="step-label-box">
                             <span class="step-badge-text">STEP 2</span>
-                            <span class="step-name-text">Raw Materials Composition</span>
+                            <span class="step-name-text">Raw Materials BOM & Costing</span>
                         </div>
                     </div>
 
@@ -368,7 +470,7 @@
                                                 <label class="form-label-pro">
                                                     Base Unit (UOM) <span class="text-danger">*</span>
                                                 </label>
-                                                <select name="unit" id="product_unit" class="form-select-pro" required>
+                                                <select name="unit" id="product_unit" class="form-select-pro" required onchange="updateBatchUnitLabel()">
                                                     <option value="">-- Select Unit --</option>
                                                     @foreach ($units as $u)
                                                         <option value="{{ $u->id }}">{{ $u->name }}</option>
@@ -378,7 +480,7 @@
                                                     <option value="Kg">Kilogram (Kg)</option>
                                                     <option value="Bottle">Bottle</option>
                                                     <option value="Pack">Pack</option>
-                                                    <option value="Piece">Piece / Vial</option>
+                                                    <option value="Piece">Piece / Tablet / Vial</option>
                                                 </select>
                                             </div>
 
@@ -413,8 +515,8 @@
                                             </div>
 
                                             <!-- Department -->
-                                            <div class="col-md-6">
-                                                <label class="form-label-pro">Manufacturing Department</label>
+                                            <div class="col-md-4">
+                                                <label class="form-label-pro">Manufacturing Dept.</label>
                                                 <select name="department_id" id="department_id" class="form-select-pro">
                                                     <option value="">-- Select Department --</option>
                                                     @foreach ($departments as $dept)
@@ -424,10 +526,10 @@
                                             </div>
 
                                             <!-- Batch Unit Size -->
-                                            <div class="col-md-6">
-                                                <label class="form-label-pro">Standard Batch Size (Per Unit Output)</label>
-                                                <input type="number" step="0.01" name="batch_size" id="batch_size" class="form-control-pro" value="1" placeholder="1.00">
-                                                <small class="text-muted" style="font-size: 0.72rem;">Formula composition will be defined for 1 Unit / Batch</small>
+                                            <div class="col-md-4">
+                                                <label class="form-label-pro">Batch Output Qty <span class="text-danger">*</span></label>
+                                                <input type="number" step="0.01" name="batch_size" id="batch_size" class="form-control-pro font-weight-bold text-primary" value="100" placeholder="100" min="1" oninput="calculateLiveCosting()">
+                                                <small class="text-muted" style="font-size: 0.72rem;">e.g. 100 Bottles / Tablets per Batch</small>
                                             </div>
                                         </div>
                                     </div>
@@ -443,18 +545,19 @@
                                     <div class="card-body-pro">
                                         <div class="row g-3">
                                             <div class="col-md-4">
-                                                <label class="form-label-pro">Sale Price Per Unit (PKR) <span class="text-danger">*</span></label>
-                                                <input type="number" step="0.01" name="sale_price_per_box" id="sale_price_per_box" class="form-control-pro font-weight-bold" required placeholder="0.00">
+                                                <label class="form-label-pro">Sale Price Per Unit (PKR) <span class="text-muted fw-normal">(Optional)</span></label>
+                                                <input type="number" step="0.01" name="sale_price_per_box" id="sale_price_per_box" class="form-control-pro font-weight-bold text-success" placeholder="0.00">
+                                                <small class="text-muted" style="font-size: 0.72rem;">Leave blank or set anytime</small>
                                             </div>
 
                                             <div class="col-md-4">
-                                                <label class="form-label-pro">Est. Production Cost (PKR)</label>
-                                                <input type="number" step="0.01" name="purchase_price_per_piece" id="purchase_price_per_piece" class="form-control-pro" placeholder="0.00">
-                                                <small class="text-muted" style="font-size: 0.72rem;">Auto-computed from raw materials or set manually</small>
+                                                <label class="form-label-pro">Auto Est. Purchase / Production Cost (PKR)</label>
+                                                <input type="number" step="0.01" name="purchase_price_per_piece" id="purchase_price_per_piece" class="form-control-pro font-weight-bold text-dark" placeholder="0.00" readonly style="background: #eef2ff;">
+                                                <small class="text-muted" style="font-size: 0.72rem;">Calculated automatically from Raw Materials BOM</small>
                                             </div>
 
                                             <div class="col-md-4">
-                                                <label class="form-label-pro">Wholesale Price (PKR)</label>
+                                                <label class="form-label-pro">Wholesale Price (PKR) <span class="text-muted fw-normal">(Optional)</span></label>
                                                 <input type="number" step="0.01" name="wholesale_price" class="form-control-pro" placeholder="0.00">
                                             </div>
 
@@ -494,10 +597,10 @@
                                 <!-- Quick Summary Widget -->
                                 <div class="p-3 bg-white rounded-3 border">
                                     <h6 class="font-weight-bold text-dark mb-2" style="font-size: 0.88rem;">
-                                        <i class="fa fa-info-circle text-primary me-1"></i> Product Profile Setup
+                                        <i class="fa fa-info-circle text-primary me-1"></i> Automatic Production Costing
                                     </h6>
-                                    <p class="text-muted small mb-0" style="line-height: 1.4;">
-                                        After configuring product specifications in Step 1, click <strong>"Next: Composition & Raw Materials"</strong> to specify the exact raw materials required for 1 Unit / Batch output.
+                                    <p class="text-muted small mb-0" style="line-height: 1.45;">
+                                        In Step 2, as you select raw materials for your batch (e.g. 100 Bottles / Tablets), the system automatically sums material costs and divides by the batch size to calculate the exact <strong>Estimated Purchase / Production Cost Per Unit</strong>!
                                     </p>
                                 </div>
                             </div>
@@ -506,16 +609,46 @@
 
 
                     <!-- ============================================================== -->
-                    <!-- STEP 2: COMPOSITION & RAW MATERIALS (BOM) -->
+                    <!-- STEP 2: COMPOSITION & RAW MATERIALS (BOM) & LIVE COSTING -->
                     <!-- ============================================================== -->
                     <div class="wizard-step-panel" id="wizard_step_2">
 
-                        <div class="alert alert-info border-0 shadow-sm mb-4" style="border-radius: 12px; background: #e0f2fe; color: #0369a1;">
-                            <div class="d-flex align-items-center gap-3">
-                                <div style="font-size: 1.5rem;"><i class="fa fa-flask text-primary"></i></div>
-                                <div>
-                                    <strong class="font-weight-bold" style="font-size: 0.95rem;">Product Composition & Bill of Materials (BOM)</strong>
-                                    <div class="small">Search raw materials or add new profiles on the fly. Pressing <kbd>Enter</kbd> or making a selection automatically opens the next row!</div>
+                        <!-- Live Cost & Formula Summary Header Banner -->
+                        <div class="cost-calculator-card">
+                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-3 border-bottom pb-2 border-secondary border-opacity-25">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="fa fa-calculator text-warning fs-5"></i>
+                                    <h5 class="m-0 font-weight-bold text-white fs-6">Live Recipe Costing & Per Unit Estimation</h5>
+                                </div>
+                                <div class="badge bg-primary px-3 py-2 rounded-pill font-weight-bold" style="font-size: 0.78rem;">
+                                    Batch Size: <span id="live_batch_size_display">100</span> <span id="live_unit_display">Units</span>
+                                </div>
+                            </div>
+
+                            <div class="row g-3">
+                                <div class="col-md-3 col-6">
+                                    <div class="cost-stat-box">
+                                        <div class="cost-stat-label">Raw Materials Cost</div>
+                                        <div class="cost-stat-val" id="live_rm_cost_display">Rs. 0.00</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <div class="cost-stat-box">
+                                        <div class="cost-stat-label">Packaging Cost</div>
+                                        <div class="cost-stat-val" id="live_pm_cost_display">Rs. 0.00</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <div class="cost-stat-box">
+                                        <div class="cost-stat-label">Total Batch Cost</div>
+                                        <div class="cost-stat-val text-warning" id="live_total_batch_cost_display">Rs. 0.00</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <div class="cost-stat-box" style="border-color: rgba(74, 222, 128, 0.4); background: rgba(74, 222, 128, 0.1);">
+                                        <div class="cost-stat-label text-success">Per Unit Est. Cost</div>
+                                        <div class="cost-stat-val-highlight" id="live_per_unit_cost_display">Rs. 0.00</div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -525,7 +658,7 @@
                             <div class="card-header-pro py-2" style="background: #f0fdf4;">
                                 <div class="card-title-pro text-success">
                                     <i class="fa fa-vials text-success"></i>
-                                    <span>Raw Materials & Active Ingredients (Per 1 Unit / Batch)</span>
+                                    <span>Raw Materials & Active Ingredients (For <span class="batch-size-text">100</span> Batch Output)</span>
                                 </div>
                                 <div class="d-flex gap-2">
                                     <button type="button" class="btn btn-outline-success btn-sm font-weight-bold" data-bs-toggle="modal" data-bs-target="#quickCreateRmModal" data-toggle="modal" data-target="#quickCreateRmModal" style="border-radius: 8px; font-size: 0.8rem;">
@@ -616,8 +749,20 @@
                                                 <span class="font-weight-bold text-dark" id="rev_category">-</span>
                                             </div>
                                             <div class="d-flex justify-content-between mb-2">
+                                                <span class="text-muted small">Batch Size Output:</span>
+                                                <span class="font-weight-bold text-dark" id="rev_batch_size">100 Units</span>
+                                            </div>
+                                            <div class="d-flex justify-content-between mb-2">
+                                                <span class="text-muted small">Total Batch Cost:</span>
+                                                <span class="font-weight-bold text-warning" id="rev_total_batch_cost">Rs. 0.00</span>
+                                            </div>
+                                            <div class="d-flex justify-content-between mb-2">
+                                                <span class="text-muted small">Est. Cost Per Unit:</span>
+                                                <span class="font-weight-bold text-success" id="rev_per_unit_cost">Rs. 0.00</span>
+                                            </div>
+                                            <div class="d-flex justify-content-between mb-2">
                                                 <span class="text-muted small">Sale Price (Per Unit):</span>
-                                                <span class="font-weight-bold text-success" id="rev_sale_price">Rs. 0.00</span>
+                                                <span class="font-weight-bold text-success" id="rev_sale_price">Optional</span>
                                             </div>
                                             <div class="d-flex justify-content-between mb-2">
                                                 <span class="text-muted small">Min Stock Alert:</span>
@@ -638,13 +783,14 @@
                                                     <tr>
                                                         <th class="py-2 px-3">Type</th>
                                                         <th class="py-2 px-3">Material / Ingredient</th>
-                                                        <th class="py-2 px-3 text-end">Quantity / 1 Unit</th>
+                                                        <th class="py-2 px-3 text-end">Batch Qty</th>
                                                         <th class="py-2 px-3">Unit</th>
+                                                        <th class="py-2 px-3 text-end">Est. Cost</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody id="rev_composition_body">
                                                     <tr>
-                                                        <td colspan="4" class="text-center text-muted py-3">No composition items added</td>
+                                                        <td colspan="5" class="text-center text-muted py-3">No composition items added</td>
                                                     </tr>
                                                 </tbody>
                                             </table>
@@ -735,7 +881,7 @@
 
                         <div class="row g-2 mb-2">
                             <div class="col-md-6">
-                                <label class="form-label-pro">Price (Per Unit) <span class="text-danger">*</span></label>
+                                <label class="form-label-pro">Price (Per Material Unit) <span class="text-danger">*</span></label>
                                 <input type="number" step="0.01" id="q_rm_price" name="price" class="form-control-pro" value="0.00" required>
                             </div>
                             <div class="col-md-6">
@@ -840,20 +986,25 @@
         // Available Raw Materials Data
         let rawMaterialsData = [
             @foreach($rawMaterials as $rm)
-                { id: {{ $rm->id }}, name: "{{ addslashes($rm->name) }}", code: "{{ $rm->code }}", unit: "{{ $rm->unit->name ?? 'Unit' }}", unit_id: {{ $rm->unit_id ?? 'null' }} },
+                { id: {{ $rm->id }}, name: "{{ addslashes($rm->name) }}", code: "{{ $rm->code }}", unit: "{{ $rm->unit->name ?? 'Unit' }}", unit_id: {{ $rm->unit_id ?? 'null' }}, price: {{ (float)($rm->price ?? 0) }} },
             @endforeach
         ];
 
         // Available Packaging Materials Data
         let packagingMaterialsData = [
             @foreach($packagingMaterials as $pm)
-                { id: {{ $pm->id }}, name: "{{ addslashes($pm->name) }}", code: "{{ $pm->code }}", unit: "{{ $pm->unit->name ?? 'Pcs' }}" },
+                { id: {{ $pm->id }}, name: "{{ addslashes($pm->name) }}", code: "{{ $pm->code }}", unit: "{{ $pm->unit->name ?? 'Pcs' }}", price: {{ (float)($pm->price ?? 0) }} },
             @endforeach
         ];
 
         let currentWizardStep = 1;
         let rmCounter = 0;
         let pmCounter = 0;
+
+        // Prevent Mouse Wheel Scroll from changing values in numeric inputs
+        $(document).on('wheel', 'input[type=number]', function(e) {
+            $(this).blur();
+        });
 
         function showAlert(title, message, icon = 'warning') {
             if (typeof Swal !== 'undefined' && typeof Swal.fire === 'function') {
@@ -863,25 +1014,26 @@
             }
         }
 
+        function updateBatchUnitLabel() {
+            let unitText = $('#product_unit option:selected').text() || 'Units';
+            if (!unitText || unitText.includes('-- Select')) unitText = 'Units';
+            $('#live_unit_display').text(unitText);
+        }
+
         function toggleProductType() {
             let type = $('#product_type').val();
             if(type === 'Finished Good') {
                 $('#pricing_card').show();
-                $('#sale_price_per_box').attr('required', 'required');
                 
-                // Hide steps in wizard
-                $('#step_tab_2, #step_line_2, #step_tab_3, #step_line_3').hide();
+                // Show steps in wizard
+                $('#step_tab_2, #step_line_2, #step_tab_3, #step_line_3').show();
                 
-                // If we are past step 1, go back to step 1
-                if(currentWizardStep > 1) {
-                    switchStep(1);
-                } else {
-                    $('#btn_next_step').hide();
-                    $('#btn_submit_final').show();
+                if(currentWizardStep === 1) {
+                    $('#btn_next_step').show().html('Next: Composition Recipe <i class="fa fa-arrow-right ms-1"></i>');
+                    $('#btn_submit_final').hide();
                 }
             } else {
                 $('#pricing_card').hide();
-                $('#sale_price_per_box').removeAttr('required');
                 
                 // Show steps in wizard
                 $('#step_tab_2, #step_line_2, #step_tab_3, #step_line_3').show();
@@ -900,7 +1052,6 @@
                     const name = $('#product_name').val() ? $('#product_name').val().trim() : '';
                     const unit = $('#product_unit').val();
                     const category = $('#category_id').val();
-                    const price = $('#sale_price_per_box').val();
 
                     if (!name) {
                         showAlert('Required Field', 'Please enter the Product Name before proceeding.', 'warning');
@@ -915,12 +1066,6 @@
                     if (!category) {
                         showAlert('Required Field', 'Please select a Product Category.', 'warning');
                         $('#category_id').focus();
-                        return;
-                    }
-                    let type = $('#product_type').val();
-                    if (type === 'Finished Good' && (price === '' || price === null || price === undefined)) {
-                        showAlert('Required Field', 'Please enter Sale Price per unit.', 'warning');
-                        $('#sale_price_per_box').focus();
                         return;
                     }
                 }
@@ -948,18 +1093,13 @@
             // Update Navigation Footer Buttons
             if (step === 1) {
                 $('#btn_prev_step').hide();
-                if ($('#product_type').val() === 'Finished Good') {
-                    $('#btn_next_step').hide();
-                    $('#btn_submit_final').show();
-                } else {
-                    $('#btn_next_step').show().html('Next: Composition Recipe <i class="fa fa-arrow-right ms-1"></i>');
-                    $('#btn_submit_final').hide();
-                }
+                $('#btn_next_step').show().html('Next: Composition Recipe <i class="fa fa-arrow-right ms-1"></i>');
+                $('#btn_submit_final').hide();
             } else if (step === 2) {
                 $('#btn_prev_step').show();
                 $('#btn_next_step').show().html('Next: Review Profile <i class="fa fa-arrow-right ms-1"></i>');
                 $('#btn_submit_final').hide();
-                $('#summary_product_title').text($('#product_name').val() || 'This Product');
+                calculateLiveCosting();
             } else if (step === 3) {
                 $('#btn_prev_step').show();
                 $('#btn_next_step').hide();
@@ -974,11 +1114,56 @@
             switchStep(currentWizardStep + direction);
         }
 
+        // Live Costing Calculation
+        function calculateLiveCosting() {
+            let batchSize = parseFloat($('#batch_size').val()) || 1;
+            if (batchSize <= 0) batchSize = 1;
+
+            $('#live_batch_size_display').text(batchSize);
+            $('.batch-size-text').text(batchSize);
+
+            let totalRmCost = 0;
+            let totalPmCost = 0;
+
+            // Calculate Raw Material Costs
+            $('.rm-row').each(function() {
+                const $select = $(this).find('.rm-select');
+                const rmId = $select.val();
+                const qty = parseFloat($(this).find('.rm-qty').val()) || 0;
+                if (rmId && qty > 0) {
+                    const price = parseFloat($select.find('option:selected').data('price')) || 0;
+                    totalRmCost += (qty * price);
+                }
+            });
+
+            // Calculate Packaging Material Costs
+            $('.pm-row').each(function() {
+                const $select = $(this).find('.pm-select');
+                const pmId = $select.val();
+                const qty = parseFloat($(this).find('.pm-qty').val()) || 0;
+                if (pmId && qty > 0) {
+                    const price = parseFloat($select.find('option:selected').data('price')) || 0;
+                    totalPmCost += (qty * price);
+                }
+            });
+
+            const totalBatchCost = totalRmCost + totalPmCost;
+            const perUnitCost = totalBatchCost / batchSize;
+
+            $('#live_rm_cost_display').text('Rs. ' + totalRmCost.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+            $('#live_pm_cost_display').text('Rs. ' + totalPmCost.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+            $('#live_total_batch_cost_display').text('Rs. ' + totalBatchCost.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+            $('#live_per_unit_cost_display').text('Rs. ' + perUnitCost.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+
+            // Update Est. Purchase Price input
+            $('#purchase_price_per_piece').val(perUnitCost.toFixed(2));
+        }
+
         // Generate Options HTML for Raw Material Selects
         function getRmOptionsHtml() {
             let optionsHtml = '<option value="">-- Search & Choose Raw Material --</option>';
             rawMaterialsData.forEach(rm => {
-                optionsHtml += `<option value="${rm.id}" data-unit="${rm.unit}" data-unit-id="${rm.unit_id || ''}">${rm.name} (${rm.code})</option>`;
+                optionsHtml += `<option value="${rm.id}" data-unit="${rm.unit}" data-unit-id="${rm.unit_id || ''}" data-price="${rm.price}">${rm.name} (${rm.code})</option>`;
             });
             return optionsHtml;
         }
@@ -998,8 +1183,8 @@
                             </select>
                         </div>
                         <div class="col-md-2">
-                            <label class="form-label-pro" style="font-size: 0.68rem;">Qty / 1 Unit</label>
-                            <input type="number" step="0.0001" name="rm_quantity[]" class="form-control-pro font-weight-bold rm-qty" placeholder="0.00">
+                            <label class="form-label-pro" style="font-size: 0.68rem;">Batch Qty</label>
+                            <input type="number" step="0.0001" name="rm_quantity[]" class="form-control-pro font-weight-bold rm-qty" placeholder="0.00" oninput="calculateLiveCosting()">
                         </div>
                         <div class="col-md-2">
                             <label class="form-label-pro" style="font-size: 0.68rem;">Unit</label>
@@ -1034,9 +1219,10 @@
                 $select.val(autoSelectId).trigger('change');
             }
 
-            // On Change: Update Unit & Auto-Append next row if last row
+            // On Change: Update Unit, Live Cost & Auto-Append next row
             $select.on('change', function() {
                 updateRmUnit(this);
+                calculateLiveCosting();
                 checkAutoAppendRm($row);
             });
 
@@ -1067,6 +1253,7 @@
             if ($('.rm-row').length === 0) {
                 $('#no_rm_message').show();
             }
+            calculateLiveCosting();
         }
 
         function updateRmUnit(selectEl) {
@@ -1082,7 +1269,7 @@
         function getPmOptionsHtml() {
             let optionsHtml = '<option value="">-- Search & Choose Packaging Item --</option>';
             packagingMaterialsData.forEach(pm => {
-                optionsHtml += `<option value="${pm.id}" data-unit="${pm.unit}">${pm.name} (${pm.code})</option>`;
+                optionsHtml += `<option value="${pm.id}" data-unit="${pm.unit}" data-price="${pm.price}">${pm.name} (${pm.code})</option>`;
             });
             return optionsHtml;
         }
@@ -1102,8 +1289,8 @@
                             </select>
                         </div>
                         <div class="col-md-3">
-                            <label class="form-label-pro" style="font-size: 0.68rem;">Qty Needed Per Unit</label>
-                            <input type="number" step="0.01" name="pm_quantity[]" class="form-control-pro font-weight-bold pm-qty" placeholder="1.00" value="1">
+                            <label class="form-label-pro" style="font-size: 0.68rem;">Batch Qty Needed</label>
+                            <input type="number" step="0.01" name="pm_quantity[]" class="form-control-pro font-weight-bold pm-qty" placeholder="100" value="100" oninput="calculateLiveCosting()">
                         </div>
                         <div class="col-md-3">
                             <label class="form-label-pro" style="font-size: 0.68rem;">Notes</label>
@@ -1135,6 +1322,7 @@
 
             // On Change: Auto-Append next row if last
             $select.on('change', function() {
+                calculateLiveCosting();
                 checkAutoAppendPm($row);
             });
 
@@ -1165,6 +1353,7 @@
             if ($('.pm-row').length === 0) {
                 $('#no_pm_message').show();
             }
+            calculateLiveCosting();
         }
 
         // --- QUICK CREATE RAW MATERIAL (AJAX ZERO-REFRESH) ---
@@ -1196,13 +1385,14 @@
                             id: res.data.id,
                             name: res.data.name,
                             code: res.data.code,
-                            unit: res.data.unit ? res.data.unit.name : 'Unit'
+                            unit: res.data.unit ? res.data.unit.name : 'Unit',
+                            price: parseFloat(res.data.price || 0)
                         };
                         rawMaterialsData.push(newItem);
 
                         // Update options across all existing raw material selects
                         const newOption = new Option(`${newItem.name} (${newItem.code})`, newItem.id, false, false);
-                        $(newOption).attr('data-unit', newItem.unit);
+                        $(newOption).attr('data-unit', newItem.unit).attr('data-price', newItem.price);
 
                         $('.rm-select').each(function() {
                             const val = $(this).val();
@@ -1268,13 +1458,14 @@
                             id: res.data.id,
                             name: res.data.name,
                             code: res.data.code,
-                            unit: res.data.unit ? res.data.unit.name : 'Pcs'
+                            unit: res.data.unit ? res.data.unit.name : 'Pcs',
+                            price: 0
                         };
                         packagingMaterialsData.push(newItem);
 
                         // Update options across all existing packaging selects
                         const newOption = new Option(`${newItem.name} (${newItem.code})`, newItem.id, false, false);
-                        $(newOption).attr('data-unit', newItem.unit);
+                        $(newOption).attr('data-unit', newItem.unit).attr('data-price', 0);
 
                         $('.pm-select').each(function() {
                             const val = $(this).val();
@@ -1313,19 +1504,38 @@
 
         // Build Review Summary in Step 3
         function buildReviewSummary() {
+            calculateLiveCosting();
+            
+            const batchSize = parseFloat($('#batch_size').val()) || 1;
+            const unitText = $('#product_unit option:selected').text() || 'Units';
+            
             $('#rev_product_name').text($('#product_name').val() || '-');
-            $('#rev_unit').text($('#product_unit option:selected').text() || $('#product_unit').val() || '-');
+            $('#rev_unit').text(unitText);
             $('#rev_category').text($('#category_id option:selected').text() || '-');
-            $('#rev_sale_price').text('Rs. ' + (parseFloat($('#sale_price_per_box').val()) || 0).toLocaleString('en-US', { minimumFractionDigits: 2 }));
+            $('#rev_batch_size').text(batchSize + ' ' + unitText);
+
+            const salePriceVal = parseFloat($('#sale_price_per_box').val());
+            $('#rev_sale_price').text(salePriceVal ? 'Rs. ' + salePriceVal.toLocaleString('en-US', { minimumFractionDigits: 2 }) : 'Optional (Not set)');
+            
             $('#rev_alert_qty').text(($('input[name="alert_quantity"]').val() || '10') + ' Units');
+
+            const totalBatchCostText = $('#live_total_batch_cost_display').text();
+            const perUnitCostText = $('#live_per_unit_cost_display').text();
+
+            $('#rev_total_batch_cost').text(totalBatchCostText);
+            $('#rev_per_unit_cost').text(perUnitCostText);
 
             let tbodyHtml = '';
 
             // Raw Materials
             $('.rm-row').each(function() {
-                const name = $(this).find('.rm-select option:selected').text();
-                const qty = $(this).find('.rm-qty').val();
+                const $opt = $(this).find('.rm-select option:selected');
+                const name = $opt.text();
+                const qty = parseFloat($(this).find('.rm-qty').val()) || 0;
                 const unit = $(this).find('.rm-unit-label').val();
+                const price = parseFloat($opt.data('price')) || 0;
+                const rowCost = qty * price;
+
                 if (name && qty && $(this).find('.rm-select').val()) {
                     tbodyHtml += `
                         <tr>
@@ -1333,6 +1543,7 @@
                             <td class="py-2 px-3 font-weight-bold text-dark">${name}</td>
                             <td class="py-2 px-3 text-end font-weight-bold text-primary">${qty}</td>
                             <td class="py-2 px-3">${unit}</td>
+                            <td class="py-2 px-3 text-end font-weight-bold text-dark">Rs. ${rowCost.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
                         </tr>
                     `;
                 }
@@ -1340,8 +1551,12 @@
 
             // Packaging Materials
             $('.pm-row').each(function() {
-                const name = $(this).find('.pm-select option:selected').text();
-                const qty = $(this).find('.pm-qty').val();
+                const $opt = $(this).find('.pm-select option:selected');
+                const name = $opt.text();
+                const qty = parseFloat($(this).find('.pm-qty').val()) || 0;
+                const price = parseFloat($opt.data('price')) || 0;
+                const rowCost = qty * price;
+
                 if (name && qty && $(this).find('.pm-select').val()) {
                     tbodyHtml += `
                         <tr>
@@ -1349,13 +1564,14 @@
                             <td class="py-2 px-3 font-weight-bold text-dark">${name}</td>
                             <td class="py-2 px-3 text-end font-weight-bold text-primary">${qty}</td>
                             <td class="py-2 px-3">Pcs</td>
+                            <td class="py-2 px-3 text-end font-weight-bold text-dark">Rs. ${rowCost.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
                         </tr>
                     `;
                 }
             });
 
             if (!tbodyHtml) {
-                tbodyHtml = '<tr><td colspan="4" class="text-center text-muted py-3">No composition items added to this product.</td></tr>';
+                tbodyHtml = '<tr><td colspan="5" class="text-center text-muted py-3">No composition items added to this product.</td></tr>';
             }
 
             $('#rev_composition_body').html(tbodyHtml);

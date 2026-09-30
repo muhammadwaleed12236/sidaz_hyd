@@ -21,376 +21,383 @@
 @endif
 
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-
-    .pm-page {
-        font-family: 'Inter', system-ui, -apple-system, sans-serif;
-        color: #1e293b;
-        padding-bottom: 40px;
+    /* ── ERP COMPACT DESIGN SYSTEM ── */
+    .erp-page { background: #f8fafc; min-height: calc(100vh - 60px); padding: 12px 0; font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+    
+    :root {
+        --erp-primary:    #4f46e5;
+        --erp-primary-lt: #eef2ff;
+        --erp-success:    #10b981;
+        --erp-success-lt: #ecfdf5;
+        --erp-warning:    #f59e0b;
+        --erp-warning-lt: #fffbeb;
+        --erp-danger:     #ef4444;
+        --erp-danger-lt:  #fef2f2;
+        --erp-border:     #e2e8f0;
+        --erp-bg:         #f8fafc;
+        --erp-card-bg:    #ffffff;
+        --erp-text:       #0f172a;
+        --erp-muted:      #64748b;
+        --erp-radius:     8px;
+        --erp-shadow:     0 1px 3px rgba(15,23,42,0.05);
     }
 
-    /* Page Header */
-    .pm-header {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        padding: 20px 24px;
-        border-radius: 16px;
-        margin-bottom: 20px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.02);
-    }
-    .pm-title {
-        font-weight: 800;
-        font-size: 1.35rem;
-        color: #0f172a;
-        margin-bottom: 2px;
-        letter-spacing: -0.02em;
-    }
-    .pm-sub {
-        font-size: 0.82rem;
-        color: #64748b;
-    }
-
-    /* Stat Cards */
-    .pm-stat-card {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 14px;
-        padding: 16px 20px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-        display: flex;
-        align-items: center;
-        gap: 16px;
-        height: 100%;
-    }
-    .pm-stat-icon {
-        width: 46px;
-        height: 46px;
-        border-radius: 12px;
-        background: #f0fdfa; /* Teal for PM */
-        color: #0d9488; 
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.2rem;
-        flex-shrink: 0;
-    }
-    .pm-stat-icon.active {
-        background: #dcfce7;
-        color: #16a34a;
-    }
-    .pm-stat-val {
-        font-weight: 800;
-        font-size: 1.25rem;
-        color: #0f172a;
-        line-height: 1.2;
-    }
-    .pm-stat-lbl {
-        font-size: 0.78rem;
-        color: #64748b;
-        font-weight: 500;
-    }
-
-    /* Primary Gradient Button */
-    .btn-pm-primary {
-        background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);
-        color: #ffffff !important;
-        border: none;
-        padding: 10px 20px;
-        font-size: 0.86rem;
-        font-weight: 600;
-        border-radius: 10px;
-        box-shadow: 0 4px 12px rgba(13, 148, 136, 0.22);
-        transition: all 0.2s ease;
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        cursor: pointer;
-    }
-    .btn-pm-primary:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 6px 16px rgba(13, 148, 136, 0.35);
-    }
-
-    /* Card & Table */
-    .pm-card {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 16px;
-        box-shadow: 0 4px 20px rgba(15, 23, 42, 0.03);
+    .erp-card {
+        background: var(--erp-card-bg);
+        border-radius: var(--erp-radius);
+        border: 1px solid var(--erp-border);
+        box-shadow: var(--erp-shadow);
         overflow: hidden;
     }
-    .pm-card-header {
-        padding: 18px 24px;
-        border-bottom: 1px solid #e2e8f0;
-        background: #ffffff;
+
+    .erp-card-header {
+        padding: 12px 18px;
+        border-bottom: 1px solid var(--erp-border);
         display: flex;
         align-items: center;
         justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 10px;
+        background: #ffffff;
     }
+    .page-head-title {
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: var(--erp-text);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .head-kpis {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-left: 8px;
+    }
+    .kpi-pill {
+        font-size: 0.78rem;
+        font-weight: 600;
+        padding: 3px 10px;
+        border-radius: 12px;
+        background: #f1f5f9;
+        color: #475569;
+        border: 1px solid #e2e8f0;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+    .kpi-pill strong { color: var(--erp-text); font-weight: 700; }
+    .kpi-pill.success { background: var(--erp-success-lt); color: #047857; border-color: #a7f3d0; }
+    .kpi-pill.danger { background: var(--erp-danger-lt); color: #b91c1c; border-color: #fecaca; }
 
-    .pm-table-wrap {
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
+    .erp-hdr-actions {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 6px;
     }
+    .btn-hdr {
+        border-radius: 6px;
+        padding: 6px 12px;
+        font-size: 0.81rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        transition: all .15s;
+        border: 1px solid transparent;
+        text-decoration: none;
+        cursor: pointer;
+        height: 34px;
+        box-sizing: border-box;
+    }
+    .btn-hdr-primary { background: #0d9488; color: #fff; border-color: #0d9488; box-shadow: 0 1px 3px rgba(13,148,136,0.2); }
+    .btn-hdr-primary:hover { background: #0f766e; border-color: #0f766e; color: #fff; }
+
+    /* Desktop Table */
+    .erp-table-wrap { padding: 0; overflow-x: auto; -webkit-overflow-scrolling: touch; }
     #default-datatable {
         width: 100% !important;
+        border-collapse: collapse !important;
+        font-size: 0.83rem;
         margin-bottom: 0 !important;
     }
     #default-datatable thead th {
-        background: #f8fafc;
-        color: #475569;
-        font-size: 0.72rem;
+        background: #f1f5f9 !important;
+        color: #475569 !important;
         font-weight: 700;
         text-transform: uppercase;
-        letter-spacing: 0.05em;
-        border-bottom: 1px solid #e2e8f0;
-        padding: 14px 20px;
+        font-size: 0.71rem;
+        letter-spacing: 0.5px;
+        padding: 9px 12px;
+        border-bottom: 1px solid var(--erp-border) !important;
+        white-space: nowrap;
     }
     #default-datatable tbody td {
-        padding: 14px 20px;
+        padding: 8px 12px;
+        border: none !important;
+        border-bottom: 1px solid #f1f5f9 !important;
+        color: var(--erp-text);
         vertical-align: middle;
-        font-size: 0.88rem;
-        border-bottom: 1px solid #f1f5f9;
+        white-space: nowrap;
     }
-    #default-datatable tbody tr:hover {
-        background-color: #f8fafc;
-    }
+    #default-datatable tbody tr:hover { background: #f8fafc !important; }
 
     /* Badges */
-    .pm-id-badge {
-        background: #f1f5f9;
-        color: #475569;
-        font-weight: 700;
-        font-size: 0.75rem;
-        padding: 3px 8px;
-        border-radius: 6px;
-        font-family: monospace;
-    }
-    .pm-code-badge {
-        background: #f0fdfa;
-        color: #0d9488;
-        font-weight: 600;
-        font-size: 0.75rem;
-        padding: 3px 8px;
-        border-radius: 4px;
-        letter-spacing: 0.5px;
-    }
-    .type-badge {
-        background: #eef2ff;
-        color: #4f46e5;
-        font-weight: 600;
-        font-size: 0.75rem;
-        padding: 3px 8px;
-        border-radius: 4px;
-    }
-    .variant-badge {
-        background: #fdf4ff;
-        color: #c026d3;
-        font-weight: 600;
-        font-size: 0.75rem;
-        padding: 3px 8px;
-        border-radius: 4px;
-    }
-    .unit-badge {
-        background: #e0f2fe;
-        color: #0284c7;
-        font-weight: 600;
-        font-size: 0.75rem;
-        padding: 3px 8px;
-        border-radius: 4px;
-    }
-    .status-badge {
-        padding: 4px 10px;
-        border-radius: 20px;
-        font-size: 0.75rem;
-        font-weight: 600;
-    }
-    .status-active {
-        background: #dcfce7;
-        color: #166534;
-    }
-    .status-inactive {
-        background: #fef2f2;
-        color: #991b1b;
-    }
-
-    /* Form UI */
-    .form-control:focus, .form-select:focus {
-        border-color: #0d9488;
-        box-shadow: 0 0 0 0.2rem rgba(13, 148, 136, 0.15);
-    }
+    .pm-id-badge { background: #f1f5f9; color: #475569; font-weight: 700; font-size: 0.72rem; padding: 2px 7px; border-radius: 4px; font-family: monospace; }
+    .pm-code-badge { background: #f0fdfa; color: #0d9488; font-weight: 600; font-size: 0.72rem; padding: 2px 7px; border-radius: 4px; border: 1px solid #ccfbf1; }
+    .type-badge { background: #eef2ff; color: #4f46e5; font-weight: 600; font-size: 0.72rem; padding: 2px 7px; border-radius: 4px; }
+    .variant-badge { background: #fef3c7; color: #b45309; font-weight: 600; font-size: 0.72rem; padding: 2px 7px; border-radius: 4px; }
+    .unit-badge { background: #fdf4ff; color: #c026d3; font-weight: 600; font-size: 0.72rem; padding: 2px 7px; border-radius: 4px; }
     
-    /* Toggle Switch */
-    .switch {
-        position: relative;
-        display: inline-block;
-        width: 50px;
-        height: 24px;
+    .status-badge { padding: 3px 10px; border-radius: 12px; font-size: 0.72rem; font-weight: 700; white-space: nowrap; }
+    .status-active { background: var(--erp-success-lt); color: #047857; border: 1px solid #a7f3d0; }
+    .status-inactive { background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; }
+
+    /* Action buttons */
+    .btn-act {
+        border-radius: 4px; padding: 4px 8px; font-size: 0.75rem;
+        font-weight: 600; display: inline-flex; align-items: center; gap: 4px;
+        border: 1px solid transparent; transition: all .12s; cursor: pointer;
+        line-height: 1.3; white-space: nowrap; flex-shrink: 0; height: 28px;
     }
-    .switch input { 
-        opacity: 0;
-        width: 0;
-        height: 0;
-    }
-    .slider {
-        position: absolute;
-        cursor: pointer;
-        top: 0; left: 0; right: 0; bottom: 0;
-        background-color: #ccc;
-        transition: .4s;
-        border-radius: 24px;
-    }
-    .slider:before {
-        position: absolute;
-        content: "";
-        height: 18px;
-        width: 18px;
-        left: 3px;
-        bottom: 3px;
-        background-color: white;
-        transition: .4s;
-        border-radius: 50%;
-    }
-    input:checked + .slider {
-        background-color: #10b981;
-    }
-    input:checked + .slider:before {
-        transform: translateX(26px);
+    .btn-act-edit { background: var(--erp-primary-lt); color: var(--erp-primary); border-color: #c7d2fe; }
+    .btn-act-edit:hover { background: var(--erp-primary); color: #fff; }
+    .btn-act-deact { background: var(--erp-danger-lt); color: #b91c1c; border-color: #fecaca; }
+    .btn-act-deact:hover { background: #ef4444; color: #fff; }
+
+    /* Switch */
+    .switch { position: relative; display: inline-block; width: 44px; height: 22px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .3s; border-radius: 22px; }
+    .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; }
+    input:checked + .slider { background-color: #10b981; }
+    input:checked + .slider:before { transform: translateX(22px); }
+
+    /* Mobile view cards */
+    .mobile-pm-cards { display: none; padding: 10px; }
+    @media (max-width: 768px) {
+        .erp-page { padding: 8px 0; }
+        .erp-card-header { flex-direction: column; align-items: flex-start; gap: 8px; padding: 10px 12px; }
+        .erp-hdr-actions { width: 100%; }
+        .btn-hdr { width: 100%; justify-content: center; height: 34px; font-size: 0.8rem; }
+        .erp-table-wrap { display: none !important; }
+        .mobile-pm-cards { display: flex; flex-direction: column; gap: 8px; }
     }
 
+    .pm-mcard {
+        background: #ffffff;
+        border: 1px solid var(--erp-border);
+        border-radius: 8px;
+        padding: 10px 12px;
+        box-shadow: 0 1px 3px rgba(15,23,42,0.03);
+    }
+    .pm-mcard-hd { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+    .pm-mcard-body {
+        margin-top: 8px;
+        padding-top: 8px;
+        border-top: 1px dashed #e2e8f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .pm-mcard-actions {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 6px !important;
+        margin-top: 8px;
+        width: 100%;
+    }
+    .pm-mcard-actions .btn-act { width: 100% !important; justify-content: center !important; height: 32px !important; font-size: 0.76rem !important; border-radius: 6px !important; }
 </style>
 
-<div class="pm-page container-fluid px-3 px-md-4 pt-3">
-    
-    {{-- Header Row --}}
-    <div class="pm-header d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
-        <div>
-            <h3 class="pm-title"><i class="fas fa-boxes text-primary me-2" style="color: #0d9488 !important;"></i>Packaging Material</h3>
-            <div class="pm-sub">Manage packaging inventory like bottles, boxes, labels, and caps</div>
-        </div>
-        @can('packaging_materials.create')
-            <button type="button" class="btn-pm-primary" data-toggle="modal" data-target="#exampleModal" id="reset">
-                <i class="fas fa-plus"></i> Add Packaging
-            </button>
-        @endcan
-    </div>
-
-    {{-- Stats Row --}}
-    <div class="row g-3 mb-4">
-        <div class="col-12 col-sm-6 col-md-4">
-            <div class="pm-stat-card">
-                <div class="pm-stat-icon"><i class="fas fa-layer-group"></i></div>
-                <div>
-                    <div class="pm-stat-val">{{ count($packagingMaterials) }}</div>
-                    <div class="pm-stat-lbl">Total Packaging</div>
+<div class="erp-page">
+    <div class="container-fluid px-2">
+        <div class="erp-card">
+            
+            {{-- Header Bar --}}
+            <div class="erp-card-header">
+                <div class="d-flex align-items-center flex-wrap gap-2">
+                    <h1 class="page-head-title"><i class="fas fa-boxes me-1" style="color: #0d9488;"></i> Packaging Material</h1>
+                    <div class="head-kpis">
+                        <span class="kpi-pill">Total: <strong>{{ count($packagingMaterials) }}</strong></span>
+                        <span class="kpi-pill success">Active: <strong>{{ $packagingMaterials->where('status', 1)->count() }}</strong></span>
+                        <span class="kpi-pill danger">Inactive: <strong>{{ $packagingMaterials->where('status', 0)->count() }}</strong></span>
+                    </div>
+                </div>
+                <div class="erp-hdr-actions">
+                    @can('packaging_materials.create')
+                        <button type="button" class="btn-hdr btn-hdr-primary" data-toggle="modal" data-target="#exampleModal" id="reset">
+                            <i class="fas fa-plus"></i> Add Packaging
+                        </button>
+                    @endcan
                 </div>
             </div>
-        </div>
-        <div class="col-12 col-sm-6 col-md-4">
-            <div class="pm-stat-card">
-                <div class="pm-stat-icon active"><i class="fas fa-check-circle"></i></div>
-                <div>
-                    <div class="pm-stat-val">{{ $packagingMaterials->where('status', 1)->count() }}</div>
-                    <div class="pm-stat-lbl">Active Packaging</div>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    {{-- Main Content Card --}}
-    <div class="pm-card">
-        <div class="pm-card-header">
-            <div class="fw-bold text-dark"><i class="fas fa-list me-1 text-muted"></i> All Packaging Materials</div>
-            <div class="text-muted small">Showing {{ count($packagingMaterials) }} entries</div>
-        </div>
-
-        {{-- Desktop Table View --}}
-        <div class="pm-table-wrap">
-            <table id="default-datatable" class="table">
-                <thead>
-                    <tr>
-                        <th class="text-center" style="width: 70px;">Id</th>
-                        <th class="text-start">Name</th>
-                        <th class="text-start">Code/SKU</th>
-                        <th class="text-start">Type & Variant</th>
-                        <th class="text-start">Capacity</th>
-                        <th class="text-start">Unit (Stock)</th>
-                        <th class="text-center">Status</th>
-                        <th class="d-none">Department</th>
-                        <th class="d-none">Min Stock</th>
-                        <th class="d-none">Description</th>
-                        <th class="text-end pe-4" style="width: 140px;">Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach ($packagingMaterials as $pm)
+            {{-- Desktop Table View --}}
+            <div class="erp-table-wrap">
+                <table id="default-datatable" class="table align-middle nowrap">
+                    <thead>
                         <tr>
-                            <td class="text-center id"><span class="pm-id-badge">#{{ $pm->id }}</span></td>
-                            <td class="text-start name fw-semibold text-dark">{{ $pm->name }}</td>
-                            <td class="text-start code"><span class="pm-code-badge">{{ $pm->code }}</span></td>
-                            
-                            <td class="text-start type_variant">
-                                <span class="type-badge type-val" data-val="{{ $pm->packaging_type }}">{{ $pm->packaging_type }}</span>
-                                @if($pm->variant)
-                                    <span class="variant-badge variant-val" data-val="{{ $pm->variant }}">{{ $pm->variant }}</span>
-                                @else
-                                    <span class="variant-val d-none" data-val=""></span>
-                                @endif
-                            </td>
-
-                            <td class="text-start capacity-data" data-cap="{{ $pm->capacity }}" data-capunit="{{ $pm->capacity_unit_id }}">
-                                @if($pm->capacity)
-                                    <span class="fw-semibold text-dark">{{ $pm->capacity }}</span> 
-                                    <span class="text-muted small">{{ $pm->capacityUnit ? $pm->capacityUnit->short_code : '' }}</span>
-                                @else
-                                    <span class="text-muted small">N/A</span>
-                                @endif
-                            </td>
-                            
-                            <td class="text-start unit" data-unitid="{{ $pm->unit_id }}">
-                                @if($pm->unit)
-                                    <span class="unit-badge">{{ $pm->unit->short_code }}</span>
-                                @endif
-                            </td>
-
-                            <td class="text-center status" data-status="{{ $pm->status }}">
-                                @if($pm->status)
-                                    <span class="status-badge status-active"><i class="fas fa-circle me-1" style="font-size: 8px; vertical-align: middle;"></i> Active</span>
-                                @else
-                                    <span class="status-badge status-inactive"><i class="fas fa-circle me-1" style="font-size: 8px; vertical-align: middle;"></i> Inactive</span>
-                                @endif
-                            </td>
-
-                            <td class="d-none department" data-deptid="{{ $pm->department_id }}"></td>
-                            <td class="d-none min_stock">{{ $pm->min_stock }}</td>
-                            <td class="d-none description">{{ $pm->description }}</td>
-
-                            <td class="text-end pe-4">
-                                @include('admin_panel.partials.action_buttons', [
-                                    'editRoute' => route('packaging_materials.store'),
-                                    'deleteRoute' => route('packaging_materials.delete', $pm->id),
-                                    'editIsLink' => false,
-                                    'permissions' => [
-                                        'edit' => 'packaging_materials.edit',
-                                        'delete' => 'packaging_materials.delete',
-                                    ],
-                                    'deleteMsg' => 'Are you sure you want to delete this packaging material?',
-                                ])
-                            </td>
+                            <th class="text-center" style="width: 50px;">ID</th>
+                            <th>Packaging Name</th>
+                            <th>Code/SKU</th>
+                            <th>Type & Variant</th>
+                            <th>Capacity</th>
+                            <th>Stock Unit</th>
+                            <th class="text-center">Status</th>
+                            <th class="d-none">Department</th>
+                            <th class="d-none">Min Stock</th>
+                            <th class="d-none">Description</th>
+                            <th class="text-center" style="width: 130px;">Action</th>
                         </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        </div>
+                    </thead>
+                    <tbody>
+                        @foreach ($packagingMaterials as $pm)
+                            <tr class="pm-row-item">
+                                <td class="text-center id"><span class="pm-id-badge">#{{ $pm->id }}</span></td>
+                                <td class="name fw-semibold text-dark">{{ $pm->name }}</td>
+                                <td class="code"><span class="pm-code-badge">{{ $pm->code }}</span></td>
+                                
+                                <td class="type_variant">
+                                    <span class="type-badge type-val" data-val="{{ $pm->packaging_type }}">{{ $pm->packaging_type }}</span>
+                                    @if($pm->variant)
+                                        <span class="variant-badge variant-val" data-val="{{ $pm->variant }}">{{ $pm->variant }}</span>
+                                    @else
+                                        <span class="variant-val d-none" data-val=""></span>
+                                    @endif
+                                </td>
+
+                                <td class="capacity-data" data-cap="{{ $pm->capacity }}" data-capunit="{{ $pm->capacity_unit_id }}">
+                                    @if($pm->capacity)
+                                        <span class="fw-semibold text-dark">{{ $pm->capacity }}</span> 
+                                        <span class="text-muted small">{{ $pm->capacityUnit ? $pm->capacityUnit->short_code : '' }}</span>
+                                    @else
+                                        <span class="text-muted small">N/A</span>
+                                    @endif
+                                </td>
+                                
+                                <td class="unit" data-unitid="{{ $pm->unit_id }}">
+                                    @if($pm->unit)
+                                        <span class="unit-badge">{{ $pm->unit->short_code }}</span>
+                                    @endif
+                                </td>
+
+                                <td class="text-center status" data-status="{{ $pm->status }}">
+                                    @if($pm->status)
+                                        <span class="status-badge status-active"><i class="fas fa-circle me-1" style="font-size: 7px;"></i> Active</span>
+                                    @else
+                                        <span class="status-badge status-inactive"><i class="fas fa-circle me-1" style="font-size: 7px;"></i> Inactive</span>
+                                    @endif
+                                </td>
+
+                                <td class="d-none department" data-deptid="{{ $pm->department_id }}"></td>
+                                <td class="d-none min_stock">{{ $pm->min_stock }}</td>
+                                <td class="d-none description">{{ $pm->description }}</td>
+
+                                <td class="text-center">
+                                    @include('admin_panel.partials.action_buttons', [
+                                        'editRoute' => route('packaging_materials.store'),
+                                        'deleteRoute' => route('packaging_materials.delete', $pm->id),
+                                        'editIsLink' => false,
+                                        'permissions' => [
+                                            'edit' => 'packaging_materials.edit',
+                                            'delete' => 'packaging_materials.delete',
+                                        ],
+                                        'deleteMsg' => 'Are you sure you want to delete this packaging material?',
+                                    ])
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>{{-- /erp-table-wrap --}}
+
+            {{-- Mobile Cards View (<768px) --}}
+            <div class="mobile-pm-cards">
+                @foreach ($packagingMaterials as $pm)
+                    <div class="pm-mcard pm-row-item">
+                        <div class="pm-mcard-hd">
+                            <div>
+                                <span class="pm-code-badge">{{ $pm->code }}</span>
+                                <div class="fw-bold text-dark fs-6 mt-1">{{ $pm->name }}</div>
+                                <div class="d-flex flex-wrap gap-1 mt-1">
+                                    <span class="type-badge type-val" data-val="{{ $pm->packaging_type }}">{{ $pm->packaging_type }}</span>
+                                    @if($pm->variant)
+                                        <span class="variant-badge variant-val" data-val="{{ $pm->variant }}">{{ $pm->variant }}</span>
+                                    @endif
+                                    @if($pm->unit)
+                                        <span class="unit-badge">{{ $pm->unit->short_code }}</span>
+                                    @endif
+                                </div>
+                            </div>
+                            <div>
+                                @if($pm->status)
+                                    <span class="status-badge status-active">Active</span>
+                                @else
+                                    <span class="status-badge status-inactive">Inactive</span>
+                                @endif
+                            </div>
+                        </div>
+
+                        <div class="pm-mcard-body">
+                            <div>
+                                <div style="font-size:0.65rem; font-weight:700; color:var(--erp-muted); text-transform:uppercase;">Capacity</div>
+                                <div class="fw-bold text-dark fs-6">
+                                    @if($pm->capacity)
+                                        {{ $pm->capacity }} {{ $pm->capacityUnit ? $pm->capacityUnit->short_code : '' }}
+                                    @else
+                                        <span class="text-muted small">N/A</span>
+                                    @endif
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                <span class="pm-id-badge">ID: #{{ $pm->id }}</span>
+                            </div>
+                        </div>
+
+                        {{-- Hidden elements for JS edit modal compatibility --}}
+                        <span class="d-none id">#{{ $pm->id }}</span>
+                        <span class="d-none name">{{ $pm->name }}</span>
+                        <span class="d-none code">{{ $pm->code }}</span>
+                        <span class="d-none type-val" data-val="{{ $pm->packaging_type }}"></span>
+                        <span class="d-none variant-val" data-val="{{ $pm->variant }}"></span>
+                        <span class="d-none department" data-deptid="{{ $pm->department_id }}"></span>
+                        <span class="d-none unit" data-unitid="{{ $pm->unit_id }}"></span>
+                        <span class="d-none capacity-data" data-cap="{{ $pm->capacity }}" data-capunit="{{ $pm->capacity_unit_id }}"></span>
+                        <span class="d-none min_stock">{{ $pm->min_stock }}</span>
+                        <span class="d-none description">{{ $pm->description }}</span>
+                        <span class="d-none status" data-status="{{ $pm->status }}"></span>
+
+                        <div class="pm-mcard-actions">
+                            @can('packaging_materials.edit')
+                                <button type="button" class="btn-act btn-act-edit edit-btn">
+                                    <i class="fas fa-edit"></i> Edit
+                                </button>
+                            @endcan
+                            @can('packaging_materials.delete')
+                                <form action="{{ route('packaging_materials.delete', $pm->id) }}" method="GET" class="d-inline w-100" onsubmit="return confirm('Are you sure you want to delete this packaging material?')">
+                                    <button type="submit" class="btn-act btn-act-deact w-100">
+                                        <i class="fas fa-trash"></i> Delete
+                                    </button>
+                                </form>
+                            @endcan
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+
+        </div>{{-- /erp-card --}}
     </div>
 </div>
 
 {{-- Add/Edit Packaging Material Modal --}}
 <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content border-0 shadow-lg" style="border-radius: 16px; overflow: hidden;">
-            <div class="modal-header bg-white px-4 py-3 border-bottom">
-                <h5 class="modal-title fw-bold text-dark" id="exampleModalLabel"><i class="fas fa-boxes text-primary me-2" style="color: #0d9488 !important;"></i><span id="modalTitleText">Add Packaging</span></h5>
+        <div class="modal-content border-0 shadow" style="border-radius: 10px;">
+            <div class="modal-header bg-light px-4 py-3 border-bottom">
+                <h5 class="modal-title fw-bold text-dark fs-6" id="exampleModalLabel"><span id="modalTitleText">Add Packaging</span></h5>
                 <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close"></button>
             </div>
             <form class="myform" action="{{ route('packaging_materials.store') }}" method="POST">
@@ -399,18 +406,18 @@
                     <input type="hidden" name="edit_id" id="id" />
                     
                     <div class="row g-3">
-                        <div class="col-md-6 mb-3">
-                            <label for="name" class="form-label fw-semibold text-dark small">Packaging Name <span class="text-danger">*</span></label>
-                            <input type="text" name="name" class="form-control px-3 py-2" id="name" placeholder="e.g. Syrup Bottle 100ML" required style="border-radius: 10px; border: 1.5px solid #cbd5e1;" />
+                        <div class="col-md-6">
+                            <label for="name" class="form-label fw-semibold text-dark small d-block mb-1">Packaging Name <span class="text-danger">*</span></label>
+                            <input type="text" name="name" class="form-control form-control-sm px-3 py-2 w-100" id="name" placeholder="e.g. Syrup Bottle 100ML" required style="border-radius: 6px; border: 1px solid #cbd5e1;" />
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="code" class="form-label fw-semibold text-dark small">Code / SKU <span class="text-danger">*</span></label>
-                            <input type="text" name="code" class="form-control px-3 py-2" id="code" placeholder="e.g. PM-001" required style="border-radius: 10px; border: 1.5px solid #cbd5e1; text-transform: uppercase;" />
+                        <div class="col-md-6">
+                            <label for="code" class="form-label fw-semibold text-dark small d-block mb-1">Code / SKU <span class="text-danger">*</span></label>
+                            <input type="text" name="code" class="form-control form-control-sm px-3 py-2 w-100 text-uppercase" id="code" placeholder="e.g. PM-001" required style="border-radius: 6px; border: 1px solid #cbd5e1;" />
                         </div>
 
-                        <div class="col-md-4 mb-3">
-                            <label for="packaging_type" class="form-label fw-semibold text-dark small">Packaging Type <span class="text-danger">*</span></label>
-                            <select name="packaging_type" id="packaging_type" class="form-control px-3 py-2" required style="border-radius: 10px; border: 1.5px solid #cbd5e1;">
+                        <div class="col-md-4">
+                            <label for="packaging_type" class="form-label fw-semibold text-dark small d-block mb-1">Packaging Type <span class="text-danger">*</span></label>
+                            <select name="packaging_type" id="packaging_type" class="form-select form-select-sm px-3 py-2 w-100" required style="border-radius: 6px; border: 1px solid #cbd5e1;">
                                 <option value="Bottle">Bottle</option>
                                 <option value="Box">Box</option>
                                 <option value="Cap">Cap</option>
@@ -422,14 +429,14 @@
                             </select>
                         </div>
                         
-                        <div class="col-md-4 mb-3">
-                            <label for="variant" class="form-label fw-semibold text-dark small">Variant (Optional)</label>
-                            <input type="text" name="variant" class="form-control px-3 py-2" id="variant" placeholder="e.g. Glass, Plastic" style="border-radius: 10px; border: 1.5px solid #cbd5e1;" />
+                        <div class="col-md-4">
+                            <label for="variant" class="form-label fw-semibold text-dark small d-block mb-1">Variant (Optional)</label>
+                            <input type="text" name="variant" class="form-control form-control-sm px-3 py-2 w-100" id="variant" placeholder="e.g. Glass, Plastic" style="border-radius: 6px; border: 1px solid #cbd5e1;" />
                         </div>
 
-                        <div class="col-md-4 mb-3">
+                        <div class="col-md-4">
                             <label for="department_id" class="form-label fw-semibold text-dark small d-block mb-1">Department</label>
-                            <select name="department_id" id="department_id" class="form-control px-3 py-2 w-100" style="border-radius: 10px; border: 1.5px solid #cbd5e1;">
+                            <select name="department_id" id="department_id" class="form-select form-select-sm px-3 py-2 w-100" style="border-radius: 6px; border: 1px solid #cbd5e1;">
                                 <option value="">-- Select Department --</option>
                                 @foreach($departments as $dept)
                                     <option value="{{ $dept->id }}">{{ $dept->name }}</option>
@@ -437,9 +444,9 @@
                             </select>
                         </div>
 
-                        <div class="col-md-4 mb-3">
-                            <label for="unit_id" class="form-label fw-semibold text-dark small">Stock Unit <span class="text-danger">*</span></label>
-                            <select name="unit_id" id="unit_id" class="form-control px-3 py-2" required style="border-radius: 10px; border: 1.5px solid #cbd5e1;">
+                        <div class="col-md-4">
+                            <label for="unit_id" class="form-label fw-semibold text-dark small d-block mb-1">Stock Unit <span class="text-danger">*</span></label>
+                            <select name="unit_id" id="unit_id" class="form-select form-select-sm px-3 py-2 w-100" required style="border-radius: 6px; border: 1px solid #cbd5e1;">
                                 <option value="">-- Select Unit --</option>
                                 @foreach($units as $u)
                                     <option value="{{ $u->id }}">{{ $u->name }} ({{ $u->short_code }})</option>
@@ -447,14 +454,14 @@
                             </select>
                         </div>
 
-                        <div class="col-md-4 mb-3">
-                            <label for="capacity" class="form-label fw-semibold text-dark small">Capacity</label>
-                            <input type="number" step="0.0001" name="capacity" class="form-control px-3 py-2" id="capacity" placeholder="e.g. 100" style="border-radius: 10px; border: 1.5px solid #cbd5e1;" />
+                        <div class="col-md-4">
+                            <label for="capacity" class="form-label fw-semibold text-dark small d-block mb-1">Capacity</label>
+                            <input type="number" step="0.0001" name="capacity" class="form-control form-control-sm px-3 py-2 w-100" id="capacity" placeholder="e.g. 100" style="border-radius: 6px; border: 1px solid #cbd5e1;" />
                         </div>
                         
-                        <div class="col-md-4 mb-3">
-                            <label for="capacity_unit_id" class="form-label fw-semibold text-dark small">Capacity Unit</label>
-                            <select name="capacity_unit_id" id="capacity_unit_id" class="form-control px-3 py-2" style="border-radius: 10px; border: 1.5px solid #cbd5e1;">
+                        <div class="col-md-4">
+                            <label for="capacity_unit_id" class="form-label fw-semibold text-dark small d-block mb-1">Capacity Unit</label>
+                            <select name="capacity_unit_id" id="capacity_unit_id" class="form-select form-select-sm px-3 py-2 w-100" style="border-radius: 6px; border: 1px solid #cbd5e1;">
                                 <option value="">-- Select Unit --</option>
                                 @foreach($units as $u)
                                     <option value="{{ $u->id }}">{{ $u->name }} ({{ $u->short_code }})</option>
@@ -462,17 +469,17 @@
                             </select>
                         </div>
 
-                        <div class="col-md-6 mb-3">
-                            <label for="min_stock" class="form-label fw-semibold text-dark small">Min Stock Level</label>
-                            <input type="number" step="0.0001" name="min_stock" class="form-control px-3 py-2" id="min_stock" placeholder="0.00" style="border-radius: 10px; border: 1.5px solid #cbd5e1;" />
+                        <div class="col-md-6">
+                            <label for="min_stock" class="form-label fw-semibold text-dark small d-block mb-1">Min Stock Level</label>
+                            <input type="number" step="0.0001" name="min_stock" class="form-control form-control-sm px-3 py-2 w-100" id="min_stock" placeholder="0.00" style="border-radius: 6px; border: 1px solid #cbd5e1;" />
                         </div>
 
-                        <div class="col-md-12 mb-3">
-                            <label for="description" class="form-label fw-semibold text-dark small">Description</label>
-                            <textarea name="description" class="form-control px-3 py-2" id="description" rows="2" placeholder="Optional details..." style="border-radius: 10px; border: 1.5px solid #cbd5e1;"></textarea>
+                        <div class="col-md-12">
+                            <label for="description" class="form-label fw-semibold text-dark small d-block mb-1">Description</label>
+                            <textarea name="description" class="form-control form-control-sm px-3 py-2 w-100" id="description" rows="2" placeholder="Optional details..." style="border-radius: 6px; border: 1px solid #cbd5e1;"></textarea>
                         </div>
 
-                        <div class="col-md-12 mb-1 d-flex align-items-center">
+                        <div class="col-md-12 d-flex align-items-center">
                             <label class="form-label fw-semibold text-dark small mb-0 me-3">Status</label>
                             <input type="hidden" name="status" value="0">
                             <label class="switch mb-0">
@@ -483,11 +490,11 @@
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer bg-light px-4 py-3 border-top">
-                    <button type="button" class="btn btn-outline-secondary px-4 fw-semibold" data-dismiss="modal" style="border-radius: 8px;">Close</button>
+                <div class="modal-footer bg-light px-4 py-2 border-top">
+                    <button type="button" class="btn btn-sm btn-secondary px-3" data-dismiss="modal">Close</button>
                     @canany(['packaging_materials.create', 'packaging_materials.edit'])
-                        <button type="submit" class="btn btn-primary px-4 fw-bold save-btn" style="border-radius: 8px; background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%); border: none;">
-                            <i class="fas fa-check me-1"></i> Save Packaging
+                        <button type="submit" class="btn btn-sm btn-primary px-3 save-btn">
+                            Save Packaging
                         </button>
                     @endcanany
                 </div>
@@ -501,7 +508,6 @@
 @section('js')
 <script src="{{ asset('assets/js/mycode.js') }}"></script>
 <script>
-    // Status Toggle Label
     $('#status').on('change', function() {
         if($(this).is(':checked')) {
             $('#statusLabel').text('Active').removeClass('text-danger').addClass('text-success');
@@ -520,23 +526,23 @@
     });
 
     $(document).on('click', '.edit-btn', function() {
-        var tr = $(this).closest("tr");
-        var id = tr.find(".id").text().replace('#', '').trim();
-        var name = tr.find(".name").text().trim();
-        var code = tr.find(".code").text().trim();
+        var item = $(this).closest(".pm-row-item");
+        var id = item.find(".id").text().replace('#', '').trim();
+        var name = item.find(".name").text().trim();
+        var code = item.find(".code").text().trim();
         
-        var type = tr.find(".type-val").data('val');
-        var variant = tr.find(".variant-val").data('val');
+        var type = item.find(".type-val").data('val');
+        var variant = item.find(".variant-val").data('val');
 
-        var dept_id = tr.find(".department").data('deptid');
-        var unit_id = tr.find(".unit").data('unitid');
+        var dept_id = item.find(".department").data('deptid');
+        var unit_id = item.find(".unit").data('unitid');
         
-        var capacity = tr.find(".capacity-data").data('cap');
-        var capacity_unit_id = tr.find(".capacity-data").data('capunit');
+        var capacity = item.find(".capacity-data").data('cap');
+        var capacity_unit_id = item.find(".capacity-data").data('capunit');
 
-        var min_stock = tr.find(".min_stock").text().trim();
-        var desc = tr.find(".description").text().trim();
-        var status = tr.find(".status").data('status');
+        var min_stock = item.find(".min_stock").text().trim();
+        var desc = item.find(".description").text().trim();
+        var status = item.find(".status").data('status');
 
         $('#id').val(id);
         $('#name').val(name);
@@ -577,15 +583,17 @@
     });
 
     $(document).ready(function() {
-        $('#default-datatable').DataTable({
-            "pageLength": 10,
-            "lengthMenu": [5, 10, 25, 50, 100],
-            "order": [[0, 'desc']],
-            "language": {
-                "search": "Search Packaging:",
-                "lengthMenu": "Show _MENU_ entries"
-            }
-        });
+        if($('#default-datatable').length) {
+            $('#default-datatable').DataTable({
+                "pageLength": 10,
+                "lengthMenu": [5, 10, 25, 50, 100],
+                "order": [[0, 'desc']],
+                "language": {
+                    "search": "Search Packaging:",
+                    "lengthMenu": "Show _MENU_ entries"
+                }
+            });
+        }
     });
 </script>
 @endsection

@@ -5,12 +5,14 @@ namespace App\Http\Controllers;
 use App\Models\Formulation;
 use App\Models\MaterialRequisition;
 use App\Models\MaterialStockMovement;
+use App\Models\PackagingMaterial;
 use App\Models\Product;
 use App\Models\ProductionBatch;
 use App\Models\ProductionBatchItem;
 use App\Models\RawMaterial;
 use App\Models\Sale;
 use App\Models\StockMovement;
+use App\Models\SystemNotification;
 use App\Models\WarehouseStock;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -41,13 +43,31 @@ class ProductionController extends Controller
             ->orderBy('id', 'desc')
             ->get();
 
+        foreach ($sales as $s) {
+            foreach ($s->items as $item) {
+                if (!$item->product_id) continue;
+                $ordered = (float) ($item->total_pieces > 0 ? $item->total_pieces : ($item->qty * ($item->product->pieces_per_box ?? 1)));
+                $produced = (float) ProductionBatch::where('sale_id', $s->id)
+                    ->where('product_id', $item->product_id)
+                    ->sum('quantity');
+
+                $item->total_ordered_pieces = $ordered;
+                $item->already_produced_pieces = $produced;
+                $item->remaining_pieces = max(0, $ordered - $produced);
+            }
+        }
+
         $selectedSaleId = $request->input('sale_id');
         $selectedProductId = $request->input('product_id');
 
         $lastBatchId = ProductionBatch::max('id') ?? 0;
         $nextBatchNo = 'BATCH-' . date('Y') . '-' . str_pad($lastBatchId + 1, 4, '0', STR_PAD_LEFT);
 
-        return view('admin_panel.production.create', compact('products', 'sales', 'nextBatchNo', 'selectedSaleId', 'selectedProductId'));
+        $formulations = Formulation::with(['rawMaterials.rawMaterial.unit', 'packagingMaterials.packagingMaterial.unit'])
+            ->get()
+            ->groupBy('product_id');
+
+        return view('admin_panel.production.create', compact('products', 'sales', 'nextBatchNo', 'selectedSaleId', 'selectedProductId', 'formulations'));
     }
 
     public function store(Request $request)
@@ -222,30 +242,79 @@ class ProductionController extends Controller
                 'note' => "Produced Batch #{$batch->batch_no} ({$qtyToProduce} pcs)"
             ]);
 
-            // 6. Update linked Requisition and Customer Sale Order status
+            // 6. Update linked Requisition and Customer Sale Order status (Partial vs Full completion)
+            $successMsg = "Batch #{$batch->batch_no} produced successfully! Finished product stock added to warehouse.";
+
             if ($saleId) {
-                $reqs = MaterialRequisition::where('sale_id', $saleId)->get();
-                $reqIds = $reqs->pluck('id')->toArray();
+                $sale = Sale::with('items.product')->find($saleId);
+                if ($sale) {
+                    $allSaleProductsCompleted = true;
 
-                MaterialRequisition::where('sale_id', $saleId)->update([
-                    'status' => 'fulfilled',
-                    'notes' => "Production completed via Batch #{$batch->batch_no}"
-                ]);
+                    foreach ($sale->items as $sItem) {
+                        if ($sItem->is_manual || !$sItem->product_id) continue;
 
-                if (!empty($reqIds)) {
-                    SystemNotification::where('source_type', 'App\Models\MaterialRequisition')
-                        ->whereIn('source_id', $reqIds)
-                        ->delete();
+                        $orderedPcs = (float) ($sItem->total_pieces > 0 ? $sItem->total_pieces : ($sItem->qty * ($sItem->product->pieces_per_box ?? 1)));
+                        $producedPcs = (float) ProductionBatch::where('sale_id', $saleId)
+                            ->where('product_id', $sItem->product_id)
+                            ->sum('quantity');
+
+                        if ($producedPcs < $orderedPcs) {
+                            $allSaleProductsCompleted = false;
+                            break;
+                        }
+                    }
+
+                    $totalProducedForProduct = (float) ProductionBatch::where('sale_id', $saleId)
+                        ->where('product_id', $product->id)
+                        ->sum('quantity');
+
+                    $orderedForProduct = 0;
+                    foreach ($sale->items as $sItem) {
+                        if ($sItem->product_id == $product->id) {
+                            $orderedForProduct += (float) ($sItem->total_pieces > 0 ? $sItem->total_pieces : ($sItem->qty * ($product->pieces_per_box ?? 1)));
+                        }
+                    }
+                    if ($orderedForProduct <= 0) $orderedForProduct = $qtyToProduce;
+
+                    $remainingForProduct = max(0, $orderedForProduct - $totalProducedForProduct);
+
+                    if ($allSaleProductsCompleted) {
+                        MaterialRequisition::where('sale_id', $saleId)->update([
+                            'status' => 'fulfilled',
+                            'notes' => "Production Fully Completed ({$totalProducedForProduct} / {$orderedForProduct} Pcs) via Batch #{$batch->batch_no}"
+                        ]);
+
+                        $reqs = MaterialRequisition::where('sale_id', $saleId)->get();
+                        $reqIds = $reqs->pluck('id')->toArray();
+                        if (!empty($reqIds)) {
+                            SystemNotification::where('source_type', 'App\Models\MaterialRequisition')
+                                ->whereIn('source_id', $reqIds)
+                                ->delete();
+                        }
+
+                        Sale::where('id', $saleId)->update([
+                            'sale_status' => 'ready_for_delivery'
+                        ]);
+
+                        $successMsg = "Batch #{$batch->batch_no} produced! Order #{$sale->invoice_no} is fully completed ({$totalProducedForProduct} Pcs) & ready for delivery.";
+                    } else {
+                        MaterialRequisition::where('sale_id', $saleId)->update([
+                            'status' => 'in_production',
+                            'notes' => "Partially Produced: {$totalProducedForProduct} / {$orderedForProduct} Pcs (Remaining: {$remainingForProduct} Pcs via Batch #{$batch->batch_no})"
+                        ]);
+
+                        Sale::where('id', $saleId)->update([
+                            'sale_status' => 'booked'
+                        ]);
+
+                        $successMsg = "Batch #{$batch->batch_no} produced! Partial production: {$totalProducedForProduct} / {$orderedForProduct} Pcs ({$remainingForProduct} Pcs remaining to produce & deliver).";
+                    }
                 }
-
-                Sale::where('id', $saleId)->update([
-                    'sale_status' => 'ready'
-                ]);
             }
 
             DB::commit();
 
-            return redirect()->route('production.index')->with('success', "Batch #{$batch->batch_no} produced successfully! Finished product stock added to warehouse.");
+            return redirect()->route('production.index')->with('success', $successMsg);
 
         } catch (\Exception $e) {
             DB::rollBack();

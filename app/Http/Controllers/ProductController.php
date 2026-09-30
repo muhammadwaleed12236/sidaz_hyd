@@ -813,7 +813,7 @@ class ProductController extends Controller
                     'product_id' => $product->id,
                     'department_id' => $request->department_id ?? null,
                     'batch_size' => $request->batch_size ?? 1,
-                    'batch_unit_id' => $request->unit ?? null,
+                    'batch_unit_id' => $unitVal,
                     'version' => '1.0',
                     'effective_date' => date('Y-m-d'),
                     'status' => 'active',
@@ -1354,13 +1354,13 @@ class ProductController extends Controller
                 'pieces_per_box' => 'required|integer|min:1',
                 'boxes_quantity' => 'required|integer|min:0',
                 'loose_pieces' => 'nullable|integer|min:0',
-                'sale_price_per_box' => 'required|numeric|min:0',
+                'sale_price_per_box' => 'nullable|numeric|min:0',
                 'purchase_price_per_piece' => 'nullable|numeric|min:0',
             ]);
         } else {
             $rules = array_merge($rules, [
                 'piece_quantity' => 'nullable|integer|min:0', // Allowed 0 stock
-                'sale_price_per_box' => 'required|numeric|min:0',
+                'sale_price_per_box' => 'nullable|numeric|min:0',
                 'purchase_price_per_piece' => 'nullable|numeric|min:0',
             ]);
         }

@@ -32,16 +32,25 @@ class VendorController extends Controller
     // Store or update vendor information
     public function store(Request $request)
     {
+        if ($request->has('mobile') && !$request->filled('phone')) {
+            $request->merge(['phone' => $request->mobile]);
+        }
+
         $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
             'name' => 'required|string|max:255',
-            'phone' => 'required|string|max:255',
+            'phone' => 'nullable|string|max:255',
             'credit_limit' => 'nullable|numeric',
             'opening_balance' => 'nullable|numeric',
         ]);
 
         if ($validator->fails()) {
             if ($request->ajax() || $request->wantsJson()) {
-                return response()->json(['error' => $validator->errors()->first()], 422);
+                return response()->json([
+                    'ok' => false,
+                    'error' => $validator->errors()->first(),
+                    'message' => $validator->errors()->first(),
+                    'errors' => $validator->errors()
+                ], 422);
             }
             return back()->with('error', $validator->errors()->first())->withInput();
         }

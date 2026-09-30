@@ -579,15 +579,15 @@
                     toggleGroup(grpLoose, false);
                     unitLabels.forEach(l => l.innerText = '(pc)');
  
-                    setRequired(['pieces_per_box', 'boxes_quantity', 'sale_price_per_box', 'purchase_price_per_piece'], true);
-                    setRequired(['piece_quantity'], false);
+                    setRequired(['pieces_per_box', 'boxes_quantity', 'purchase_price_per_piece'], true);
+                    setRequired(['sale_price_per_box', 'piece_quantity'], false);
  
                 } else {
                     toggleGroup(grpPieceOnly, false);
                     unitLabels.forEach(l => l.innerText = '(' + (mode === 'by_pieces' ? 'pc' : (mode === 'by_meter' ? 'm' : 'kg')) + ')');
  
-                    setRequired(['piece_quantity', 'sale_price_per_box', 'purchase_price_per_piece'], true);
-                    setRequired(['pieces_per_box', 'boxes_quantity'], false);
+                    setRequired(['piece_quantity', 'purchase_price_per_piece'], true);
+                    setRequired(['sale_price_per_box', 'pieces_per_box', 'boxes_quantity'], false);
                 }
  
                 calculate();

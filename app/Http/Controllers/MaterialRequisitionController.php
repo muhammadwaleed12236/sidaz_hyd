@@ -12,8 +12,12 @@ class MaterialRequisitionController extends Controller
     {
         $status = $request->get('status', 'active');
 
-        $query = MaterialRequisition::with(['sale.customer_relation', 'items.rawMaterial.unit'])
-            ->orderBy('id', 'desc');
+        $query = MaterialRequisition::with([
+            'sale.customer_relation',
+            'sale.items.product.formulations.rawMaterials.rawMaterial.unit',
+            'sale.items.product.formulations.packagingMaterials.packagingMaterial.unit',
+            'items.rawMaterial.unit'
+        ])->orderBy('id', 'desc');
 
         if ($status === 'active') {
             $query->whereIn('status', ['pending', 'in_production']);

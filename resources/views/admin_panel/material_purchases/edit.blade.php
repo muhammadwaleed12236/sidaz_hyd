@@ -33,8 +33,168 @@
         box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.15);
     }
 
-    .table-items th { background: #f8fafc; color: #475569; font-size: 0.75rem; text-transform: uppercase; }
-    .table-items td { vertical-align: middle; }
+    /* EXCEL SPREADSHEET TABLE GRID STYLING */
+    .table-excel-container {
+        border: 1px solid #cbd5e1;
+        border-radius: 4px;
+        overflow-x: auto;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        background-color: #ffffff;
+    }
+
+    .table-excel {
+        border-collapse: collapse !important;
+        width: 100%;
+        margin-bottom: 0 !important;
+        background-color: #ffffff;
+    }
+
+    .table-excel th {
+        background: #f1f5f9 !important;
+        color: #334155 !important;
+        font-size: 0.72rem !important;
+        font-weight: 700 !important;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 8px 10px !important;
+        border: 1px solid #cbd5e1 !important;
+        vertical-align: middle;
+        text-align: center;
+        user-select: none;
+    }
+
+    .table-excel td {
+        padding: 0 !important;
+        margin: 0 !important;
+        border: 1px solid #cbd5e1 !important;
+        vertical-align: middle;
+        background: #ffffff;
+        position: relative;
+    }
+
+    .table-excel td.excel-row-num {
+        background-color: #f8fafc !important;
+        color: #64748b !important;
+        font-weight: 700;
+        font-size: 0.8rem;
+        text-align: center;
+        width: 36px;
+        padding: 8px 4px !important;
+        user-select: none;
+        border-right: 2px solid #cbd5e1 !important;
+    }
+
+    /* Excel Cell Inputs - Seamless & Edge to Edge */
+    .excel-input {
+        width: 100% !important;
+        height: 38px !important;
+        border: none !important;
+        border-radius: 0 !important;
+        padding: 6px 10px !important;
+        font-size: 0.85rem !important;
+        background: transparent !important;
+        outline: none !important;
+        box-shadow: none !important;
+        color: #1e293b;
+        margin: 0 !important;
+    }
+
+    .excel-input:focus {
+        background-color: #f0fdf4 !important;
+        outline: 2px solid #16a34a !important;
+        outline-offset: -2px;
+        z-index: 10;
+        position: relative;
+    }
+
+    .excel-input-readonly {
+        background-color: #f8fafc !important;
+        color: #2563eb !important;
+        font-weight: 700 !important;
+        cursor: default;
+    }
+
+    .table-excel .select2-container--default .select2-selection--single {
+        border: none !important;
+        border-radius: 0 !important;
+        height: 38px !important;
+        padding: 4px 6px !important;
+        background: transparent !important;
+        display: flex !important;
+        align-items: center !important;
+    }
+
+    .table-excel .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: 28px !important;
+        font-size: 0.85rem !important;
+        color: #1e293b !important;
+        padding-left: 4px !important;
+        width: 100%;
+    }
+
+    .table-excel .select2-container--default.select2-container--focus .select2-selection--single,
+    .table-excel .select2-container--default.select2-container--open .select2-selection--single {
+        outline: 2px solid #16a34a !important;
+        outline-offset: -2px;
+        background-color: #f0fdf4 !important;
+        z-index: 10;
+    }
+
+    .table-excel .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 36px !important;
+        right: 4px !important;
+    }
+
+    .excel-date-box {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        padding: 3px 4px;
+    }
+
+    .excel-date-input {
+        height: 22px !important;
+        font-size: 0.73rem !important;
+        padding: 1px 4px !important;
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 2px !important;
+        background: #ffffff;
+    }
+
+    .excel-date-input:focus {
+        border-color: #16a34a !important;
+        outline: 1px solid #16a34a !important;
+        background-color: #f0fdf4 !important;
+    }
+
+    .excel-unit-cell {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 38px;
+        background-color: #fafafa;
+        color: #475569;
+        font-weight: 600;
+        font-size: 0.78rem;
+    }
+
+    .btn-excel-delete {
+        background: transparent;
+        border: none;
+        color: #94a3b8;
+        width: 100%;
+        height: 38px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+
+    .btn-excel-delete:hover {
+        background-color: #fef2f2;
+        color: #ef4444;
+    }
     
     .btn-add-row {
         background: #eff6ff; color: #2563eb; border: 1px dashed #93c5fd; padding: 8px 16px; font-weight: 600; border-radius: 8px; transition: 0.2s;
@@ -98,47 +258,53 @@
                 </div>
 
                 <h6 class="fw-bold text-primary mb-3"><i class="fas fa-boxes me-1"></i> Purchase Items</h6>
-                <div class="table-responsive mb-3">
-                    <table class="table table-bordered table-items" id="itemsTable">
+                <div class="table-excel-container mb-3">
+                    <table class="table-excel" id="itemsTable">
                         <thead>
                             <tr>
-                                <th style="width: 20%;">Item</th>
-                                <th style="width: 10%;">Qty</th>
-                                <th style="width: 8%;">Unit</th>
-                                <th style="width: 10%;">Price</th>
-                                <th style="width: 8%;">Disc</th>
-                                <th style="width: 8%;">Tax</th>
-                                <th style="width: 10%;">Batch</th>
-                                <th style="width: 12%;">Dates (Mfg/Exp)</th>
-                                <th style="width: 9%;">Total</th>
-                                <th style="width: 5%;" class="text-center"><i class="fas fa-cog"></i></th>
+                                <th style="width: 36px;">#</th>
+                                <th style="min-width: 220px;">Item</th>
+                                <th style="width: 95px;">Qty</th>
+                                <th style="width: 70px;">Unit</th>
+                                <th style="width: 110px;">Price</th>
+                                <th style="width: 90px;">Disc</th>
+                                <th style="width: 90px;">Tax</th>
+                                <th style="width: 100px;">Batch</th>
+                                <th style="width: 135px;">Dates (Mfg/Exp)</th>
+                                <th style="width: 115px;" class="text-end pe-2">Total</th>
+                                <th style="width: 40px;">×</th>
                             </tr>
                         </thead>
                         <tbody id="itemsBody">
                             @foreach($purchase->items as $idx => $item)
                             <tr class="item-row">
+                                <td class="excel-row-num row-number">{{ $idx + 1 }}</td>
                                 <td>
                                     <select name="item_type[]" class="d-none row-item-type"><option value="{{ class_basename($item->item_type) }}"></option></select>
                                     <select name="item_id[]" class="form-control select2 item-select" required onchange="updateRowItemType(this)" data-selected-id="{{ $item->item_id }}" data-selected-type="{{ class_basename($item->item_type) }}">
                                         <option value="">Select Item</option>
                                     </select>
                                 </td>
-                                <td><input type="number" step="0.0001" name="qty[]" class="form-control item-qty form-control-sm" value="{{ $item->qty }}" required oninput="calcSubtotal(this)"></td>
-                                <td class="text-center"><span class="badge bg-secondary item-unit" style="font-size:11px;">-</span></td>
-                                <td><input type="number" step="0.01" name="unit_price[]" class="form-control item-price form-control-sm" value="{{ $item->unit_price }}" required oninput="calcSubtotal(this)"></td>
-                                <td><input type="number" step="0.01" name="discount[]" class="form-control item-disc form-control-sm" value="{{ $item->discount }}" oninput="calcSubtotal(this)"></td>
-                                <td><input type="number" step="0.01" name="tax[]" class="form-control item-tax form-control-sm" value="{{ $item->tax }}" oninput="calcSubtotal(this)"></td>
-                                <td><input type="text" name="batch_no[]" class="form-control form-control-sm" value="{{ $item->batch_no }}" placeholder="Batch"></td>
+                                <td><input type="number" step="0.0001" name="qty[]" class="excel-input item-qty text-end fw-semibold" value="{{ $item->qty }}" required oninput="calcSubtotal(this)"></td>
+                                <td><div class="excel-unit-cell"><span class="item-unit">-</span></div></td>
+                                <td><input type="number" step="0.01" name="unit_price[]" class="excel-input item-price text-end fw-semibold" value="{{ $item->unit_price }}" required oninput="calcSubtotal(this)"></td>
+                                <td><input type="number" step="0.01" name="discount[]" class="excel-input item-disc text-end text-danger" value="{{ $item->discount }}" oninput="calcSubtotal(this)"></td>
+                                <td><input type="number" step="0.01" name="tax[]" class="excel-input item-tax text-end text-info" value="{{ $item->tax }}" oninput="calcSubtotal(this)"></td>
+                                <td><input type="text" name="batch_no[]" class="excel-input" value="{{ $item->batch_no }}" placeholder="Batch"></td>
                                 <td>
-                                    <input type="date" name="mfg_date[]" class="form-control form-control-sm mb-1" value="{{ $item->mfg_date }}" title="Mfg Date">
-                                    <input type="date" name="exp_date[]" class="form-control form-control-sm" value="{{ $item->exp_date }}" title="Exp Date">
+                                    <div class="excel-date-box">
+                                        <input type="date" name="mfg_date[]" class="excel-date-input" value="{{ $item->mfg_date }}" title="Mfg Date">
+                                        <input type="date" name="exp_date[]" class="excel-date-input" value="{{ $item->exp_date }}" title="Exp Date">
+                                    </div>
                                 </td>
-                                <td><input type="text" class="form-control item-subtotal bg-light fw-bold form-control-sm" value="{{ $item->subtotal }}" data-raw-sub="{{ $item->qty * $item->unit_price }}" data-raw-disc="{{ $item->discount }}" data-raw-tax="{{ $item->tax }}" readonly></td>
-                                <td class="text-center"><button type="button" class="btn btn-sm btn-danger text-white border-0 remove-row" style="padding: 2px 6px;"><i class="fas fa-times"></i></button></td>
+                                <td><input type="text" class="excel-input item-subtotal excel-input-readonly text-end pe-2" value="{{ $item->subtotal }}" data-raw-sub="{{ $item->qty * $item->unit_price }}" data-raw-disc="{{ $item->discount }}" data-raw-tax="{{ $item->tax }}" readonly></td>
+                                <td><button type="button" class="btn-excel-delete remove-row" title="Delete Row"><i class="fas fa-times"></i></button></td>
                             </tr>
                             @endforeach
                         </tbody>
                     </table>
+                </div>
+                <div class="mb-3">
                     <button type="button" class="btn-add-row" onclick="addRow()"><i class="fas fa-plus me-1"></i> Add Another Item</button>
                 </div>
 
@@ -246,13 +412,16 @@
 
     function filterItems() {
         const type = $('#purchase_type').val();
+    function buildItemOptionsHtml() {
+        const type = $('#purchase_type').val();
         let options = '<option value="">Select Item</option>';
         
         if (type === 'Raw Material' || type === 'Mixed') {
             if(type === 'Mixed') options += '<optgroup label="Raw Materials">';
             rawMaterials.forEach(item => {
                 let unitName = item.unit ? item.unit.name : '-';
-                options += `<option value="${item.id}" data-type="RawMaterial" data-unit="${unitName}">${item.name} (${item.code})</option>`;
+                let price = item.purchase_price || item.price || 0;
+                options += `<option value="${item.id}" data-type="RawMaterial" data-unit="${unitName}" data-price="${price}">${item.name} (${item.code})</option>`;
             });
             if(type === 'Mixed') options += '</optgroup>';
         }
@@ -261,23 +430,27 @@
             if(type === 'Mixed') options += '<optgroup label="Packaging Materials">';
             packagingMaterials.forEach(item => {
                 let unitName = item.unit ? item.unit.name : '-';
-                options += `<option value="${item.id}" data-type="PackagingMaterial" data-unit="${unitName}">${item.name} (${item.code})</option>`;
+                let price = item.purchase_price || item.price || 0;
+                options += `<option value="${item.id}" data-type="PackagingMaterial" data-unit="${unitName}" data-price="${price}">${item.name} (${item.code})</option>`;
             });
             if(type === 'Mixed') options += '</optgroup>';
         }
-        
-        $('.item-select').each(function() {
+
+        return options;
+    }
+
+    function populateSelectOptions($targetSelects) {
+        const options = buildItemOptionsHtml();
+        $targetSelects.each(function() {
             const currentVal = $(this).val() || $(this).data('selected-id');
             const requiredType = $(this).data('selected-type');
             
-            // If select2 is initialized, destroy it first to update options cleanly
             if ($(this).hasClass("select2-hidden-accessible")) {
                 $(this).select2('destroy');
             }
             $(this).html(options);
             
             if(currentVal) {
-                // If we need to match type as well (since same ID might exist in both Raw/Packaging)
                 if(requiredType) {
                     let opt = $(this).find(`option[value="${currentVal}"][data-type="${requiredType}"]`);
                     if(opt.length > 0) {
@@ -290,41 +463,72 @@
                     }
                 }
             }
-            // Re-initialize select2
             $(this).select2({ width: '100%' });
         });
     }
 
+    function filterItems() {
+        populateSelectOptions($('.item-select'));
+    }
+
     function updateRowItemType(selectElem) {
-        const selectedOpt = $(selectElem).find('option:selected');
+        const $select = $(selectElem);
+        const selectedOpt = $select.find('option:selected');
         const itemType = selectedOpt.data('type');
         const unit = selectedOpt.data('unit') || '-';
-        $(selectElem).closest('tr').find('.row-item-type option').val(itemType);
-        $(selectElem).closest('tr').find('.item-unit').text(unit);
+        const price = parseFloat(selectedOpt.data('price')) || 0;
+
+        const $row = $select.closest('tr');
+        $row.find('.row-item-type option').val(itemType);
+        $row.find('.item-unit').text(unit);
+
+        const currentItemId = $select.val();
+        const prevItemId = $select.data('prev-item-id');
+
+        if (currentItemId && currentItemId !== prevItemId) {
+            $select.data('prev-item-id', currentItemId);
+            const priceInput = $row.find('.item-price');
+            if (price > 0) {
+                priceInput.val(price.toFixed(2));
+            }
+            calcSubtotal(priceInput);
+        }
+    }
+
+    function updateRowIndexes() {
+        $('#itemsBody tr.item-row').each(function(index) {
+            $(this).find('.row-number').text(index + 1);
+        });
     }
 
     function addRow() {
-        const tr = `
+        const trHtml = `
         <tr class="item-row">
+            <td class="excel-row-num row-number">1</td>
             <td>
                 <select name="item_type[]" class="d-none row-item-type"><option value="RawMaterial"></option></select>
                 <select name="item_id[]" class="form-control select2 item-select" required onchange="updateRowItemType(this)"></select>
             </td>
-            <td><input type="number" step="0.0001" name="qty[]" class="form-control item-qty form-control-sm" required oninput="calcSubtotal(this)"></td>
-            <td class="text-center"><span class="badge bg-secondary item-unit" style="font-size:11px;">-</span></td>
-            <td><input type="number" step="0.01" name="unit_price[]" class="form-control item-price form-control-sm" required oninput="calcSubtotal(this)"></td>
-            <td><input type="number" step="0.01" name="discount[]" class="form-control item-disc form-control-sm" value="0" oninput="calcSubtotal(this)"></td>
-            <td><input type="number" step="0.01" name="tax[]" class="form-control item-tax form-control-sm" value="0" oninput="calcSubtotal(this)"></td>
-            <td><input type="text" name="batch_no[]" class="form-control form-control-sm" placeholder="Batch"></td>
+            <td><input type="number" step="0.0001" name="qty[]" class="excel-input item-qty text-end fw-semibold" required oninput="calcSubtotal(this)"></td>
+            <td><div class="excel-unit-cell"><span class="item-unit">-</span></div></td>
+            <td><input type="number" step="0.01" name="unit_price[]" class="excel-input item-price text-end fw-semibold" required oninput="calcSubtotal(this)"></td>
+            <td><input type="number" step="0.01" name="discount[]" class="excel-input item-disc text-end text-danger" value="0" oninput="calcSubtotal(this)"></td>
+            <td><input type="number" step="0.01" name="tax[]" class="excel-input item-tax text-end text-info" value="0" oninput="calcSubtotal(this)"></td>
+            <td><input type="text" name="batch_no[]" class="excel-input" placeholder="Batch"></td>
             <td>
-                <input type="date" name="mfg_date[]" class="form-control form-control-sm mb-1" title="Mfg Date">
-                <input type="date" name="exp_date[]" class="form-control form-control-sm" title="Exp Date">
+                <div class="excel-date-box">
+                    <input type="date" name="mfg_date[]" class="excel-date-input" title="Mfg Date">
+                    <input type="date" name="exp_date[]" class="excel-date-input" title="Exp Date">
+                </div>
             </td>
-            <td><input type="text" class="form-control item-subtotal bg-light fw-bold form-control-sm" readonly></td>
-            <td class="text-center"><button type="button" class="btn btn-sm btn-danger text-white border-0 remove-row" style="padding: 2px 6px;"><i class="fas fa-times"></i></button></td>
+            <td><input type="text" class="excel-input item-subtotal excel-input-readonly text-end pe-2" readonly></td>
+            <td><button type="button" class="btn-excel-delete remove-row" title="Delete Row"><i class="fas fa-times"></i></button></td>
         </tr>`;
-        $('#itemsBody').append(tr);
-        filterItems(); // Re-populate new select
+
+        const $newRow = $(trHtml);
+        $('#itemsBody').append($newRow);
+        populateSelectOptions($newRow.find('.item-select'));
+        updateRowIndexes();
     }
 
     $(document).on('click', '.remove-row', function() {

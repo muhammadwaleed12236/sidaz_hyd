@@ -2,13 +2,12 @@
 @section('content')
 
 <style>
-    /* ── LAYOUT RESET: make sure page uses full width cleanly ── */
-    .erp-page { background: #f8fafc; min-height: calc(100vh - 80px); padding: 20px 0; font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+    /* ── LAYOUT RESET & ERP COMPACT DESIGN ── */
+    .erp-page { background: #f8fafc; min-height: calc(100vh - 60px); padding: 12px 0; font-family: 'Inter', system-ui, -apple-system, sans-serif; }
     .erp-page .container-fluid { max-width: 100%; box-sizing: border-box; }
 
-    /* ── ERP Product Page – Premium Design System ── */
     :root {
-        --erp-primary:    #6366f1;
+        --erp-primary:    #4f46e5;
         --erp-primary-lt: #eef2ff;
         --erp-success:    #10b981;
         --erp-success-lt: #ecfdf5;
@@ -16,41 +15,16 @@
         --erp-warning-lt: #fffbeb;
         --erp-danger:     #ef4444;
         --erp-danger-lt:  #fef2f2;
-        --erp-info:       #3b82f6;
-        --erp-info-lt:    #eff6ff;
         --erp-border:     #e2e8f0;
         --erp-bg:         #f8fafc;
         --erp-card-bg:    #ffffff;
         --erp-text:       #0f172a;
         --erp-muted:      #64748b;
-        --erp-radius:     14px;
-        --erp-shadow:     0 2px 8px rgba(15,23,42,0.04), 0 1px 3px rgba(15,23,42,0.02);
-        --erp-shadow-md:  0 8px 30px rgba(15,23,42,0.08);
+        --erp-radius:     8px;
+        --erp-shadow:     0 1px 3px rgba(15,23,42,0.05);
     }
 
-    /* ── Stats Cards ── */
-    .stat-card {
-        background: var(--erp-card-bg);
-        border-radius: var(--erp-radius);
-        border: 1px solid var(--erp-border);
-        box-shadow: var(--erp-shadow);
-        padding: 16px 18px;
-        display: flex;
-        align-items: center;
-        gap: 14px;
-        transition: transform .2s ease, box-shadow .2s ease;
-    }
-    .stat-card:hover { transform: translateY(-2px); box-shadow: var(--erp-shadow-md); }
-    .stat-icon {
-        width: 44px; height: 44px; border-radius: 12px;
-        display: flex; align-items: center; justify-content: center;
-        font-size: 18px; flex-shrink: 0;
-    }
-    .stat-card .stat-label { font-size: .73rem; font-weight: 700; color: var(--erp-muted); text-transform: uppercase; letter-spacing: .5px; }
-    .stat-card .stat-value { font-size: 1.4rem; font-weight: 800; color: var(--erp-text); line-height: 1.2; }
-    .stat-card .stat-sub   { font-size: .72rem; color: var(--erp-muted); margin-top: 2px; }
-
-    /* ── Main Card ── */
+    /* ── Main ERP Card Container ── */
     .erp-card {
         background: var(--erp-card-bg);
         border-radius: var(--erp-radius);
@@ -58,41 +32,97 @@
         box-shadow: var(--erp-shadow);
         overflow: hidden;
     }
+
+    /* ── Compact Header Bar ── */
     .erp-card-header {
-        padding: 16px 20px;
+        padding: 10px 16px;
         border-bottom: 1px solid var(--erp-border);
         display: flex;
         align-items: center;
         justify-content: space-between;
         flex-wrap: wrap;
-        gap: 12px;
+        gap: 10px;
+        background: #ffffff;
     }
-    .erp-card-header .page-title { font-size: 1.05rem; font-weight: 800; color: var(--erp-text); margin: 0; display: flex; align-items: center; gap: 8px; }
-    .erp-card-header .page-sub   { font-size: .78rem; color: var(--erp-muted); margin: 2px 0 0 0; }
-    
-    /* ── Header action buttons group ── */
+    /* ── Compact Header Bar ── */
+    .erp-card-header {
+        padding: 12px 18px;
+        border-bottom: 1px solid var(--erp-border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 10px;
+        background: #ffffff;
+    }
+    .page-head-title {
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: var(--erp-text);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .head-kpis {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-left: 8px;
+    }
+    .kpi-pill {
+        font-size: 0.78rem;
+        font-weight: 600;
+        padding: 3px 10px;
+        border-radius: 12px;
+        background: #f1f5f9;
+        color: #475569;
+        border: 1px solid #e2e8f0;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+    .kpi-pill strong { color: var(--erp-text); font-weight: 700; }
+    .kpi-pill.success { background: var(--erp-success-lt); color: #047857; border-color: #a7f3d0; }
+    .kpi-pill.danger { background: var(--erp-danger-lt); color: #b91c1c; border-color: #fecaca; }
+
+    /* ── Header Action Buttons ── */
     .erp-hdr-actions {
         display: flex;
         align-items: center;
         flex-wrap: wrap;
-        gap: 8px;
+        gap: 6px;
     }
+    .btn-hdr {
+        border-radius: 6px;
+        padding: 6px 12px;
+        font-size: 0.81rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        transition: all .15s;
+        border: 1px solid transparent;
+        text-decoration: none;
+        cursor: pointer;
+        height: 34px;
+        box-sizing: border-box;
+    }
+    .btn-hdr-outline { background: #fff; color: var(--erp-muted); border-color: var(--erp-border); }
+    .btn-hdr-outline:hover { border-color: #94a3b8; color: var(--erp-text); background: var(--erp-bg); }
+    .btn-hdr-success { background: #10b981; color: #fff; border-color: #10b981; }
+    .btn-hdr-success:hover { background: #059669; border-color: #059669; color: #fff; }
+    .btn-hdr-warning { background: #fffbeb; color: #b45309; border-color: #fde68a; }
+    .btn-hdr-warning:hover { background: #f59e0b; color: #fff; border-color: #f59e0b; }
+    .btn-hdr-primary { background: var(--erp-primary); color: #fff; border-color: var(--erp-primary); box-shadow: 0 1px 3px rgba(79,70,229,0.2); }
+    .btn-hdr-primary:hover { background: #4338ca; border-color: #4338ca; color: #fff; }
 
-    /* ── Filter Panel ── */
+    /* ── Compact Filter Panel ── */
     .filter-panel {
         background: #f8fafc;
         border-bottom: 1px solid var(--erp-border);
-        padding: 16px 20px;
+        padding: 10px 18px;
     }
-    .filter-panel .filter-heading {
-        font-size: .74rem; font-weight: 800; text-transform: uppercase; letter-spacing: .6px;
-        color: var(--erp-muted); margin-bottom: 12px; display: flex; align-items: center; gap: 6px;
-    }
-    .filter-panel label.form-label {
-        font-size: .72rem; font-weight: 700; color: var(--erp-muted);
-        text-transform: uppercase; letter-spacing: .4px; margin-bottom: 5px;
-    }
-
     .erp-filter-row {
         display: flex;
         align-items: flex-end;
@@ -103,32 +133,31 @@
     .erp-filter-field {
         display: flex;
         flex-direction: column;
-        flex: 1 1 150px;
-        min-width: 130px;
-        max-width: 240px;
+        flex: 1 1 140px;
+        min-width: 120px;
         box-sizing: border-box;
     }
-    .erp-filter-search { flex: 1 1 220px; max-width: 320px; }
-    .erp-filter-btns   { flex: 0 0 auto; max-width: none; min-width: 0; }
+    .erp-filter-search { flex: 2 1 220px; }
+    .erp-filter-btns   { flex: 0 0 auto; min-width: 0; }
 
     .erp-flabel {
         display: block;
-        font-size: .69rem;
+        font-size: 0.72rem;
         font-weight: 700;
         text-transform: uppercase;
-        letter-spacing: .5px;
+        letter-spacing: 0.4px;
         color: var(--erp-muted);
-        margin-bottom: 5px;
+        margin-bottom: 4px;
         white-space: nowrap;
     }
     .erp-finput {
         display: block;
         width: 100%;
-        height: 38px;
-        padding: 0 12px;
+        height: 34px;
+        padding: 0 10px;
         border: 1px solid var(--erp-border);
-        border-radius: 8px;
-        font-size: .83rem;
+        border-radius: 6px;
+        font-size: 0.83rem;
         font-weight: 500;
         color: var(--erp-text);
         background: #fff;
@@ -138,73 +167,57 @@
     }
     .erp-finput:focus {
         border-color: var(--erp-primary);
-        box-shadow: 0 0 0 3px rgba(99,102,241,0.15);
+        box-shadow: 0 0 0 2px rgba(79,70,229,0.12);
     }
     .search-wrap { position: relative; width: 100%; }
     .search-wrap .search-icon {
-        position: absolute; left: 12px; top: 50%;
+        position: absolute; left: 10px; top: 50%;
         transform: translateY(-50%);
-        color: var(--erp-muted); font-size: 13px; pointer-events: none;
+        color: var(--erp-muted); font-size: 12px; pointer-events: none;
         z-index: 1;
     }
-    .search-wrap .erp-finput { padding-left: 34px; }
+    .search-wrap .erp-finput { padding-left: 30px; }
 
-    /* Filter action buttons */
     .btn-erp-filter {
         background: var(--erp-primary); color: #fff; border: none;
-        border-radius: 8px; height: 38px; padding: 0 16px;
-        font-size: .83rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;
-        transition: background .15s, transform .1s; cursor: pointer;
+        border-radius: 6px; height: 34px; padding: 0 14px;
+        font-size: 0.81rem; font-weight: 600; display: inline-flex; align-items: center; gap: 5px;
+        transition: background .15s; cursor: pointer;
     }
-    .btn-erp-filter:hover { background: #4f46e5; color: #fff; transform: translateY(-1px); }
+    .btn-erp-filter:hover { background: #4338ca; color: #fff; }
     .btn-erp-clear {
         background: #fff; color: var(--erp-muted); border: 1px solid var(--erp-border);
-        border-radius: 8px; height: 38px; padding: 0 14px;
-        font-size: .83rem; font-weight: 500; display: inline-flex; align-items: center; gap: 6px;
+        border-radius: 6px; height: 34px; padding: 0 12px;
+        font-size: 0.81rem; font-weight: 500; display: inline-flex; align-items: center; gap: 4px;
         transition: all .15s; text-decoration: none; cursor: pointer;
     }
     .btn-erp-clear:hover { border-color: var(--erp-danger); color: var(--erp-danger); background: var(--erp-danger-lt); }
 
     /* Active filter badges */
-    .active-filters { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+    .active-filters { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
     .filter-chip {
         background: var(--erp-primary-lt); color: var(--erp-primary);
-        border: 1px solid #c7d2fe; border-radius: 20px;
-        padding: 3px 10px; font-size: .72rem; font-weight: 600;
+        border: 1px solid #c7d2fe; border-radius: 12px;
+        padding: 2px 9px; font-size: 0.72rem; font-weight: 600;
         display: inline-flex; align-items: center; gap: 4px;
     }
 
-    /* ── Header action buttons ── */
-    .btn-hdr {
-        border-radius: 8px; padding: 8px 14px; font-size: .82rem; font-weight: 600;
-        display: inline-flex; align-items: center; gap: 6px; transition: all .15s;
-        border: 1px solid transparent; text-decoration: none; cursor: pointer;
-    }
-    .btn-hdr-outline { background: #fff; color: var(--erp-muted); border-color: var(--erp-border); }
-    .btn-hdr-outline:hover { border-color: #94a3b8; color: var(--erp-text); background: var(--erp-bg); }
-    .btn-hdr-success { background: #10b981; color: #fff; border-color: #10b981; }
-    .btn-hdr-success:hover { background: #059669; border-color: #059669; color: #fff; transform: translateY(-1px); }
-    .btn-hdr-warning { background: #fffbeb; color: #d97706; border-color: #fde68a; }
-    .btn-hdr-warning:hover { background: #f59e0b; color: #fff; border-color: #f59e0b; }
-    .btn-hdr-primary { background: linear-gradient(135deg, #6366f1, #4f46e5); color: #fff; border-color: #6366f1; box-shadow: 0 2px 6px rgba(99,102,241,0.25); }
-    .btn-hdr-primary:hover { background: #4338ca; border-color: #4338ca; color: #fff; transform: translateY(-1px); }
-
-    /* ── Table ── */
+    /* ── High-Density Table Design ── */
     .erp-table-wrap { padding: 0; overflow-x: auto; -webkit-overflow-scrolling: touch; }
     #productTable {
         width: 100% !important;
         border-collapse: collapse !important;
-        font-size: .82rem;
+        font-size: 0.83rem;
     }
     #productTable thead th {
-        background: #f8fafc !important;
+        background: #f1f5f9 !important;
         color: #475569 !important;
         font-weight: 700;
         text-transform: uppercase;
-        font-size: .67rem;
-        letter-spacing: .5px;
-        padding: 12px 14px;
-        border-bottom: 2px solid var(--erp-border) !important;
+        font-size: 0.71rem;
+        letter-spacing: 0.5px;
+        padding: 9px 12px;
+        border-bottom: 1px solid var(--erp-border) !important;
         border-top: none !important;
         border-left: none !important;
         border-right: none !important;
@@ -212,70 +225,70 @@
         position: sticky; top: 0; z-index: 2;
     }
     #productTable tbody td {
-        padding: 10px 14px;
+        padding: 8px 12px;
         border: none !important;
         border-bottom: 1px solid #f1f5f9 !important;
         color: var(--erp-text);
         vertical-align: middle;
         white-space: nowrap;
     }
-    #productTable tbody td.td-item-details { white-space: normal; min-width: 180px; max-width: 260px; }
+    #productTable tbody td.td-item-details { white-space: normal; min-width: 180px; max-width: 250px; }
     #productTable tbody tr { transition: background .12s ease; }
     #productTable tbody tr:hover { background: #f8fafc !important; }
-    #productTable tbody tr.row-inactive { opacity: .6; background: #fafafa; }
+    #productTable tbody tr.row-inactive { opacity: .65; background: #fafafa; }
 
     /* Image cell */
     .product-img {
-        width: 40px; height: 40px; object-fit: cover;
-        border-radius: 8px; border: 1px solid var(--erp-border);
-        transition: transform .2s ease, box-shadow .2s ease;
+        width: 34px; height: 34px; object-fit: cover;
+        border-radius: 6px; border: 1px solid var(--erp-border);
+        transition: transform .2s ease;
         cursor: pointer; display: block;
     }
-    .product-img:hover { transform: scale(1.35); z-index: 10; position: relative; box-shadow: var(--erp-shadow-md); }
+    .product-img:hover { transform: scale(1.4); z-index: 10; position: relative; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
     .no-img-badge {
-        width: 40px; height: 40px; border-radius: 8px;
+        width: 34px; height: 34px; border-radius: 6px;
         background: #f1f5f9; border: 1px dashed #cbd5e1;
         display: flex; align-items: center; justify-content: center;
-        font-size: 16px; color: #94a3b8;
+        font-size: 14px; color: #94a3b8;
     }
 
     /* Item details cell */
-    .item-name { font-weight: 700; color: var(--erp-text); margin-bottom: 3px; font-size: .85rem; line-height: 1.3; }
-    .item-meta { font-size: .7rem; color: var(--erp-muted); display: flex; flex-wrap: wrap; gap: 4px; align-items: center; margin-top: 2px; }
+    .item-name { font-weight: 700; color: var(--erp-text); margin-bottom: 2px; font-size: 0.88rem; line-height: 1.25; }
+    .item-meta { font-size: 0.72rem; color: var(--erp-muted); display: flex; flex-wrap: wrap; gap: 4px; align-items: center; margin-top: 1px; }
     .item-meta .meta-chip {
-        background: #f1f5f9; border-radius: 4px; padding: 2px 6px;
-        font-size: .67rem; font-weight: 600; color: #475569;
+        background: #f1f5f9; border-radius: 3px; padding: 1px 6px;
+        font-size: 0.68rem; font-weight: 600; color: #475569;
         display: inline-flex; align-items: center; gap: 3px;
     }
-    .item-code { font-family: 'Courier New', monospace; background: #f8fafc; border: 1px solid var(--erp-border); border-radius: 4px; padding: 1px 6px; font-size: .7rem; font-weight: 600; color: #334155; }
+    .item-code { font-family: monospace; background: #f8fafc; border: 1px solid var(--erp-border); border-radius: 3px; padding: 1px 5px; font-size: 0.7rem; font-weight: 600; color: #334155; }
 
     /* Stock badge */
     .stock-badge {
         display: inline-flex; align-items: center; gap: 4px;
-        background: var(--erp-success-lt); color: var(--erp-success);
-        border: 1px solid #a7f3d0; border-radius: 6px;
-        padding: 3px 8px; font-size: .75rem; font-weight: 700;
+        background: var(--erp-success-lt); color: #047857;
+        border: 1px solid #a7f3d0; border-radius: 4px;
+        padding: 3px 8px; font-size: 0.78rem; font-weight: 700;
         white-space: nowrap;
     }
-    .stock-badge.low  { background: var(--erp-danger-lt); color: var(--erp-danger); border-color: #fecaca; }
+    .stock-badge.low  { background: var(--erp-danger-lt); color: #b91c1c; border-color: #fecaca; }
     .stock-badge.zero { background: #fef3c7; color: #b45309; border-color: #fde68a; }
-    .stock-unit { font-weight: 500; font-size: .67rem; opacity: .85; }
+    .stock-unit { font-weight: 500; font-size: 0.68rem; opacity: .85; }
 
     /* Price cells */
-    .price-purchase { color: var(--erp-muted); font-weight: 600; font-size: .81rem; white-space: nowrap; }
-    .price-sale     { color: var(--erp-success); font-weight: 800; font-size: .84rem; white-space: nowrap; }
+    .price-purchase { color: var(--erp-muted); font-weight: 500; font-size: 0.82rem; white-space: nowrap; }
+    .price-sale     { color: #047857; font-weight: 700; font-size: 0.86rem; white-space: nowrap; }
 
     /* Status badge */
     .status-active {
-        background: var(--erp-success-lt); color: var(--erp-success);
-        border: 1px solid #a7f3d0; border-radius: 20px;
-        padding: 3px 10px; font-size: .7rem; font-weight: 700;
-        letter-spacing: .2px; white-space: nowrap;
+        background: var(--erp-success-lt); color: #047857;
+        border: 1px solid #a7f3d0; border-radius: 12px;
+        padding: 3px 10px; font-size: 0.72rem; font-weight: 700;
+        white-space: nowrap;
     }
     .status-inactive {
         background: #f1f5f9; color: #64748b;
-        border: 1px solid #cbd5e1; border-radius: 20px;
-        padding: 3px 10px; font-size: .7rem; font-weight: 700;
+        border: 1px solid #cbd5e1; border-radius: 12px;
+        padding: 3px 10px; font-size: 0.72rem; font-weight: 700;
         white-space: nowrap;
     }
 
@@ -286,37 +299,37 @@
         justify-content: flex-start;
     }
     .btn-act {
-        border-radius: 6px; padding: 4px 9px; font-size: .72rem;
+        border-radius: 4px; padding: 4px 8px; font-size: 0.75rem;
         font-weight: 600; display: inline-flex; align-items: center; gap: 4px;
         border: 1px solid transparent; transition: all .12s; cursor: pointer;
-        line-height: 1.5; white-space: nowrap; flex-shrink: 0;
+        line-height: 1.3; white-space: nowrap; flex-shrink: 0; height: 28px;
     }
     .btn-act-view    { background: #e0f2fe; color: #0284c7; border-color: #bae6fd; }
     .btn-act-view:hover    { background: #0284c7; color: #fff; }
     .btn-act-edit    { background: var(--erp-primary-lt); color: var(--erp-primary); border-color: #c7d2fe; }
     .btn-act-edit:hover    { background: var(--erp-primary); color: #fff; }
-    .btn-act-barcode { background: var(--erp-success-lt); color: var(--erp-success); border-color: #a7f3d0; }
-    .btn-act-barcode:hover { background: var(--erp-success); color: #fff; }
-    .btn-act-deact   { background: var(--erp-danger-lt); color: var(--erp-danger); border-color: #fecaca; }
-    .btn-act-deact:hover   { background: var(--erp-danger); color: #fff; }
-    .btn-act-act     { background: var(--erp-success-lt); color: var(--erp-success); border-color: #a7f3d0; }
-    .btn-act-act:hover     { background: var(--erp-success); color: #fff; }
+    .btn-act-barcode { background: var(--erp-success-lt); color: #047857; border-color: #a7f3d0; }
+    .btn-act-barcode:hover { background: #10b981; color: #fff; }
+    .btn-act-deact   { background: var(--erp-danger-lt); color: #b91c1c; border-color: #fecaca; }
+    .btn-act-deact:hover   { background: #ef4444; color: #fff; }
+    .btn-act-act     { background: var(--erp-success-lt); color: #047857; border-color: #a7f3d0; }
+    .btn-act-act:hover     { background: #10b981; color: #fff; }
 
     /* ── Pagination ── */
-    .erp-pagination { padding: 14px 20px; border-top: 1px solid var(--erp-border); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
-    .erp-pagination .showing { font-size: .78rem; color: var(--erp-muted); }
-    .erp-pagination .page-link { border-radius: 6px !important; border-color: var(--erp-border) !important; color: var(--erp-text) !important; font-size: .8rem; padding: 5px 12px; }
+    .erp-pagination { padding: 10px 18px; border-top: 1px solid var(--erp-border); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; background: #fff; }
+    .erp-pagination .showing { font-size: 0.78rem; color: var(--erp-muted); }
+    .erp-pagination .page-link { border-radius: 4px !important; border-color: var(--erp-border) !important; color: var(--erp-text) !important; font-size: 0.78rem; padding: 4px 10px; }
     .erp-pagination .page-item.active .page-link { background: var(--erp-primary) !important; border-color: var(--erp-primary) !important; color: #fff !important; }
 
-    /* ── Actions column – force min-width so buttons never wrap ── */
+    /* ── Actions column min-width ── */
     #productTable th:last-child,
-    #productTable td:last-child { min-width: 190px; }
+    #productTable td:last-child { min-width: 170px; }
 
-    /* ── Select checkbox ── */
-    input[type="checkbox"].row-check { width: 16px; height: 16px; accent-color: var(--erp-primary); cursor: pointer; }
+    /* Checkbox */
+    input[type="checkbox"].row-check { width: 15px; height: 15px; accent-color: var(--erp-primary); cursor: pointer; }
 
-    /* ── DataTable override ── */
-    div.dataTables_wrapper div.dataTables_length select { width: 75px !important; }
+    /* DataTable overrides */
+    div.dataTables_wrapper div.dataTables_length select { width: 70px !important; }
     .dataTables_wrapper .dataTables_info,
     .dataTables_wrapper .dataTables_paginate { display: none !important; }
     .dataTables_wrapper { overflow-x: visible !important; }
@@ -325,173 +338,91 @@
        MOBILE RESPONSIVE  ≤ 768px
     ════════════════════════════════════════════════════ */
     @media (max-width: 768px) {
-        .erp-page { padding: 12px 0; }
-        .container-fluid { padding-left: 10px !important; padding-right: 10px !important; }
+        .erp-page { padding: 8px 0; }
+        .container-fluid { padding-left: 8px !important; padding-right: 8px !important; }
 
-        /* Stats: 2-col grid */
-        .stat-grid { grid-template-columns: 1fr 1fr !important; gap: 10px !important; }
-        .stat-card { padding: 12px; gap: 10px; }
-        .stat-icon { width: 36px; height: 36px; font-size: 15px; border-radius: 10px; }
-        .stat-card .stat-value { font-size: 1.15rem; }
-        .stat-card .stat-label { font-size: .65rem; }
-        .stat-card .stat-sub   { display: none; }
-
-        /* Card header: title + buttons */
-        .erp-card-header { flex-direction: column; align-items: flex-start; gap: 12px; padding: 14px; }
+        .erp-card-header { flex-direction: column; align-items: flex-start; gap: 8px; padding: 10px 12px; }
         .erp-hdr-actions {
             width: 100% !important;
             display: grid !important;
             grid-template-columns: 1fr 1fr !important;
-            gap: 8px !important;
+            gap: 6px !important;
         }
         .btn-hdr {
             width: 100% !important;
             justify-content: center !important;
             text-align: center !important;
-            font-size: .78rem !important;
-            padding: 9px 10px !important;
-            box-sizing: border-box !important;
-            border-radius: 10px !important;
-            height: 38px !important;
+            font-size: 0.74rem !important;
+            padding: 6px 8px !important;
+            border-radius: 6px !important;
+            height: 32px !important;
         }
 
-        /* Filter panel: stack fields */
-        .filter-panel { padding: 12px 14px; }
-        .erp-filter-row { gap: 10px; }
+        .filter-panel { padding: 10px 12px; }
+        .erp-filter-row { gap: 8px; }
         .erp-filter-field,
         .erp-filter-search { flex: 1 1 100%; max-width: 100%; }
         .erp-filter-btns { flex: 1 1 100%; width: 100%; }
-        .erp-filter-btns > div { width: 100%; display: flex; gap: 8px; }
+        .erp-filter-btns > div { width: 100%; display: flex; gap: 6px; }
         .btn-erp-filter,
-        .btn-erp-clear { flex: 1; text-align: center; justify-content: center; height: 40px; }
-
-        /* Table wrap */
-        .erp-table-wrap {
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-            border-radius: 0;
-        }
-        #productTable {
-            min-width: 720px !important;
-            font-size: .8rem;
-        }
-        #productTable thead th { padding: 10px 10px; font-size: .64rem; }
-        #productTable tbody td { padding: 8px 10px; }
-
-        /* Pagination */
-        .erp-pagination {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 10px;
-            padding: 12px 14px;
-        }
-        .erp-pagination nav { width: 100%; }
+        .btn-erp-clear { flex: 1; text-align: center; justify-content: center; height: 34px; }
     }
 
-    /* ── Mobile Product Cards ── */
-    .mobile-product-cards { display: none; padding: 14px; }
-
+    .mobile-product-cards { display: none; padding: 10px; }
     @media (max-width: 768px) {
         .erp-table-wrap { display: none !important; }
-        .mobile-product-cards { display: flex; flex-direction: column; gap: 12px; }
+        .mobile-product-cards { display: flex; flex-direction: column; gap: 8px; }
     }
 
     .prod-mcard {
         background: #ffffff;
         border: 1px solid var(--erp-border);
-        border-radius: 12px;
-        padding: 14px;
-        box-shadow: 0 2px 8px rgba(15,23,42,0.03);
-        transition: transform .15s ease, box-shadow .15s ease;
+        border-radius: 8px;
+        padding: 10px;
+        box-shadow: 0 1px 3px rgba(15,23,42,0.03);
     }
     .prod-mcard.row-inactive { opacity: 0.65; background: #f8fafc; }
-    .prod-mcard-hd { display: flex; align-items: flex-start; gap: 12px; }
+    .prod-mcard-hd { display: flex; align-items: flex-start; gap: 8px; }
     .prod-mcard-body {
-        margin-top: 10px;
-        padding-top: 10px;
+        margin-top: 8px;
+        padding-top: 8px;
         border-top: 1px dashed #e2e8f0;
         display: flex;
         justify-content: space-between;
         align-items: center;
     }
-    .prod-mcard-price { font-size: 1.05rem; font-weight: 800; color: #10b981; }
+    .prod-mcard-price { font-size: 0.95rem; font-weight: 800; color: #047857; }
     .prod-mcard-actions {
         display: grid !important;
         grid-template-columns: 1fr 1fr !important;
-        gap: 8px !important;
-        margin-top: 12px;
+        gap: 6px !important;
+        margin-top: 8px;
         width: 100%;
     }
     .prod-mcard-actions .btn-act {
         width: 100% !important;
         justify-content: center !important;
-        height: 38px !important;
-        font-size: .78rem !important;
-        border-radius: 8px !important;
-    }
-
-    @media (max-width: 480px) {
-        .stat-grid { grid-template-columns: 1fr 1fr !important; gap: 8px !important; }
-        .stat-card { padding: 10px; }
-        .stat-card .stat-value { font-size: 1.05rem; }
-        #productTable { min-width: 660px !important; }
-        .btn-act { padding: 3px 6px; font-size: .68rem; }
+        height: 32px !important;
+        font-size: 0.74rem !important;
+        border-radius: 6px !important;
     }
 </style>
 
 <div class="erp-page">
-<div class="container-fluid px-3">
+<div class="container-fluid px-2">
 
-    {{-- ── Stats Row ── --}}
-    <div class="stat-grid mb-4" style="display:grid; grid-template-columns: repeat(4,1fr); gap:16px;">
-        <div class="stat-card">
-            <div class="stat-icon" style="background:#eef2ff; color:#4f46e5;"><i class="fas fa-box-open"></i></div>
-            <div>
-                <div class="stat-label">Total Products</div>
-                <div class="stat-value">{{ $products->total() }}</div>
-                <div class="stat-sub">in catalog</div>
-            </div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-icon" style="background:#ecfdf5; color:#059669;"><i class="fas fa-check-circle"></i></div>
-            <div>
-                <div class="stat-label">Active</div>
-                <div class="stat-value">{{ $products->getCollection()->where('is_active',1)->count() }}</div>
-                <div class="stat-sub">on this page</div>
-            </div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-icon" style="background:#fef2f2; color:#dc2626;"><i class="fas fa-times-circle"></i></div>
-            <div>
-                <div class="stat-label">Inactive</div>
-                <div class="stat-value">{{ $products->getCollection()->where('is_active',0)->count() }}</div>
-                <div class="stat-sub">on this page</div>
-            </div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-icon" style="background:#fffbeb; color:#d97706;"><i class="fas fa-filter"></i></div>
-            <div>
-                <div class="stat-label">Filtered Results</div>
-                <div class="stat-value">{{ $products->total() }}</div>
-                <div class="stat-sub">
-                    @if(request()->hasAny(['search','category_id','brand_id','status']))
-                        <span style="color:#d97706; font-weight:700;">Filters active</span>
-                    @else
-                        all products
-                    @endif
-                </div>
-            </div>
-        </div>
-    </div>
-
-    {{-- ── Main Card ── --}}
+    {{-- ── Main Card Container ── --}}
     <div class="erp-card">
 
-        {{-- Card Header --}}
+        {{-- Compact Card Header --}}
         <div class="erp-card-header">
-            <div>
-                <p class="page-title"><i class="fas fa-box me-2" style="color:var(--erp-primary);"></i>Product Catalog</p>
-                <p class="page-sub">Manage, filter and bulk-edit your entire product inventory</p>
+            <div class="d-flex align-items-center flex-wrap gap-2">
+                <h1 class="page-head-title"><i class="fas fa-box me-1" style="color:var(--erp-primary);"></i> Product Catalog</h1>
+                <div class="head-kpis">
+                    <span class="kpi-pill">Total: <strong>{{ $products->total() }}</strong></span>
+                    <span class="kpi-pill success">Active: <strong>{{ $products->getCollection()->where('is_active',1)->count() }}</strong></span>
+                    <span class="kpi-pill danger">Inactive: <strong>{{ $products->getCollection()->where('is_active',0)->count() }}</strong></span>
+                </div>
             </div>
             <div class="erp-hdr-actions">
                 <a href="{{ route('products.template') }}" class="btn-hdr btn-hdr-outline" title="Download blank CSV template">
@@ -511,10 +442,8 @@
             </div>
         </div>
 
-
-        {{-- ── Filter Panel ── --}}
+        {{-- ── Compact Filter Panel ── --}}
         <div class="filter-panel">
-            <div class="filter-heading"><i class="fas fa-sliders-h"></i> Filters &amp; Search</div>
             <form method="GET" action="{{ route('product') }}" id="filterForm">
                 <div class="erp-filter-row">
 
@@ -555,21 +484,21 @@
                     </div>
 
                     {{-- Status --}}
-                    <div class="erp-filter-field" style="min-width:120px;">
+                    <div class="erp-filter-field" style="min-width:110px;">
                         <label class="erp-flabel">Status</label>
                         <select name="status" class="erp-finput">
                             <option value="">All Status</option>
-                            <option value="active"   {{ request('status') === 'active'   ? 'selected' : '' }}>✅ Active</option>
-                            <option value="inactive" {{ request('status') === 'inactive' ? 'selected' : '' }}>⛔ Inactive</option>
+                            <option value="active"   {{ request('status') === 'active'   ? 'selected' : '' }}>Active</option>
+                            <option value="inactive" {{ request('status') === 'inactive' ? 'selected' : '' }}>Inactive</option>
                         </select>
                     </div>
 
                     {{-- Buttons --}}
                     <div class="erp-filter-field erp-filter-btns">
                         <label class="erp-flabel">&nbsp;</label>
-                        <div style="display:flex; gap:6px;">
+                        <div style="display:flex; gap:4px;">
                             <button type="submit" class="btn-erp-filter">
-                                <i class="fas fa-search"></i> Apply Filters
+                                <i class="fas fa-search"></i> Filter
                             </button>
                             <a href="{{ route('product') }}" class="btn-erp-clear">
                                 <i class="fas fa-times"></i> Clear
@@ -581,21 +510,21 @@
 
                 {{-- Active filter chips --}}
                 @if(request()->hasAny(['search','category_id','brand_id','status']))
-                <div class="active-filters" style="margin-top:10px;">
-                    <span style="font-size:.72rem; font-weight:600; color:var(--erp-muted);">Active:</span>
+                <div class="active-filters">
+                    <span style="font-size:0.68rem; font-weight:600; color:var(--erp-muted);">Active:</span>
                     @if(request('search'))
-                        <span class="filter-chip"><i class="fas fa-search" style="font-size:.6rem;"></i> "{{ request('search') }}"</span>
+                        <span class="filter-chip"><i class="fas fa-search"></i> "{{ request('search') }}"</span>
                     @endif
                     @if(request('category_id'))
-                        <span class="filter-chip"><i class="fas fa-list" style="font-size:.6rem;"></i> {{ $categories->firstWhere('id', request('category_id'))->name ?? 'Category' }}</span>
+                        <span class="filter-chip"><i class="fas fa-list"></i> {{ $categories->firstWhere('id', request('category_id'))->name ?? 'Category' }}</span>
                     @endif
                     @if(request('brand_id'))
-                        <span class="filter-chip"><i class="fas fa-trademark" style="font-size:.6rem;"></i> {{ $brands->firstWhere('id', request('brand_id'))->name ?? 'Brand' }}</span>
+                        <span class="filter-chip"><i class="fas fa-trademark"></i> {{ $brands->firstWhere('id', request('brand_id'))->name ?? 'Brand' }}</span>
                     @endif
                     @if(request('status'))
-                        <span class="filter-chip"><i class="fas fa-circle" style="font-size:.6rem;"></i> {{ ucfirst(request('status')) }}</span>
+                        <span class="filter-chip"><i class="fas fa-circle"></i> {{ ucfirst(request('status')) }}</span>
                     @endif
-                    <span style="font-size:.72rem; color:var(--erp-muted);">— <strong>{{ $products->total() }}</strong> result(s)</span>
+                    <span style="font-size:0.68rem; color:var(--erp-muted);">— <strong>{{ $products->total() }}</strong> result(s)</span>
                 </div>
                 @endif
             </form>
@@ -603,10 +532,10 @@
 
         {{-- ── Success Alert ── --}}
         @if (session()->has('success'))
-        <div class="mx-4 mt-3 alert d-flex align-items-center gap-2" style="background:#ecfdf5; border:1px solid #a7f3d0; border-radius:8px; color:#065f46; font-size:.85rem; padding:10px 14px;">
-            <i class="fas fa-check-circle" style="color:#059669; font-size:16px;"></i>
+        <div class="mx-3 mt-2 alert d-flex align-items-center gap-2" style="background:#ecfdf5; border:1px solid #a7f3d0; border-radius:6px; color:#065f46; font-size:0.78rem; padding:6px 12px;">
+            <i class="fas fa-check-circle" style="color:#059669; font-size:14px;"></i>
             {{ session('success') }}
-            <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" style="font-size:.6rem;"></button>
+            <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" style="font-size:0.55rem;"></button>
         </div>
         @endif
 
@@ -617,15 +546,15 @@
                 <table id="productTable" class="table table-hover align-middle nowrap" style="width:100%">
                     <thead>
                         <tr>
-                            <th style="width:36px;"><input type="checkbox" id="selectAll" class="row-check"></th>
-                            <th style="width:40px;">#</th>
-                            <th style="width:52px;">Image</th>
+                            <th style="width:30px;"><input type="checkbox" id="selectAll" class="row-check"></th>
+                            <th style="width:35px;">#</th>
+                            <th style="width:44px;">Img</th>
                             <th>Item Details</th>
                             <th>Stock</th>
                             <th>Purchase Price</th>
                             <th>Sale Price</th>
-                            <th style="width:90px;">Status</th>
-                            <th class="text-center" style="width:180px;">Actions</th>
+                            <th style="width:80px;">Status</th>
+                            <th class="text-center" style="width:160px;">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -655,7 +584,7 @@
                             @endphp
                             <tr id="product-row-{{ $product->id }}" class="{{ $product->is_active ? '' : 'row-inactive' }}">
                                 <td><input type="checkbox" class="selectProduct row-check" value="{{ $product->id }}"></td>
-                                <td style="color:var(--erp-muted); font-size:.72rem;">{{ $products->firstItem() + $key }}</td>
+                                <td style="color:var(--erp-muted); font-size:0.7rem;">{{ $products->firstItem() + $key }}</td>
                                 <td>
                                     @if ($product->image)
                                         <img src="{{ asset('uploads/products/' . $product->image) }}"
@@ -669,16 +598,16 @@
                                     <div class="item-meta">
                                         <span class="item-code">{{ $product->item_code }}</span>
                                         @if($product->category_relation)
-                                            <span class="meta-chip"><i class="fas fa-list" style="font-size:.6rem;"></i> {{ $product->category_relation->name }}</span>
+                                            <span class="meta-chip"><i class="fas fa-list"></i> {{ $product->category_relation->name }}</span>
                                         @endif
                                         @if($product->brand)
-                                            <span class="meta-chip"><i class="fas fa-trademark" style="font-size:.6rem;"></i> {{ $product->brand->name }}</span>
+                                            <span class="meta-chip"><i class="fas fa-trademark"></i> {{ $product->brand->name }}</span>
                                         @endif
                                     </div>
                                 </td>
                                 <td>
                                     <span class="stock-badge {{ $stockClass }}">
-                                        <i class="fas fa-cubes" style="font-size:.65rem;"></i>
+                                        <i class="fas fa-cubes" style="font-size:0.6rem;"></i>
                                         {{ $stockDisplay }}
                                         <span class="stock-unit">{{ $stockUnit }}</span>
                                     </span>
@@ -726,7 +655,7 @@
                 </table>
         </div>{{-- /erp-table-wrap --}}
 
-        {{-- ── Mobile Product Cards (Shown only on mobile < 768px for 100% user-friendly view) ── --}}
+        {{-- ── Mobile Product Cards (Shown only on mobile < 768px) ── --}}
         <div class="mobile-product-cards">
             @foreach ($products as $product)
                 @php
@@ -782,12 +711,12 @@
                     </div>
                     <div class="prod-mcard-body">
                         <div>
-                            <div style="font-size:.68rem; font-weight:700; color:var(--erp-muted); text-transform:uppercase;">Sale Price</div>
+                            <div style="font-size:0.65rem; font-weight:700; color:var(--erp-muted); text-transform:uppercase;">Sale Price</div>
                             <div class="prod-mcard-price">Rs. {{ number_format($retailPrice, 2) }}</div>
-                            <div style="font-size:.7rem; color:var(--erp-muted);">Cost: Rs. {{ number_format($tradePrice, 2) }}</div>
+                            <div style="font-size:0.68rem; color:var(--erp-muted);">Cost: Rs. {{ number_format($tradePrice, 2) }}</div>
                         </div>
                         <div class="text-end">
-                            <div style="font-size:.68rem; font-weight:700; color:var(--erp-muted); text-transform:uppercase; margin-bottom:2px;">Stock</div>
+                            <div style="font-size:0.65rem; font-weight:700; color:var(--erp-muted); text-transform:uppercase; margin-bottom:2px;">Stock</div>
                             <span class="stock-badge {{ $stockClass }}">
                                 <i class="fas fa-cubes"></i> {{ $stockDisplay }} <span class="stock-unit">{{ $stockUnit }}</span>
                             </span>

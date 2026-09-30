@@ -20,7 +20,7 @@ class ProductionRequisitionService
      */
     public function calculateRequirements(array $items): array
     {
-        $rmRequirements = [];
+        $allRequirements = [];
 
         foreach ($items as $item) {
             $productId = $item['product_id'] ?? null;
@@ -38,69 +38,114 @@ class ProductionRequisitionService
             // Find active formulation, fallback to latest formulation
             $formulation = Formulation::where('product_id', $productId)
                 ->where('status', 'active')
-                ->with(['rawMaterials.rawMaterial.unit'])
+                ->with(['rawMaterials.rawMaterial.unit', 'packagingMaterials.packagingMaterial.unit'])
                 ->first();
 
             if (!$formulation) {
                 $formulation = Formulation::where('product_id', $productId)
-                    ->with(['rawMaterials.rawMaterial.unit'])
+                    ->with(['rawMaterials.rawMaterial.unit', 'packagingMaterials.packagingMaterial.unit'])
                     ->latest()
                     ->first();
             }
 
-            if (!$formulation || $formulation->rawMaterials->isEmpty()) {
+            if (!$formulation) {
                 continue;
             }
 
             $batchSize = (float) ($formulation->batch_size > 0 ? $formulation->batch_size : 1);
 
-            foreach ($formulation->rawMaterials as $frm) {
-                $rm = $frm->rawMaterial;
-                if (!$rm) {
-                    continue;
-                }
+            // 1. Process Raw Materials
+            if ($formulation->rawMaterials) {
+                foreach ($formulation->rawMaterials as $frm) {
+                    $rm = $frm->rawMaterial;
+                    if (!$rm) {
+                        continue;
+                    }
 
-                $rmId = $rm->id;
-                $baseQty = (float) $frm->quantity;
-                $wastePercent = (float) ($frm->waste_percent ?? 0);
+                    $key = 'RM_' . $rm->id;
+                    $baseQty = (float) $frm->quantity;
+                    $wastePercent = (float) ($frm->waste_percent ?? 0);
 
-                // Quantity required per piece
-                $qtyPerPiece = ($baseQty / $batchSize) * (1 + ($wastePercent / 100));
-                // Total quantity required for the ordered amount
-                $reqQty = round($qtyPerPiece * $orderedPieces, 4);
+                    $qtyPerPiece = ($baseQty / $batchSize) * (1 + ($wastePercent / 100));
+                    $reqQty = round($qtyPerPiece * $orderedPieces, 4);
+                    $unitName = $rm->unit ? $rm->unit->name : 'Unit';
 
-                $unitName = $rm->unit ? $rm->unit->name : 'Unit';
+                    if (!isset($allRequirements[$key])) {
+                        $allRequirements[$key] = [
+                            'item_type' => 'Raw Material',
+                            'raw_material_id' => $rm->id,
+                            'name' => $rm->name,
+                            'code' => $rm->code,
+                            'unit' => $unitName,
+                            'base_qty' => $baseQty,
+                            'batch_size' => $batchSize,
+                            'qty_per_piece' => $qtyPerPiece,
+                            'required_qty' => 0.0,
+                            'current_stock' => (float) ($rm->current_stock ?? 0),
+                            'products' => [],
+                        ];
+                    }
 
-                if (!isset($rmRequirements[$rmId])) {
-                    $rmRequirements[$rmId] = [
-                        'raw_material_id' => $rmId,
-                        'name' => $rm->name,
-                        'code' => $rm->code,
-                        'unit' => $unitName,
-                        'required_qty' => 0.0,
-                        'current_stock' => (float) ($rm->current_stock ?? 0),
-                        'products' => [],
+                    $allRequirements[$key]['required_qty'] += $reqQty;
+                    $allRequirements[$key]['products'][] = [
+                        'product_name' => $product->item_name,
+                        'ordered_pieces' => $orderedPieces,
+                        'req_qty' => $reqQty,
                     ];
                 }
+            }
 
-                $rmRequirements[$rmId]['required_qty'] += $reqQty;
-                $rmRequirements[$rmId]['products'][] = [
-                    'product_name' => $product->item_name,
-                    'ordered_pieces' => $orderedPieces,
-                    'rm_qty' => $reqQty,
-                ];
+            // 2. Process Packaging Materials
+            if ($formulation->packagingMaterials) {
+                foreach ($formulation->packagingMaterials as $fpm) {
+                    $pm = $fpm->packagingMaterial;
+                    if (!$pm) {
+                        continue;
+                    }
+
+                    $key = 'PM_' . $pm->id;
+                    $baseQty = (float) $fpm->quantity;
+                    $wastePercent = (float) ($fpm->waste_percent ?? 0);
+
+                    $qtyPerPiece = ($baseQty / $batchSize) * (1 + ($wastePercent / 100));
+                    $reqQty = round($qtyPerPiece * $orderedPieces, 4);
+                    $unitName = $pm->unit ? $pm->unit->name : 'Piece';
+
+                    if (!isset($allRequirements[$key])) {
+                        $allRequirements[$key] = [
+                            'item_type' => 'Packaging Material',
+                            'packaging_material_id' => $pm->id,
+                            'name' => $pm->name,
+                            'code' => $pm->code,
+                            'unit' => $unitName,
+                            'base_qty' => $baseQty,
+                            'batch_size' => $batchSize,
+                            'qty_per_piece' => $qtyPerPiece,
+                            'required_qty' => 0.0,
+                            'current_stock' => (float) ($pm->current_stock ?? 0),
+                            'products' => [],
+                        ];
+                    }
+
+                    $allRequirements[$key]['required_qty'] += $reqQty;
+                    $allRequirements[$key]['products'][] = [
+                        'product_name' => $product->item_name,
+                        'ordered_pieces' => $orderedPieces,
+                        'req_qty' => $reqQty,
+                    ];
+                }
             }
         }
 
         // Compute shortage
-        foreach ($rmRequirements as $rmId => &$data) {
+        foreach ($allRequirements as $key => &$data) {
             $data['required_qty'] = round($data['required_qty'], 4);
             $data['current_stock'] = round($data['current_stock'], 4);
             $data['shortage_qty'] = max(0.0, round($data['required_qty'] - $data['current_stock'], 4));
             $data['is_short'] = $data['shortage_qty'] > 0;
         }
 
-        return $rmRequirements;
+        return $allRequirements;
     }
 
     /**

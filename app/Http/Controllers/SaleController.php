@@ -20,13 +20,16 @@ class SaleController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Sale::with(['customer_relation', 'items.product', 'returns']);
+        $query = Sale::with(['customer_relation', 'items.product', 'returns', 'productionBatches']);
 
         // Apply Status Filter
         if ($request->has('status') && $request->status != 'all') {
             $st = $request->status;
             if ($st === 'sale_order' || $st === 'booked') {
                 $query->whereIn('sale_status', ['booked', 'sale_order']);
+            } elseif ($st === 'partial') {
+                $query->whereIn('sale_status', ['booked', 'sale_order', 'in_production'])
+                      ->whereHas('productionBatches');
             } elseif ($st === 'ready') {
                 $query->whereIn('sale_status', ['ready', 'ready_for_delivery']);
             } elseif ($st === 'delivered' || $st === 'posted') {
@@ -902,7 +905,7 @@ class SaleController extends Controller
         }
         $currentBalance = $previousBalance + $sale->total_net;
 
-        return view('admin_panel.sale.salereceipt', [
+        return view('admin_panel.sale.saleinvoice', [
             'sale' => $sale,
             'saleItems' => $items,
             'previousBalance' => $previousBalance,

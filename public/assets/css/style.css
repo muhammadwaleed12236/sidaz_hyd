@@ -1384,10 +1384,8 @@ blockquote span:before {
 }
 
 .rt_nav_header.horizontal-layout .top_nav {
-    /* background: #02007C; */
-    background: #3948ff;
-    background: #408679a1;
-    height: 70px;
+    background: linear-gradient(135deg, #1e293b, #0f172a);
+    height: 64px;
 }
 
 .rt_nav_header.horizontal-layout .top_nav .rt_nav_wrapper {

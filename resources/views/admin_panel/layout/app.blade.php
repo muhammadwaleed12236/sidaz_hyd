@@ -16,45 +16,44 @@
         .nav-item .submenu,
         .mega-menu .submenu {
             background: #fff;
-            padding: 12px;
-            /* compact padding */
-            border-radius: 6px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            padding: 16px 20px !important;
+            border-radius: 10px;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
         }
 
         .mega-menu .category-heading {
-            font-size: 13px;
-            font-weight: 600;
-            color: #34495e;
-            margin-bottom: 8px;
-            padding-bottom: 4px;
-            border-bottom: 1px solid #eaeaea;
+            font-size: 14px !important;
+            font-weight: 700 !important;
+            color: #1e293b !important;
+            margin-bottom: 10px !important;
+            padding-bottom: 6px !important;
+            border-bottom: 1.5px solid #e2e8f0 !important;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
         }
 
         .nav-item .submenu-item li,
         .mega-menu .submenu-item li {
             margin-bottom: 4px;
-            /* less spacing */
         }
 
         .nav-item .submenu-item li a,
         .mega-menu .submenu-item li a {
             display: flex;
             align-items: center;
-            font-size: 15px;
-            /* smaller font */
-            color: #555;
-            padding: 4px 8px;
-            /* compact padding */
-            border-radius: 4px;
+            font-size: 14px !important;
+            color: #475569 !important;
+            padding: 6px 10px !important;
+            border-radius: 6px;
             transition: all 0.2s ease;
+            font-weight: 500;
         }
 
         .nav-item .submenu-item li a i,
         .mega-menu .submenu-item li a i {
             font-size: 14px;
-            margin-right: 6px;
-            color: #2980b9;
+            margin-right: 8px;
+            color: #0284c7;
             min-width: 18px;
             text-align: center;
         }
@@ -103,6 +102,387 @@
             flex: none;
             max-width: none;
         }
+
+        /* Top Navigation Header Styling */
+        .rt_nav_header.horizontal-layout .top_nav {
+            background: linear-gradient(135deg, #1e293b, #0f172a) !important;
+            height: 64px !important;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+        }
+
+        .rt_nav_header.horizontal-layout .top_nav .nav_logo {
+            color: #ffffff !important;
+            font-size: 1.25rem !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.3px;
+        }
+
+        /* WhatsApp Support Button Hover */
+        .whatsapp-support-btn {
+            background: rgba(37, 211, 102, 0.15);
+            border: 1px solid rgba(37, 211, 102, 0.4);
+            color: #ffffff !important;
+            border-radius: 8px;
+            padding: 7px 16px;
+            font-weight: 700;
+            font-size: 15px;
+            text-decoration: none;
+            transition: all 0.2s ease-in-out;
+            display: inline-flex;
+            align-items: center;
+            letter-spacing: 0.3px;
+        }
+
+        .whatsapp-support-btn:hover {
+            background: rgba(37, 211, 102, 0.3) !important;
+            border-color: #25D366 !important;
+            color: #ffffff !important;
+            box-shadow: 0 2px 8px rgba(37, 211, 102, 0.3);
+            text-decoration: none;
+            transform: translateY(-1px);
+        }
+
+        .rt_nav_header.horizontal-layout .top_nav .profile_name {
+            color: #ffffff !important;
+            font-weight: 600;
+        }
+
+        /* Bottom Navigation Horizontal Layout - Single Row */
+        .rt_nav_header.horizontal-layout .nav-bottom {
+            background: #ffffff !important;
+            border-bottom: 1px solid #e2e8f0;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.04), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+        }
+
+        .rt_nav_header.horizontal-layout .nav-bottom {
+            background: #ffffff !important;
+            border-bottom: 1px solid #e2e8f0;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.04), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+            overflow: visible !important;
+            position: relative;
+            z-index: 1050;
+        }
+
+        .rt_nav_header.horizontal-layout .nav-bottom .page-navigation {
+            display: flex !important;
+            flex-wrap: wrap !important;
+            align-items: center !important;
+            justify-content: center !important;
+            width: 100% !important;
+            margin: 0 auto !important;
+            padding: 0 !important;
+            overflow: visible !important;
+            white-space: nowrap !important;
+        }
+
+        .rt_nav_header.horizontal-layout .nav-bottom .page-navigation > .nav-item {
+            flex: 0 0 auto !important;
+            display: inline-block !important;
+            float: none !important;
+            margin: 0 !important;
+        }
+
+        .rt_nav_header.horizontal-layout .nav-bottom .page-navigation > .nav-item > .nav-link {
+            padding: 16px 15px !important;
+            font-size: 14px !important;
+            font-weight: 600 !important;
+            color: #334155 !important;
+            display: flex !important;
+            align-items: center !important;
+            white-space: nowrap !important;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .rt_nav_header.horizontal-layout .nav-bottom .page-navigation > .nav-item > .nav-link .menu_icon {
+            font-size: 14px !important;
+            margin-right: 7px !important;
+            color: #0284c7 !important;
+        }
+
+        .rt_nav_header.horizontal-layout .nav-bottom .page-navigation > .nav-item > .nav-link .menu-title {
+            font-size: 14px !important;
+            font-weight: 600 !important;
+        }
+
+        .rt_nav_header.horizontal-layout .nav-bottom .page-navigation > .nav-item:hover > .nav-link,
+        .rt_nav_header.horizontal-layout .nav-bottom .page-navigation > .nav-item.active > .nav-link {
+            color: #0284c7 !important;
+            background-color: #f0f9ff !important;
+            border-radius: 6px;
+        }
+
+        /* Submenu positioning: Normal dropdowns align to item, Mega menu centers on screen */
+        .rt_nav_header.horizontal-layout .nav-bottom .page-navigation > .nav-item:not(.mega-menu) {
+            position: relative !important;
+        }
+
+        .rt_nav_header.horizontal-layout .nav-bottom .page-navigation > .nav-item.mega-menu {
+            position: static !important;
+        }
+
+        .rt_nav_header.horizontal-layout .nav-bottom .page-navigation > .nav-item .submenu {
+            position: absolute !important;
+            top: 100% !important;
+            z-index: 999999 !important;
+            display: none !important;
+            opacity: 0;
+            visibility: hidden;
+            background: #ffffff !important;
+            box-shadow: 0 14px 35px rgba(15, 23, 42, 0.15) !important;
+            border: 1px solid #cbd5e1 !important;
+            border-radius: 12px !important;
+            transition: opacity 0.2s ease, transform 0.2s ease;
+        }
+
+        /* Normal dropdown position */
+        .rt_nav_header.horizontal-layout .nav-bottom .page-navigation > .nav-item:not(.mega-menu) .submenu {
+            left: 0 !important;
+            right: auto !important;
+            min-width: 220px !important;
+        }
+
+        /* Mega menu centered position on container */
+        .rt_nav_header.horizontal-layout .nav-bottom .page-navigation > .nav-item.mega-menu .submenu {
+            left: 50% !important;
+            right: auto !important;
+            transform: translateX(-50%) !important;
+            width: max-content !important;
+            max-width: 95vw !important;
+            margin: 0 auto !important;
+        }
+
+        @media (min-width: 992px) {
+            .rt_nav_header.horizontal-layout .nav-bottom .page-navigation > .nav-item:hover > .submenu {
+                display: block !important;
+                opacity: 1 !important;
+                visibility: visible !important;
+                pointer-events: auto !important;
+            }
+        }
+
+        .rt_nav_header.horizontal-layout .nav-bottom .page-navigation > .nav-item.show-submenu > .submenu {
+            display: block !important;
+            opacity: 1 !important;
+            visibility: visible !important;
+            pointer-events: auto !important;
+        }
+
+        /* ════════════════════════════════════════════════════
+           MOBILE RESPONSIVE HEADER SYSTEM (<= 991px & <= 767px)
+           Icon-only top bar & slide-down drawer menu
+        ════════════════════════════════════════════════════ */
+        @media (max-width: 991px) {
+            .rt_nav_header.horizontal-layout .top_nav {
+                height: auto !important;
+                min-height: 52px !important;
+                padding: 4px 0 !important;
+            }
+
+            /* Hide bottom nav bar until hamburger button is clicked */
+            .rt_nav_header.horizontal-layout .nav-bottom {
+                display: none !important;
+                background: #ffffff !important;
+                border-top: 1px solid #e2e8f0 !important;
+                box-shadow: 0 10px 25px rgba(15, 23, 42, 0.12) !important;
+            }
+
+            .rt_nav_header.horizontal-layout .nav-bottom.header-toggled {
+                display: block !important;
+            }
+
+            .rt_nav_header.horizontal-layout .nav-bottom .page-navigation {
+                display: flex !important;
+                flex-direction: column !important;
+                align-items: stretch !important;
+                white-space: normal !important;
+                overflow-x: visible !important;
+                padding: 8px 12px !important;
+            }
+
+            .rt_nav_header.horizontal-layout .nav-bottom .page-navigation > .nav-item {
+                width: 100% !important;
+                border-bottom: 1px solid #f1f5f9 !important;
+            }
+
+            .rt_nav_header.horizontal-layout .nav-bottom .page-navigation > .nav-item > .nav-link {
+                padding: 11px 14px !important;
+                font-size: 0.88rem !important;
+                font-weight: 600 !important;
+                color: #1e293b !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: space-between !important;
+            }
+
+            .rt_nav_header.horizontal-layout .nav-bottom .page-navigation > .nav-item .submenu {
+                position: static !important;
+                display: none !important;
+                opacity: 0 !important;
+                visibility: hidden !important;
+                transform: none !important;
+                left: 0 !important;
+                right: 0 !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                box-shadow: none !important;
+                border: none !important;
+                background: #f8fafc !important;
+                padding: 8px 12px !important;
+                border-radius: 8px !important;
+                margin-bottom: 6px !important;
+            }
+
+            .rt_nav_header.horizontal-layout .nav-bottom .page-navigation > .nav-item.show-submenu > .submenu {
+                display: block !important;
+                opacity: 1 !important;
+                visibility: visible !important;
+                pointer-events: auto !important;
+            }
+
+            .rt_nav_header.horizontal-layout .nav-bottom .page-navigation .submenu ul.submenu-item {
+                padding: 0 !important;
+                margin: 0 !important;
+                list-style: none !important;
+            }
+
+            .rt_nav_header.horizontal-layout .nav-bottom .page-navigation .submenu ul.submenu-item li a {
+                padding: 8px 10px !important;
+                font-size: 0.88rem !important;
+                color: #334155 !important;
+                display: flex !important;
+                align-items: center !important;
+                font-weight: 500 !important;
+                width: 100% !important;
+            }
+
+            .rt_nav_header.horizontal-layout .nav-bottom .page-navigation .submenu ul.submenu-item li a i {
+                display: inline-flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                font-size: 15px !important;
+                width: 22px !important;
+                min-width: 22px !important;
+                margin-right: 10px !important;
+                color: #0284c7 !important;
+            }
+
+            /* Mega Menu Mobile Stacking */
+            .mega-menu .col-group-wrapper {
+                display: flex !important;
+                flex-direction: column !important;
+                flex-wrap: wrap !important;
+                margin: 0 !important;
+                width: 100% !important;
+            }
+
+            .mega-menu .col-group {
+                width: 100% !important;
+                max-width: 100% !important;
+                flex: 1 1 100% !important;
+                border-right: none !important;
+                border-bottom: 1px solid #e2e8f0 !important;
+                padding: 10px 0 !important;
+                margin-bottom: 8px !important;
+            }
+
+            .mega-menu .col-group:last-child {
+                border-bottom: none !important;
+                margin-bottom: 0 !important;
+            }
+
+            .mega-menu .category-heading {
+                font-size: 13px !important;
+                font-weight: 700 !important;
+                color: #1e293b !important;
+                margin-bottom: 6px !important;
+                padding-bottom: 4px !important;
+                border-bottom: 1px solid #cbd5e1 !important;
+            }
+        }
+
+        @media (max-width: 767px) {
+            /* Container padding */
+            .rt_nav_header.horizontal-layout .top_nav .container-fluid {
+                padding-left: 10px !important;
+                padding-right: 10px !important;
+            }
+
+            .rt_nav_header.horizontal-layout .top_nav .nav_logo {
+                font-size: 0.95rem !important;
+                font-weight: 800 !important;
+            }
+
+            /* WhatsApp Pill: Icon ONLY on Mobile (Hide all text & numbers) */
+            .whatsapp-support-btn {
+                padding: 0 !important;
+                border-radius: 50% !important;
+                width: 32px !important;
+                height: 32px !important;
+                display: inline-flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                background: rgba(37, 211, 102, 0.15) !important;
+                border: 1px solid rgba(37, 211, 102, 0.4) !important;
+                margin-right: 4px !important;
+            }
+
+            .whatsapp-support-btn i {
+                font-size: 18px !important;
+                margin: 0 !important;
+                color: #25D366 !important;
+            }
+
+            .whatsapp-support-text-label,
+            .whatsapp-support-btn-num {
+                display: none !important;
+            }
+
+            /* User Profile: Icon ONLY on Mobile (Hide 'Super Admin' name text) */
+            .profile_name {
+                display: none !important;
+            }
+
+            .nav-profile .nav-link {
+                padding: 4px 6px !important;
+            }
+
+            .nav-profile .fa-user-circle {
+                font-size: 22px !important;
+                margin: 0 !important;
+            }
+
+            /* Notification Dropdown width adjustment on small mobile */
+            #notificationDropdown + .dropdown-menu {
+                width: 290px !important;
+                max-width: 92vw !important;
+            }
+        }
+
+        /* Top Header Navbar Toggler */
+        .rt_nav_header.horizontal-layout .top_nav .navbar-toggler {
+            border: none !important;
+            background: transparent !important;
+            padding: 4px 6px !important;
+            margin-left: 6px !important;
+            margin-right: 0 !important;
+            outline: none !important;
+            box-shadow: none !important;
+            cursor: pointer;
+            flex-shrink: 0 !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+
+        .rt_nav_header.horizontal-layout .top_nav .navbar-toggler span {
+            font-size: 18px !important;
+        }
+
+        @media (min-width: 992px) {
+            .rt_nav_header.horizontal-layout .top_nav .navbar-toggler {
+                display: none !important;
+            }
+        }
     </style>
     <!--=========================*
                 Met Data
@@ -115,7 +495,7 @@
     <!--=========================*
               Page Title
     *===========================-->
-    <title>{{ \App\Models\Setting::get('company_name', 'prowave technogies') }}</title>
+    <title>ProWave Technologies</title>
 
     <!--=========================*
                 Favicon
@@ -175,35 +555,32 @@
     *===========================-->
         <nav class="rt_nav_header horizontal-layout col-lg-12 col-12 p-0">
             <div class="top_nav flex-grow-1">
-                <div class="container d-flex flex-row h-100 align-items-center">
+                <div class="container-fluid px-3 px-lg-4 d-flex flex-row h-100 align-items-center">
                     <!--=========================*
                               Logo
                 *===========================-->
                     <div class="text-center rt_nav_wrapper d-flex align-items-center">
-                        {{-- <a class="nav_logo rt_logo" href="index.html"><img  src="{{asset('assets/images/WIJDAN-removebg-preview.png')}}" alt="logo" /></a> --}}
-                        <a class="nav_logo rt_logo text-success" href="{{ url('/') }}">{{ \App\Models\Setting::get('company_name', 'prowave technogies') }}</a>
-                        {{-- <a class="nav_logo nav_logo_mob" href="index.html"><img src="{{asset('assets/images/WIJDAN-removebg-preview.png')}}" alt="logo"/></a> --}}
+                        <a class="nav_logo rt_logo" href="{{ url('/') }}">ProWave Technologies</a>
                     </div>
                     <!--=========================*
                            End Logo
-               *===========================-->
+                *===========================-->
                     <div class="nav_wrapper_main d-flex align-items-center justify-content-between flex-grow-1">
-                        <ul class="navbar-nav navbar-nav-right mr-0 ml-auto">
-                            <!-- My Attendance Quick Access -->
-                            <li class="nav-item mr-3">
-                                <a href="{{ route('my-attendance') }}" class="nav-link"
-                                    style="background: linear-gradient(135deg, #22c55e, #16a34a); color: white; border-radius: 8px; padding: 8px 16px;">
-                                    <i class="fa fa-fingerprint"></i> My Attendance
+                        <ul class="navbar-nav navbar-nav-right flex-row align-items-center mr-0 ml-auto">
+                            <!-- WhatsApp Support Quick Access -->
+                            <li class="nav-item mr-2 mr-md-3">
+                                <a href="https://wa.me/923173836223" target="_blank" class="whatsapp-support-btn shadow-sm">
+                                    <i class="fab fa-whatsapp mr-1" style="font-size: 20px; color: #25D366;"></i> <span class="whatsapp-support-text-label">Support: </span><span class="whatsapp-support-btn-num">+923173836223</span>
                                 </a>
                             </li>
 
                             <!-- Notification Bell -->
                             <li class="nav-item dropdown mr-2" id="notificationLi">
-                                <a class="nav-link count-indicator dropdown-toggle position-relative"
+                                <a class="nav-link count-indicator dropdown-toggle position-relative d-flex align-items-center"
                                     id="notificationDropdown" href="#" data-toggle="dropdown"
                                     aria-expanded="false">
-                                    <i class="fas fa-bell text-secondary"
-                                        style="font-size: 20px; transition: color 0.3s;"></i>
+                                    <i class="fas fa-bell"
+                                        style="font-size: 18px; color: #cbd5e1; transition: color 0.3s;"></i>
                                     <span class="badge badge-danger notification-badge"
                                         style="display: none; position: absolute; top: -2px; right: -2px; font-size: 9px; padding: 3px 5px; border-radius: 50%; box-shadow: 0 2px 5px rgba(220,53,69,0.5);">0</span>
                                 </a>
@@ -420,10 +797,11 @@
                             </script>
 
                             <li class="nav-item nav-profile dropdown">
-                                <a class="nav-link dropdown-toggle" href="#" data-toggle="dropdown"
+                                <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" data-toggle="dropdown"
                                     id="profileDropdown">
-                                    <span class="profile_name">{{ Auth::user()->name }} <i
-                                            class="fas fa-chevron-down"></i></span>
+                                    <i class="fas fa-user-circle text-white mr-1" style="font-size: 15px;"></i>
+                                    <span class="profile_name text-white font-weight-bold">{{ Auth::user()->name }} <i
+                                            class="fas fa-chevron-down ml-1" style="font-size: 11px; opacity: 0.8;"></i></span>
                                 </a>
                                 <div class="dropdown-menu dropdown-menu-right navbar-dropdown pt-2"
                                     aria-labelledby="profileDropdown">
@@ -442,9 +820,9 @@
                         *====================================-->
                         </ul>
                         <!--=========================*
-                               Mobile Menu
+                                Mobile Menu
                    *===========================-->
-                        <button class="navbar-toggler align-self-center" type="button" data-toggle="minimize">
+                        <button class="navbar-toggler align-self-center ml-2 mr-2" type="button" data-toggle="minimize">
                             <span class="fas fa-bars text-white"></span>
                         </button>
                         <!--=========================*
@@ -454,7 +832,7 @@
                 </div>
             </div>
             <div class="nav-bottom">
-                <div class="container">
+                <div class="container-fluid px-3 px-lg-4">
                     <ul class="nav page-navigation">
                         <!--=========================*
                               Home
@@ -877,6 +1255,126 @@
                 </div>
             </div>
         </nav>
+        {{-- ── TV NEWS TICKER HEADLINE ALERT ── --}}
+        <style>
+            .news-headline-ticker {
+                background: linear-gradient(90deg, #7f1d1d 0%, #dc2626 50%, #991b1b 100%);
+                color: #ffffff;
+                display: flex;
+                align-items: center;
+                padding: 8px 16px;
+                box-shadow: 0 4px 15px rgba(185, 28, 28, 0.35);
+                position: relative;
+                z-index: 999;
+                border-bottom: 2px solid #fca5a5;
+                font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            }
+            .ticker-header-badge {
+                background: #fef08a;
+                color: #7f1d1d;
+                font-weight: 800;
+                font-size: 0.75rem;
+                padding: 4px 12px;
+                border-radius: 4px;
+                text-transform: uppercase;
+                letter-spacing: 0.8px;
+                flex-shrink: 0;
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+                margin-right: 14px;
+            }
+            .ticker-dot {
+                width: 8px;
+                height: 8px;
+                background-color: #dc2626;
+                border-radius: 50%;
+                display: inline-block;
+                animation: tickerDotPulse 1s infinite alternate;
+            }
+            @keyframes tickerDotPulse {
+                from { opacity: 0.3; transform: scale(0.8); }
+                to { opacity: 1; transform: scale(1.2); }
+            }
+            .ticker-marquee-wrap {
+                flex-grow: 1;
+                overflow: hidden;
+                white-space: nowrap;
+                position: relative;
+            }
+            .ticker-marquee-content {
+                display: inline-block;
+                white-space: nowrap;
+                padding-left: 100%;
+                animation: newsTickerMarquee 55s linear infinite; /* Slower, smooth speed */
+            }
+            .ticker-marquee-wrap:hover .ticker-marquee-content {
+                animation-play-state: paused;
+            }
+            @keyframes newsTickerMarquee {
+                0%   { transform: translate3d(0, 0, 0); }
+                100% { transform: translate3d(-100%, 0, 0); }
+            }
+            .ticker-msg {
+                display: inline-block;
+                font-weight: 600;
+                font-size: 0.86rem;
+                letter-spacing: 0.3px;
+                padding-right: 60px;
+            }
+            .ticker-highlight {
+                color: #fef08a;
+                font-weight: 700;
+            }
+            .ticker-action-btn {
+                background: #ffffff;
+                color: #991b1b;
+                font-weight: 800;
+                font-size: 0.78rem;
+                padding: 5px 14px;
+                border-radius: 6px;
+                text-decoration: none;
+                flex-shrink: 0;
+                margin-left: 14px;
+                transition: all 0.2s ease;
+                white-space: nowrap;
+                border: 1px solid #fecaca;
+            }
+            .ticker-action-btn:hover {
+                background: #fef2f2;
+                color: #7f1d1d;
+                text-decoration: none;
+                transform: translateY(-1px);
+                box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            }
+        </style>
+
+        <div id="dynamicTickerContainer" style="display: none;"></div>
+
+        @if(session()->has('error'))
+        <div class="news-headline-ticker" id="sessionErrorTicker">
+            <div class="ticker-header-badge">
+                <span class="ticker-dot"></span>
+                <i class="fas fa-exclamation-triangle"></i> STOCK ALERT
+            </div>
+            <div class="ticker-marquee-wrap">
+                <div class="ticker-marquee-content">
+                    <span class="ticker-msg">
+                        <strong>⚠️ INSUFFICIENT MATERIAL DETECTED:</strong> {{ session('error') }} &nbsp;&mdash;&nbsp;
+                        <span class="ticker-highlight">Low Stock Warning: Please purchase stock or update inventory to resume batch manufacturing!</span>
+                    </span>
+                    <span class="ticker-msg">
+                        <strong>⚠️ INSUFFICIENT MATERIAL DETECTED:</strong> {{ session('error') }} &nbsp;&mdash;&nbsp;
+                        <span class="ticker-highlight">Low Stock Warning: Please purchase stock or update inventory to resume batch manufacturing!</span>
+                    </span>
+                </div>
+            </div>
+            <a href="{{ route('material-purchases.create') }}" class="ticker-action-btn">
+                <i class="fas fa-shopping-cart"></i> Purchase Stock Now
+            </a>
+        </div>
+        @endif
 
         @yield('content')
 
@@ -1048,10 +1546,27 @@
                 }
             }, 30000);
 
-            // Fix for Navigation links with href="#" causing page jumps and potential layout freezes
-            document.querySelectorAll('.nav-link[href="#"]').forEach(function(link) {
+            // Mobile Navigation Dropdown Click-to-Open and Click-to-Close Toggle Fix (<= 991px)
+            document.querySelectorAll('.page-navigation > .nav-item > .nav-link').forEach(function(link) {
                 link.addEventListener('click', function(e) {
-                    e.preventDefault(); // Prevent URL hash and page jump
+                    if (window.matchMedia('(max-width: 991px)').matches) {
+                        var parentItem = link.closest('.nav-item');
+                        if (parentItem && parentItem.querySelector('.submenu')) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            var wasOpen = parentItem.classList.contains('show-submenu');
+                            
+                            // Close all open submenus
+                            document.querySelectorAll('.page-navigation > .nav-item').forEach(function(item) {
+                                item.classList.remove('show-submenu');
+                            });
+                            
+                            // If it wasn't open before, open it now; if it was open, it stays closed
+                            if (!wasOpen) {
+                                parentItem.classList.add('show-submenu');
+                            }
+                        }
+                    }
                 });
             });
 

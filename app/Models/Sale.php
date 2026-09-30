@@ -43,6 +43,11 @@ class Sale extends Model
         return $this->hasMany(SaleReturn::class, 'sale_id');
     }
 
+    public function productionBatches()
+    {
+        return $this->hasMany(ProductionBatch::class, 'sale_id');
+    }
+
     protected static function boot()
     {
         parent::boot();

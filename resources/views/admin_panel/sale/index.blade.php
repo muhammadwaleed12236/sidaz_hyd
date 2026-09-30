@@ -104,7 +104,7 @@
         .premium-table {
             border: 1px solid #e2e8f0 !important;
             border-radius: 8px !important;
-            overflow: hidden;
+            overflow: visible !important;
         }
 
         .premium-table thead th {
@@ -123,10 +123,33 @@
             padding: 12px 10px !important;
             font-size: 13px !important;
             color: #334155 !important;
+            position: relative;
         }
 
         .premium-table tbody tr:hover td {
             background-color: #f8fafc !important;
+        }
+
+        .table-responsive {
+            overflow-x: auto !important;
+            overflow-y: visible !important;
+        }
+
+        .premium-table .dropdown-menu {
+            border-radius: 8px !important;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15) !important;
+            border: 1px solid #cbd5e1 !important;
+            z-index: 99999 !important;
+            margin-top: 4px;
+        }
+
+        .premium-table .dropdown-item {
+            padding: 8px 14px !important;
+            font-weight: 500;
+        }
+
+        .premium-table .dropdown-item:hover {
+            background-color: #f1f5f9 !important;
         }
     </style>
 
@@ -232,6 +255,10 @@
                     <a href="{{ route('sale.index', ['status' => 'sale_order']) }}"
                         class="btn btn-sm {{ request('status') == 'sale_order' || request('status') == 'booked' ? 'btn-primary text-white' : 'btn-outline-primary' }} rounded-pill px-3 shadow-sm fw-bold">
                         <i class="fas fa-file-invoice me-1"></i> Sale Orders
+                    </a>
+                    <a href="{{ route('sale.index', ['status' => 'partial']) }}"
+                        class="btn btn-sm {{ request('status') == 'partial' ? 'btn-info text-white' : 'btn-outline-info' }} rounded-pill px-3 shadow-sm fw-bold">
+                        <i class="fas fa-hourglass-half me-1"></i> Partial Batches
                     </a>
                     <a href="{{ route('sale.index', ['status' => 'ready']) }}"
                         class="btn btn-sm {{ request('status') == 'ready' ? 'btn-warning text-dark' : 'btn-outline-warning' }} rounded-pill px-3 shadow-sm fw-bold">
@@ -466,6 +493,22 @@
                         form.submit();
                     }
                 });
+            });
+
+            // Action Dropdown Toggle Click Handler
+            $(document).on('click', '.sale-action-dropdown-btn', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                const $parent = $(this).closest('.dropdown');
+                const $menu = $parent.find('.dropdown-menu');
+                $('.dropdown-menu').not($menu).removeClass('show');
+                $menu.toggleClass('show');
+            });
+
+            $(document).on('click', function(e) {
+                if (!$(e.target).closest('.dropdown').length) {
+                    $('.dropdown-menu').removeClass('show');
+                }
             });
         });
     </script>

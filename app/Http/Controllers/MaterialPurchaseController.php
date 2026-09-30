@@ -26,9 +26,25 @@ class MaterialPurchaseController extends Controller
     public function create()
     {
         $vendors = Vendor::where('status', 1)->get();
-        // Get materials
-        $rawMaterials = RawMaterial::with('unit')->where('status', 1)->get();
-        $packagingMaterials = PackagingMaterial::with('unit')->where('status', 1)->get();
+        
+        // Get materials with purchase_price (last purchased price or base price)
+        $rawMaterials = RawMaterial::with('unit')->where('status', 1)->get()->map(function($item) {
+            $lastPrice = MaterialPurchaseItem::where('item_type', RawMaterial::class)
+                ->where('item_id', $item->id)
+                ->latest('id')
+                ->value('unit_price');
+            $item->purchase_price = $lastPrice !== null ? (float)$lastPrice : (float)($item->price ?? 0);
+            return $item;
+        });
+
+        $packagingMaterials = PackagingMaterial::with('unit')->where('status', 1)->get()->map(function($item) {
+            $lastPrice = MaterialPurchaseItem::where('item_type', PackagingMaterial::class)
+                ->where('item_id', $item->id)
+                ->latest('id')
+                ->value('unit_price');
+            $item->purchase_price = $lastPrice !== null ? (float)$lastPrice : (float)($item->price ?? 0);
+            return $item;
+        });
         
         $accounts = Account::whereHas('head', function($q) {
             $q->whereIn('name', ['Cash', 'Bank']);
@@ -285,8 +301,25 @@ class MaterialPurchaseController extends Controller
     {
         $purchase = MaterialPurchase::with('items')->findOrFail($id);
         $vendors = Vendor::where('status', 1)->get();
-        $rawMaterials = RawMaterial::with('unit')->where('status', 1)->get();
-        $packagingMaterials = PackagingMaterial::with('unit')->where('status', 1)->get();
+        
+        $rawMaterials = RawMaterial::with('unit')->where('status', 1)->get()->map(function($item) {
+            $lastPrice = MaterialPurchaseItem::where('item_type', RawMaterial::class)
+                ->where('item_id', $item->id)
+                ->latest('id')
+                ->value('unit_price');
+            $item->purchase_price = $lastPrice !== null ? (float)$lastPrice : (float)($item->price ?? 0);
+            return $item;
+        });
+
+        $packagingMaterials = PackagingMaterial::with('unit')->where('status', 1)->get()->map(function($item) {
+            $lastPrice = MaterialPurchaseItem::where('item_type', PackagingMaterial::class)
+                ->where('item_id', $item->id)
+                ->latest('id')
+                ->value('unit_price');
+            $item->purchase_price = $lastPrice !== null ? (float)$lastPrice : (float)($item->price ?? 0);
+            return $item;
+        });
+
         $accounts = Account::whereHas('head', function($q) {
             $q->whereIn('name', ['Cash', 'Bank']);
         })->where('status', 1)->orderBy('title')->get();

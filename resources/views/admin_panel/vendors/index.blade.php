@@ -3,12 +3,6 @@
 
 @if (session('success'))
     <script>
-    $('.modal').on('hide.bs.modal', function () {
-        if (document.activeElement) {
-            document.activeElement.blur();
-        }
-    });
-
     document.addEventListener('DOMContentLoaded', function() {
         Swal.fire({
             icon: 'success',
@@ -21,388 +15,336 @@
 @endif
 
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-
-    .sup-page {
-        font-family: 'Inter', system-ui, -apple-system, sans-serif;
-        color: #1e293b;
-        padding-bottom: 40px;
+    /* ── ERP COMPACT DESIGN SYSTEM ── */
+    .erp-page { background: #f8fafc; min-height: calc(100vh - 60px); padding: 12px 0; font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+    
+    :root {
+        --erp-primary:    #4f46e5;
+        --erp-primary-lt: #eef2ff;
+        --erp-success:    #10b981;
+        --erp-success-lt: #ecfdf5;
+        --erp-warning:    #f59e0b;
+        --erp-warning-lt: #fffbeb;
+        --erp-danger:     #ef4444;
+        --erp-danger-lt:  #fef2f2;
+        --erp-border:     #e2e8f0;
+        --erp-bg:         #f8fafc;
+        --erp-card-bg:    #ffffff;
+        --erp-text:       #0f172a;
+        --erp-muted:      #64748b;
+        --erp-radius:     8px;
+        --erp-shadow:     0 1px 3px rgba(15,23,42,0.05);
     }
 
-    /* Page Header */
-    .sup-header {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        padding: 20px 24px;
-        border-radius: 16px;
-        margin-bottom: 20px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.02);
-    }
-    .sup-title {
-        font-weight: 800;
-        font-size: 1.35rem;
-        color: #0f172a;
-        margin-bottom: 2px;
-        letter-spacing: -0.02em;
-    }
-    .sup-sub {
-        font-size: 0.82rem;
-        color: #64748b;
-    }
-
-    /* Action Buttons Hub */
-    .vendor-action-hub {
-        display: flex;
-        gap: 8px;
-        flex-wrap: wrap;
-    }
-    .btn-vendor-sub {
-        background: #ffffff;
-        color: #475569 !important;
-        border: 1.5px solid #cbd5e1;
-        padding: 9px 16px;
-        font-size: 0.84rem;
-        font-weight: 600;
-        border-radius: 10px;
-        transition: all 0.15s ease;
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        text-decoration: none;
-    }
-    .btn-vendor-sub:hover {
-        background: #f8fafc;
-        border-color: #94a3b8;
-        color: #0f172a !important;
-    }
-
-    /* Stat Cards */
-    .sup-stat-card {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 14px;
-        padding: 16px 20px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-        display: flex;
-        align-items: center;
-        gap: 16px;
-        height: 100%;
-    }
-    .sup-stat-icon {
-        width: 46px;
-        height: 46px;
-        border-radius: 12px;
-        background: #eff6ff;
-        color: #2563eb; 
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.2rem;
-        flex-shrink: 0;
-    }
-    .sup-stat-icon.active {
-        background: #dcfce7;
-        color: #16a34a;
-    }
-    .sup-stat-val {
-        font-weight: 800;
-        font-size: 1.25rem;
-        color: #0f172a;
-        line-height: 1.2;
-    }
-    .sup-stat-lbl {
-        font-size: 0.78rem;
-        color: #64748b;
-        font-weight: 500;
-    }
-
-    /* Primary Gradient Button */
-    .btn-sup-primary {
-        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-        color: #ffffff !important;
-        border: none;
-        padding: 10px 20px;
-        font-size: 0.86rem;
-        font-weight: 600;
-        border-radius: 10px;
-        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.22);
-        transition: all 0.2s ease;
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        cursor: pointer;
-    }
-    .btn-sup-primary:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 6px 16px rgba(37, 99, 235, 0.35);
-    }
-
-    /* Card & Table */
-    .sup-card {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 16px;
-        box-shadow: 0 4px 20px rgba(15, 23, 42, 0.03);
+    .erp-card {
+        background: var(--erp-card-bg);
+        border-radius: var(--erp-radius);
+        border: 1px solid var(--erp-border);
+        box-shadow: var(--erp-shadow);
         overflow: hidden;
     }
-    .sup-card-header {
-        padding: 18px 24px;
-        border-bottom: 1px solid #e2e8f0;
-        background: #ffffff;
+
+    .erp-card-header {
+        padding: 12px 18px;
+        border-bottom: 1px solid var(--erp-border);
         display: flex;
         align-items: center;
         justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 10px;
+        background: #ffffff;
     }
+    .page-head-title {
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: var(--erp-text);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .head-kpis {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-left: 8px;
+    }
+    .kpi-pill {
+        font-size: 0.78rem;
+        font-weight: 600;
+        padding: 3px 10px;
+        border-radius: 12px;
+        background: #f1f5f9;
+        color: #475569;
+        border: 1px solid #e2e8f0;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+    .kpi-pill strong { color: var(--erp-text); font-weight: 700; }
+    .kpi-pill.success { background: var(--erp-success-lt); color: #047857; border-color: #a7f3d0; }
+    .kpi-pill.danger { background: var(--erp-danger-lt); color: #b91c1c; border-color: #fecaca; }
 
-    .sup-table-wrap {
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
+    .erp-hdr-actions {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 6px;
     }
+    .btn-hdr {
+        border-radius: 6px;
+        padding: 6px 12px;
+        font-size: 0.81rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        transition: all .15s;
+        border: 1px solid transparent;
+        text-decoration: none;
+        cursor: pointer;
+        height: 34px;
+        box-sizing: border-box;
+    }
+    .btn-hdr-outline { background: #fff; color: var(--erp-muted); border-color: var(--erp-border); }
+    .btn-hdr-outline:hover { border-color: #94a3b8; color: var(--erp-text); background: var(--erp-bg); }
+    .btn-hdr-primary { background: #2563eb; color: #fff; border-color: #2563eb; box-shadow: 0 1px 3px rgba(37,99,235,0.2); }
+    .btn-hdr-primary:hover { background: #1d4ed8; border-color: #1d4ed8; color: #fff; }
+
+    /* Desktop Table */
+    .erp-table-wrap { padding: 0; overflow-x: auto; -webkit-overflow-scrolling: touch; }
     #default-datatable {
         width: 100% !important;
+        border-collapse: collapse !important;
+        font-size: 0.83rem;
         margin-bottom: 0 !important;
     }
     #default-datatable thead th {
-        background: #f8fafc;
-        color: #475569;
-        font-size: 0.72rem;
+        background: #f1f5f9 !important;
+        color: #475569 !important;
         font-weight: 700;
         text-transform: uppercase;
-        letter-spacing: 0.05em;
-        border-bottom: 1px solid #e2e8f0;
-        padding: 14px 20px;
+        font-size: 0.71rem;
+        letter-spacing: 0.5px;
+        padding: 9px 12px;
+        border-bottom: 1px solid var(--erp-border) !important;
+        white-space: nowrap;
     }
     #default-datatable tbody td {
-        padding: 14px 20px;
+        padding: 8px 12px;
+        border: none !important;
+        border-bottom: 1px solid #f1f5f9 !important;
+        color: var(--erp-text);
         vertical-align: middle;
-        font-size: 0.88rem;
-        border-bottom: 1px solid #f1f5f9;
+        white-space: nowrap;
     }
-    #default-datatable tbody tr:hover {
-        background-color: #f8fafc;
-    }
+    #default-datatable tbody tr:hover { background: #f8fafc !important; }
 
     /* Badges */
-    .sup-id-badge {
-        background: #f1f5f9;
-        color: #475569;
-        font-weight: 700;
-        font-size: 0.75rem;
-        padding: 3px 8px;
-        border-radius: 6px;
-        font-family: monospace;
-    }
-    .contact-badge {
-        background: #eff6ff;
-        color: #2563eb;
-        font-weight: 600;
-        font-size: 0.75rem;
-        padding: 3px 8px;
-        border-radius: 4px;
-    }
-    .finance-badge {
-        background: #fdf4ff;
-        color: #c026d3;
-        font-weight: 600;
-        font-size: 0.75rem;
-        padding: 3px 8px;
-        border-radius: 4px;
-    }
-    .status-badge {
-        padding: 4px 10px;
-        border-radius: 20px;
-        font-size: 0.75rem;
-        font-weight: 600;
-    }
-    .status-active {
-        background: #dcfce7;
-        color: #166534;
-    }
-    .status-inactive {
-        background: #fef2f2;
-        color: #991b1b;
-    }
-
-    /* Form UI */
-    .form-control:focus, .form-select:focus {
-        border-color: #2563eb;
-        box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.15);
-    }
+    .sup-id-badge { background: #f1f5f9; color: #475569; font-weight: 700; font-size: 0.72rem; padding: 2px 7px; border-radius: 4px; font-family: monospace; }
+    .finance-badge { background: #fdf4ff; color: #c026d3; font-weight: 600; font-size: 0.72rem; padding: 2px 7px; border-radius: 4px; }
     
-    /* Toggle Switch */
-    .switch {
-        position: relative;
-        display: inline-block;
-        width: 50px;
-        height: 24px;
+    .status-badge { padding: 3px 10px; border-radius: 12px; font-size: 0.72rem; font-weight: 700; white-space: nowrap; }
+    .status-active { background: var(--erp-success-lt); color: #047857; border: 1px solid #a7f3d0; }
+    .status-inactive { background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; }
+
+    /* Action buttons */
+    .btn-act {
+        border-radius: 4px; padding: 4px 8px; font-size: 0.75rem;
+        font-weight: 600; display: inline-flex; align-items: center; gap: 4px;
+        border: 1px solid transparent; transition: all .12s; cursor: pointer;
+        line-height: 1.3; white-space: nowrap; flex-shrink: 0; height: 28px;
     }
-    .switch input { 
-        opacity: 0;
-        width: 0;
-        height: 0;
-    }
-    .slider {
-        position: absolute;
-        cursor: pointer;
-        top: 0; left: 0; right: 0; bottom: 0;
-        background-color: #ccc;
-        transition: .4s;
-        border-radius: 24px;
-    }
-    .slider:before {
-        position: absolute;
-        content: "";
-        height: 18px;
-        width: 18px;
-        left: 3px;
-        bottom: 3px;
-        background-color: white;
-        transition: .4s;
-        border-radius: 50%;
-    }
-    input:checked + .slider {
-        background-color: #10b981;
-    }
-    input:checked + .slider:before {
-        transform: translateX(26px);
+    .btn-act-edit { background: var(--erp-primary-lt); color: var(--erp-primary); border-color: #c7d2fe; }
+    .btn-act-edit:hover { background: var(--erp-primary); color: #fff; }
+    .btn-act-deact { background: var(--erp-danger-lt); color: #b91c1c; border-color: #fecaca; }
+    .btn-act-deact:hover { background: #ef4444; color: #fff; }
+
+    /* Mobile Cards View */
+    .mobile-vendor-cards { display: none; padding: 10px; }
+    @media (max-width: 768px) {
+        .erp-page { padding: 8px 0; }
+        .erp-card-header { flex-direction: column; align-items: flex-start; gap: 8px; padding: 10px 12px; }
+        .erp-hdr-actions { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+        .btn-hdr { width: 100%; justify-content: center; height: 34px; font-size: 0.78rem; }
+        .erp-table-wrap { display: none !important; }
+        .mobile-vendor-cards { display: flex; flex-direction: column; gap: 8px; }
     }
 
+    .vendor-mcard {
+        background: #ffffff;
+        border: 1px solid var(--erp-border);
+        border-radius: 8px;
+        padding: 10px 12px;
+        box-shadow: 0 1px 3px rgba(15,23,42,0.03);
+    }
+    .vendor-mcard-hd { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+    .vendor-mcard-body {
+        margin-top: 8px;
+        padding-top: 8px;
+        border-top: 1px dashed #e2e8f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .vendor-mcard-actions {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 6px !important;
+        margin-top: 8px;
+        width: 100%;
+    }
+    .vendor-mcard-actions .btn-act { width: 100% !important; justify-content: center !important; height: 32px !important; font-size: 0.76rem !important; border-radius: 6px !important; }
 </style>
 
-<div class="sup-page container-fluid px-3 px-md-4 pt-3">
-    
-    {{-- Header Row --}}
-    <div class="sup-header d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
-        <div>
-            <h3 class="sup-title"><i class="fas fa-truck text-primary me-2" style="color: #2563eb !important;"></i>Vendor / Supplier Management</h3>
-            <div class="sup-sub">Manage suppliers, vendors, ledgers and payments</div>
-        </div>
-        <div class="vendor-action-hub">
-            @can('vendors.create')
-                <a href="{{ route('vendors.create') }}" class="btn-sup-primary">
-                    <i class="fas fa-plus"></i> Add Vendor
-                </a>
-            @endcan
-            <a href="{{ url('vendors-ledger') }}" class="btn-vendor-sub">
-                <i class="fas fa-book me-1"></i> Ledger
-            </a>
-            <a href="{{ route('vendor.payments') }}" class="btn-vendor-sub">
-                <i class="fas fa-money-check-alt me-1"></i> Payments
-            </a>
-            <a href="{{ url('vendor/bilties') }}" class="btn-vendor-sub">
-                <i class="fas fa-shipping-fast me-1"></i> Bilty
-            </a>
-        </div>
-    </div>
-
-    {{-- Stats Row --}}
-    <div class="row g-3 mb-4">
-        <div class="col-12 col-sm-6 col-md-4">
-            <div class="sup-stat-card">
-                <div class="sup-stat-icon"><i class="fas fa-users"></i></div>
-                <div>
-                    <div class="sup-stat-val">{{ count($vendors) }}</div>
-                    <div class="sup-stat-lbl">Total Vendors</div>
+<div class="erp-page">
+    <div class="container-fluid px-2">
+        <div class="erp-card">
+            
+            {{-- Header Bar --}}
+            <div class="erp-card-header">
+                <div class="d-flex align-items-center flex-wrap gap-2">
+                    <h1 class="page-head-title"><i class="fas fa-truck text-primary me-1" style="color:#2563eb;"></i> Vendor Directory</h1>
+                    <div class="head-kpis">
+                        <span class="kpi-pill">Total: <strong>{{ count($vendors) }}</strong></span>
+                        <span class="kpi-pill success">Active: <strong>{{ $vendors->where('status', 1)->count() }}</strong></span>
+                        <span class="kpi-pill danger">Inactive: <strong>{{ $vendors->where('status', 0)->count() }}</strong></span>
+                    </div>
+                </div>
+                <div class="erp-hdr-actions">
+                    <a href="{{ url('vendors-ledger') }}" class="btn-hdr btn-hdr-outline">
+                        <i class="fas fa-book"></i> Ledger
+                    </a>
+                    <a href="{{ route('vendor.payments') }}" class="btn-hdr btn-hdr-outline">
+                        <i class="fas fa-money-check-alt"></i> Payments
+                    </a>
+                    <a href="{{ url('vendor/bilties') }}" class="btn-hdr btn-hdr-outline">
+                        <i class="fas fa-shipping-fast"></i> Bilty
+                    </a>
+                    @can('vendors.create')
+                        <a href="{{ route('vendors.create') }}" class="btn-hdr btn-hdr-primary">
+                            <i class="fas fa-plus"></i> Add Vendor
+                        </a>
+                    @endcan
                 </div>
             </div>
-        </div>
-        <div class="col-12 col-sm-6 col-md-4">
-            <div class="sup-stat-card">
-                <div class="sup-stat-icon active"><i class="fas fa-check-circle"></i></div>
-                <div>
-                    <div class="sup-stat-val">{{ $vendors->where('status', 1)->count() }}</div>
-                    <div class="sup-stat-lbl">Active Vendors</div>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    {{-- Main Content Card --}}
-    <div class="sup-card">
-        <div class="sup-card-header">
-            <div class="fw-bold text-dark"><i class="fas fa-list me-1 text-muted"></i> All Vendors & Suppliers</div>
-            <div class="text-muted small">Showing {{ count($vendors) }} entries</div>
-        </div>
-
-        {{-- Desktop Table View --}}
-        <div class="sup-table-wrap p-3">
-            <table class="table align-middle datanew">
-                <thead>
-                    <tr>
-                        <th class="text-center" style="width: 70px;">Id</th>
-                        <th class="text-start">Vendor Info</th>
-                        <th class="text-start">Contact</th>
-                        <th class="text-start">Financials</th>
-                        <th class="text-center">Status</th>
-                        <!-- Hidden headers to match hidden TDs for DataTables -->
-                        <th class="d-none">Company Name</th>
-                        <th class="d-none">Email</th>
-                        <th class="d-none">Address</th>
-                        <th class="d-none">NTN Number</th>
-                        <th class="d-none">Payment Terms</th>
-                        
-                        <th class="text-end pe-4" style="width: 140px;">Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach ($vendors as $v)
+            {{-- Desktop Table View --}}
+            <div class="erp-table-wrap">
+                <table id="default-datatable" class="table align-middle nowrap">
+                    <thead>
                         <tr>
-                            <td class="text-center id"><span class="sup-id-badge">#{{ $v->id }}</span></td>
-                            
-                            <td class="text-start">
-                                <div class="name fw-bold text-dark">{{ $v->name }}</div>
+                            <th class="text-center" style="width: 50px;">ID</th>
+                            <th>Vendor Info</th>
+                            <th>Contact</th>
+                            <th>Financials</th>
+                            <th class="text-center">Status</th>
+                            <th class="text-center" style="width: 130px;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($vendors as $v)
+                            <tr>
+                                <td class="text-center id"><span class="sup-id-badge">#{{ $v->id }}</span></td>
+                                
+                                <td>
+                                    <div class="name fw-bold text-dark">{{ $v->name }}</div>
+                                    @if($v->company_name)
+                                        <div class="text-muted small"><i class="fas fa-building me-1" style="font-size:0.65rem;"></i>{{ $v->company_name }}</div>
+                                    @endif
+                                </td>
+                                
+                                <td>
+                                    @if($v->contact_person)
+                                        <div class="contact_person fw-semibold text-dark small"><i class="fas fa-user-tie me-1 text-muted"></i>{{ $v->contact_person }}</div>
+                                    @endif
+                                    <div class="phone text-muted small"><i class="fas fa-phone-alt me-1"></i>{{ $v->phone }}</div>
+                                </td>
+
+                                <td>
+                                    <span class="finance-badge mb-1">Limit: Rs. {{ number_format($v->credit_limit, 2) }}</span>
+                                    <div class="text-muted small">OB: Rs. {{ number_format($v->opening_balance, 2) }}</div>
+                                </td>
+
+                                <td class="text-center status" data-status="{{ $v->status }}">
+                                    @if($v->status)
+                                        <span class="status-badge status-active"><i class="fas fa-circle me-1" style="font-size: 7px;"></i> Active</span>
+                                    @else
+                                        <span class="status-badge status-inactive"><i class="fas fa-circle me-1" style="font-size: 7px;"></i> Inactive</span>
+                                    @endif
+                                </td>
+
+                                <td class="text-center">
+                                    @include('admin_panel.partials.action_buttons', [
+                                        'editRoute' => route('vendors.edit', $v->id),
+                                        'deleteRoute' => url('vendor/delete/' . $v->id),
+                                        'editIsLink' => true,
+                                        'permissions' => [
+                                            'edit' => 'vendors.edit',
+                                            'delete' => 'vendors.delete',
+                                        ],
+                                        'dataId' => $v->id,
+                                        'deleteMsg' => 'Are you sure you want to delete this vendor?',
+                                    ])
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>{{-- /erp-table-wrap --}}
+
+            {{-- Mobile Cards View (< 768px) --}}
+            <div class="mobile-vendor-cards">
+                @foreach ($vendors as $v)
+                    <div class="vendor-mcard">
+                        <div class="vendor-mcard-hd">
+                            <div>
+                                <span class="sup-id-badge">#{{ $v->id }}</span>
+                                <div class="fw-bold text-dark fs-6 mt-1">{{ $v->name }}</div>
                                 @if($v->company_name)
                                     <div class="text-muted small"><i class="fas fa-building me-1"></i>{{ $v->company_name }}</div>
                                 @endif
-                            </td>
-                            
-                            <td class="text-start">
-                                @if($v->contact_person)
-                                    <div class="contact_person fw-semibold text-dark"><i class="fas fa-user-tie me-1 text-muted"></i>{{ $v->contact_person }}</div>
-                                @else
-                                    <div class="contact_person d-none"></div>
-                                @endif
-                                <div class="phone text-muted small"><i class="fas fa-phone-alt me-1"></i>{{ $v->phone }}</div>
-                            </td>
-
-                            <td class="text-start">
-                                <div class="finance-badge mb-1" title="Credit Limit">Limit: Rs. <span class="credit_limit">{{ number_format($v->credit_limit, 2) }}</span></div>
-                                <div class="text-muted small" title="Opening Balance">OB: Rs. <span class="opening_balance">{{ number_format($v->opening_balance, 2) }}</span></div>
-                            </td>
-
-                            <td class="text-center status" data-status="{{ $v->status }}">
+                                <div class="text-muted small mt-1"><i class="fas fa-phone-alt me-1"></i>{{ $v->phone }}</div>
+                            </div>
+                            <div>
                                 @if($v->status)
-                                    <span class="status-badge status-active"><i class="fas fa-circle me-1" style="font-size: 8px; vertical-align: middle;"></i> Active</span>
+                                    <span class="status-badge status-active">Active</span>
                                 @else
-                                    <span class="status-badge status-inactive"><i class="fas fa-circle me-1" style="font-size: 8px; vertical-align: middle;"></i> Inactive</span>
+                                    <span class="status-badge status-inactive">Inactive</span>
                                 @endif
-                            </td>
+                            </div>
+                        </div>
 
-                            <!-- Hidden Data for Edit Modal -->
-                            <td class="d-none company_name">{{ $v->company_name }}</td>
-                            <td class="d-none email">{{ $v->email }}</td>
-                            <td class="d-none address">{{ $v->address }}</td>
-                            <td class="d-none ntn_number">{{ $v->ntn_number }}</td>
-                            <td class="d-none payment_terms">{{ $v->payment_terms }}</td>
+                        <div class="vendor-mcard-body">
+                            <div>
+                                <div style="font-size:0.65rem; font-weight:700; color:var(--erp-muted); text-transform:uppercase;">Credit Limit</div>
+                                <div class="fw-bold text-dark fs-6">Rs. {{ number_format($v->credit_limit, 2) }}</div>
+                            </div>
+                            <div class="text-end">
+                                <div style="font-size:0.65rem; font-weight:700; color:var(--erp-muted); text-transform:uppercase;">Opening Bal</div>
+                                <div class="text-muted small">Rs. {{ number_format($v->opening_balance, 2) }}</div>
+                            </div>
+                        </div>
 
-                            <td class="text-end pe-4">
-                                @include('admin_panel.partials.action_buttons', [
-                                    'editRoute' => route('vendors.edit', $v->id),
-                                    'deleteRoute' => url('vendor/delete/' . $v->id),
-                                    'editIsLink' => true,
-                                    'permissions' => [
-                                        'edit' => 'vendors.edit',
-                                        'delete' => 'vendors.delete',
-                                    ],
-                                    'dataId' => $v->id,
-                                    'deleteMsg' => 'Are you sure you want to delete this vendor?',
-                                ])
-                            </td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        </div>
+                        <div class="vendor-mcard-actions">
+                            @can('vendors.edit')
+                                <a href="{{ route('vendors.edit', $v->id) }}" class="btn-act btn-act-edit">
+                                    <i class="fas fa-edit"></i> Edit
+                                </a>
+                            @endcan
+                            @can('vendors.delete')
+                                <form action="{{ url('vendor/delete/' . $v->id) }}" method="GET" class="d-inline w-100" onsubmit="return confirm('Are you sure you want to delete this vendor?')">
+                                    <button type="submit" class="btn-act btn-act-deact w-100">
+                                        <i class="fas fa-trash"></i> Delete
+                                    </button>
+                                </form>
+                            @endcan
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+
+        </div>{{-- /erp-card --}}
     </div>
 </div>
 
@@ -411,21 +353,17 @@
 @section('js')
 <script>
     $(document).ready(function() {
-        if ($.fn.DataTable.isDataTable('.datanew')) {
-            $('.datanew').DataTable().destroy();
+        if($('#default-datatable').length) {
+            $('#default-datatable').DataTable({
+                "pageLength": 10,
+                "lengthMenu": [5, 10, 25, 50, 100],
+                "order": [[0, 'desc']],
+                "language": {
+                    "search": "Search Vendors:",
+                    "lengthMenu": "Show _MENU_ entries"
+                }
+            });
         }
-        $('.datanew').DataTable({
-            "pageLength": 10,
-            "lengthMenu": [5, 10, 25, 50, 100],
-            "order": [],
-            "language": {
-                "search": "",
-                "searchPlaceholder": "Search vendors..."
-            },
-            "dom": "<'row mb-3'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-6'f>>" +
-                "<'row'<'col-sm-12'tr>>" +
-                "<'row mt-3'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
-        });
     });
 </script>
 @endsection
