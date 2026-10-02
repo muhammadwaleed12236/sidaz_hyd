@@ -9,6 +9,7 @@ use App\Models\Hr\Designation;
 use App\Models\Hr\Employee;
 use App\Models\Hr\Holiday;
 use App\Models\Hr\Leave;
+use App\Models\Hr\Shift;
 use App\Services\PayrollCalculationService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
