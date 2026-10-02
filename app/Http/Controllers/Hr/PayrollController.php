@@ -250,19 +250,7 @@ class PayrollController extends Controller
                 $absenceDeduction = round(($totalDeductionDays * $payroll->basic_salary) / 30, 2);
             }
             
-            $lateDeduction = 0;
-            $latePenalty = $policy['late_penalty_per_instance'] ?? 0;
-            if ($latePenalty > 0) {
-                $lateDeduction = $lateCheckIns * $latePenalty;
-            }
-            
-            $earlyDeduction = 0;
-            $earlyPenalty = $policy['early_penalty_per_instance'] ?? 0;
-            if ($earlyPenalty > 0) {
-                $earlyDeduction = $earlyCheckOuts * $earlyPenalty;
-            }
-            
-            // Build detailed records for absent & leave days
+            $perDayDeduction = round(($payroll->basic_salary > 0) ? ($payroll->basic_salary / 30) : 0, 2);
             $absentDays = $attendances->filter(fn($att) => in_array(strtolower($att->status), ['absent', 'leave']))
                 ->map(function ($att) use ($perDayDeduction) {
                     return [
@@ -272,26 +260,48 @@ class PayrollController extends Controller
                         'deduction' => $perDayDeduction,
                     ];
                 })->values()->toArray();
-            
-            $lateDays = $attendances->where('is_late', true)->map(function ($att) use ($latePenalty) {
+
+            $perDayRate = ($payroll->basic_salary > 0) ? ($payroll->basic_salary / 30) : 0;
+            $latePenalty = floatval($policy['late_penalty_per_instance'] ?? 0);
+            $earlyPenalty = floatval($policy['early_penalty_per_instance'] ?? 0);
+            $lateRules = $policy['late_rules'] ?? [];
+            $earlyRules = $policy['early_rules'] ?? [];
+
+            $lateDeduction = 0;
+            $lateDays = $attendances->where('is_late', true)->map(function ($att) use ($latePenalty, $lateRules, $perDayRate) {
+                $timeIn = $att->check_in_time ?: $att->clock_in;
+                $itemDeduction = $latePenalty;
+                if ($itemDeduction <= 0 && !empty($lateRules)) {
+                    $itemDeduction = $this->calculateLateRuleDeduction($att->late_minutes ?? 0, $lateRules, $perDayRate);
+                }
                 return [
                     'date' => \Carbon\Carbon::parse($att->date)->format('d/m/Y'),
                     'day' => \Carbon\Carbon::parse($att->date)->format('l'),
-                    'check_in' => $att->clock_in ? \Carbon\Carbon::parse($att->clock_in)->format('h:i A') : 'N/A',
+                    'check_in' => $timeIn ? \Carbon\Carbon::parse($timeIn)->format('h:i A') : 'N/A',
                     'late_minutes' => $att->late_minutes ?? 0,
-                    'deduction' => $latePenalty,
+                    'deduction' => round($itemDeduction, 2),
                 ];
             })->values()->toArray();
-            
-            $earlyDays = $attendances->where('is_early_leave', true)->map(function ($att) use ($earlyPenalty) {
+
+            $lateDeduction = array_sum(array_column($lateDays, 'deduction'));
+
+            $earlyDeduction = 0;
+            $earlyDays = $attendances->where('is_early_leave', true)->map(function ($att) use ($earlyPenalty, $earlyRules, $perDayRate) {
+                $timeOut = $att->check_out_time ?: $att->clock_out;
+                $itemDeduction = $earlyPenalty;
+                if ($itemDeduction <= 0 && !empty($earlyRules)) {
+                    $itemDeduction = $this->calculateEarlyRuleDeduction($att->early_leave_minutes ?? 0, $earlyRules, $perDayRate);
+                }
                 return [
                     'date' => \Carbon\Carbon::parse($att->date)->format('d/m/Y'),
                     'day' => \Carbon\Carbon::parse($att->date)->format('l'),
-                    'check_out' => $att->clock_out ? \Carbon\Carbon::parse($att->clock_out)->format('h:i A') : 'N/A',
+                    'check_out' => $timeOut ? \Carbon\Carbon::parse($timeOut)->format('h:i A') : 'N/A',
                     'early_minutes' => $att->early_leave_minutes ?? 0,
-                    'deduction' => $earlyPenalty,
+                    'deduction' => round($itemDeduction, 2),
                 ];
             })->values()->toArray();
+
+            $earlyDeduction = array_sum(array_column($earlyDays, 'deduction'));
             
             return [
                 'has_data' => $hasData,
@@ -850,5 +860,55 @@ class PayrollController extends Controller
             DB::rollBack();
             \Log::error('Auto-generate daily payroll failed: '.$e->getMessage());
         }
+    }
+
+    private function calculateLateRuleDeduction(int $lateMinutes, array $rules, float $dailyRate): float
+    {
+        if (empty($rules)) {
+            return 0;
+        }
+
+        foreach ($rules as $rule) {
+            $min = $rule['min_minutes'] ?? 0;
+            $max = $rule['max_minutes'] ?? null;
+
+            if ($lateMinutes >= $min && (is_null($max) || $lateMinutes <= $max)) {
+                $amount = floatval($rule['amount'] ?? 0);
+                $type = $rule['type'] ?? 'fixed';
+
+                if ($type === 'percentage') {
+                    return ($dailyRate * $amount) / 100;
+                } else {
+                    return $amount;
+                }
+            }
+        }
+
+        return 0;
+    }
+
+    private function calculateEarlyRuleDeduction(int $earlyMinutes, array $rules, float $dailyRate): float
+    {
+        if (empty($rules)) {
+            return 0;
+        }
+
+        foreach ($rules as $rule) {
+            $min = $rule['min_minutes'] ?? 0;
+            $max = $rule['max_minutes'] ?? null;
+
+            if ($earlyMinutes >= $min && (is_null($max) || $earlyMinutes <= $max)) {
+                $amount = floatval($rule['amount'] ?? 0);
+                $type = $rule['type'] ?? 'fixed';
+
+                if ($type === 'percentage') {
+                    return ($dailyRate * $amount) / 100;
+                } else {
+                    return $amount;
+                }
+            }
+        }
+
+        return 0;
     }
 }

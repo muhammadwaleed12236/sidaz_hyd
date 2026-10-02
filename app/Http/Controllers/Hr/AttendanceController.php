@@ -601,9 +601,10 @@ class AttendanceController extends Controller
                 $shiftStartTime = Carbon::parse($today->format('Y-m-d').' '.Carbon::parse($shiftStart)->format('H:i:s'));
                 $graceEndTime = $shiftStartTime->copy()->addMinutes($graceMinutes);
 
-                if ($now->gt($graceEndTime)) {
+                $checkInDateTime = Carbon::parse($today->format('Y-m-d').' '.$attendance->check_in_time);
+                if ($checkInDateTime->gt($graceEndTime)) {
                     $isLate = true;
-                    $lateMinutes = $now->diffInMinutes($shiftStartTime);
+                    $lateMinutes = min(300, (int) $checkInDateTime->diffInMinutes($shiftStartTime));
                     $attendance->is_late = true;
                     $attendance->late_minutes = $lateMinutes;
                     $attendance->status = 'late';
@@ -818,9 +819,10 @@ class AttendanceController extends Controller
                 $shiftStartTime = Carbon::parse($today->format('Y-m-d').' '.Carbon::parse($shiftStart)->format('H:i:s'));
                 $graceEndTime = $shiftStartTime->copy()->addMinutes($graceMinutes);
 
-                if ($now->gt($graceEndTime)) {
+                $checkInDateTime = Carbon::parse($today->format('Y-m-d').' '.$attendance->check_in_time);
+                if ($checkInDateTime->gt($graceEndTime)) {
                     $attendance->is_late = true;
-                    $attendance->late_minutes = $now->diffInMinutes($shiftStartTime);
+                    $attendance->late_minutes = min(300, (int) $checkInDateTime->diffInMinutes($shiftStartTime));
                     $attendance->status = 'late';
                 }
             } else {
