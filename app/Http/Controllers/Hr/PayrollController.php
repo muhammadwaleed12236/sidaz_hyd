@@ -186,9 +186,11 @@ class PayrollController extends Controller
                     ->whereBetween('date', [$startDate->format('Y-m-d'), $endDate->format('Y-m-d')])
                     ->get();
 
-                $presentCount = $attendances->filter(fn($a) => in_array(strtolower($a->status ?? ''), ['present', 'late']))->count();
-                $lateCount = $attendances->filter(fn($a) => strtolower($a->status ?? '') === 'late' || $a->is_late)->count();
-                $absentCount = $attendances->filter(fn($a) => strtolower($a->status ?? '') === 'absent')->count();
+                $attBreakdown = $this->getAttendanceBreakdown($payroll);
+
+                $presentCount = $attBreakdown['days_present_total'] ?? $attendances->filter(fn($a) => in_array(strtolower($a->status ?? ''), ['present', 'late']))->count();
+                $lateCount = $attBreakdown['late_check_ins'] ?? $attendances->filter(fn($a) => strtolower($a->status ?? '') === 'late' || $a->is_late)->count();
+                $absentCount = $attBreakdown['days_absent'] ?? $attendances->filter(fn($a) => strtolower($a->status ?? '') === 'absent')->count();
 
                 $otData = $this->calculateOvertimeMetrics($payroll, $attendances);
 
@@ -198,6 +200,32 @@ class PayrollController extends Controller
                 $payroll->attendance_absent = $absentCount;
                 $payroll->ot_hours = $otData['hours'];
                 $payroll->ot_amount = $otData['earnings'];
+
+                $gross = $payroll->basic_salary + $payroll->allowances + $payroll->manual_allowances + $otData['earnings'];
+                $attDeduction = floatval($attBreakdown['total_deduction'] ?? 0);
+                $otherDeductions = floatval($payroll->deductions) + floatval($payroll->manual_deductions) + floatval($payroll->carried_forward_deduction);
+
+                $loanCut = 0;
+                if (floatval($payroll->loan_deduction) > 0) {
+                    $loanCut = floatval($payroll->loan_deduction);
+                } else {
+                    $activeLoans = \App\Models\Hr\Loan::where('employee_id', $payroll->employee_id)->active()->get();
+                    foreach ($activeLoans as $l) {
+                        $rem = max(0, $l->amount - $l->paid_amount);
+                        if ($l->installment_amount > 0) {
+                            $loanCut += min($l->installment_amount, $rem);
+                        } else {
+                            $loanCut += $rem;
+                        }
+                    }
+                }
+
+                $totalDeduction = $attDeduction + $otherDeductions + $loanCut;
+                $netSalary = max(0, $gross - $totalDeduction);
+
+                $payroll->calculated_gross = $gross;
+                $payroll->calculated_total_deductions = $totalDeduction;
+                $payroll->calculated_net_salary = $netSalary;
             }
         }
     }
@@ -364,7 +392,24 @@ class PayrollController extends Controller
             
             $hasData = $attendances->count() > 0;
             $daysLeave = $attendances->filter(fn($att) => strtolower($att->status) === 'leave')->count();
-            $lateCheckIns = $attendances->filter(fn($att) => strtolower($att->status) === 'late' || $att->is_late)->count();
+
+            $shift = $employee->shift ?? \App\Models\Hr\Shift::where('is_default', true)->first();
+            $shiftStartStr = ($shift ? $shift->start_time : '08:30:00');
+            $graceMins = $shift ? ($shift->grace_minutes ?? 5) : 5;
+            $lateThreshold = \Carbon\Carbon::parse($shiftStartStr)->addMinutes($graceMins)->format('H:i:s');
+
+            $lateAttendancesList = $attendances->filter(function ($att) use ($lateThreshold) {
+                if ($att->is_late || strtolower($att->status ?? '') === 'late') {
+                    return true;
+                }
+                if ($att->check_in_time) {
+                    $checkInTimeStr = \Carbon\Carbon::parse($att->check_in_time)->format('H:i:s');
+                    return $checkInTimeStr > $lateThreshold;
+                }
+                return false;
+            })->values();
+
+            $lateCheckIns = $lateAttendancesList->count();
             $daysPresentOnTime = $attendances->filter(fn($att) => strtolower($att->status) === 'present' && !$att->is_late)->count();
             $daysPresentTotal = $daysPresentOnTime + $lateCheckIns;
             $daysAbsent = $attendances->filter(fn($att) => strtolower($att->status) === 'absent')->count();
@@ -414,7 +459,7 @@ class PayrollController extends Controller
 
             $earlyPenalty = floatval($policy['early_penalty_per_instance'] ?? 0);
             $earlyRules = $policy['early_rules'] ?? [];
-            $lateDays = $attendances->where('is_late', true)->values()->map(function ($att, $idx) use ($hrPolicy, $perDayRate) {
+            $lateDays = $lateAttendancesList->map(function ($att, $idx) use ($hrPolicy, $perDayRate) {
                 $timeIn = $att->check_in_time ?: $att->clock_in;
                 $itemDeduction = 0;
 
@@ -434,7 +479,10 @@ class PayrollController extends Controller
                 ];
             })->toArray();
 
-            $lateDeduction = array_sum(array_column($lateDays, 'deduction'));
+            $lateDeductionFromDays = array_sum(array_column($lateDays, 'deduction'));
+            if ($lateDeductionFromDays > 0) {
+                $lateDeduction = $lateDeductionFromDays;
+            }
 
             $earlyDeduction = 0;
             $earlyDays = $attendances->where('is_early_leave', true)->map(function ($att) use ($earlyPenalty, $earlyRules, $perDayRate) {

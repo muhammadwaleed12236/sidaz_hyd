@@ -833,10 +833,10 @@
                                             {{ number_format($payroll->ot_amount ?? 0, 0) }}
                                         </td>
                                         <td class="text-end text-danger fw-semibold">
-                                            {{ number_format($payroll->total_deductions, 0) }}
+                                            {{ number_format($payroll->calculated_total_deductions ?? $payroll->total_deductions, 2) }}
                                         </td>
                                         <td class="text-end fw-bold text-success fs-6">
-                                            {{ number_format($payroll->net_salary, 0) }}
+                                            {{ number_format($payroll->calculated_net_salary ?? $payroll->net_salary, 2) }}
                                         </td>
                                         <td class="text-center">
                                             <span class="status-badge {{ $payroll->status }}">
