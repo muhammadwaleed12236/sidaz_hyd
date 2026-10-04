@@ -6,17 +6,7 @@
     @php
         if (!function_exists('formatMinsToHours')) {
             function formatMinsToHours($minutes) {
-                $mins = (int) $minutes;
-                if ($mins <= 0) return '0m';
-                $hrs = floor($mins / 60);
-                $rem = $mins % 60;
-                if ($hrs > 0 && $rem > 0) {
-                    return "{$hrs}hrs {$rem}m";
-                } elseif ($hrs > 0) {
-                    return "{$hrs}hrs";
-                } else {
-                    return "{$rem}m";
-                }
+                return format_minutes($minutes);
             }
         }
     @endphp

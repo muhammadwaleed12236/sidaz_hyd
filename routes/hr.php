@@ -66,6 +66,14 @@ Route::middleware(['auth'])->prefix('hr')->name('hr.')->group(function () {
     Route::post('attendance/pull', [AttendanceController::class, 'pullFromDevices'])->name('attendance.pull')->middleware('permission:hr.biometric.devices.edit');
     Route::post('attendance/mark-absent', [AttendanceController::class, 'markAbsent'])->name('attendance.mark-absent')->middleware('permission:hr.attendance.create');
 
+    // Terms & Conditions / HR Attendance Policy
+    Route::get('terms-conditions', [\App\Http\Controllers\Hr\HrPolicyController::class, 'index'])->name('policy.index')->middleware('permission:hr.payroll.view|hr.payroll.create|hr.payroll.edit');
+    Route::get('terms-conditions/create', [\App\Http\Controllers\Hr\HrPolicyController::class, 'create'])->name('policy.create')->middleware('permission:hr.payroll.create|hr.payroll.edit');
+    Route::post('terms-conditions', [\App\Http\Controllers\Hr\HrPolicyController::class, 'store'])->name('policy.store')->middleware('permission:hr.payroll.create|hr.payroll.edit');
+    Route::get('terms-conditions/{policy}/edit', [\App\Http\Controllers\Hr\HrPolicyController::class, 'edit'])->name('policy.edit')->middleware('permission:hr.payroll.edit|hr.payroll.create');
+    Route::post('terms-conditions/{policy}/toggle', [\App\Http\Controllers\Hr\HrPolicyController::class, 'toggleStatus'])->name('policy.toggle')->middleware('permission:hr.payroll.edit|hr.payroll.create');
+    Route::delete('terms-conditions/{policy}', [\App\Http\Controllers\Hr\HrPolicyController::class, 'destroy'])->name('policy.destroy')->middleware('permission:hr.payroll.delete|hr.payroll.edit|hr.payroll.create');
+
     // Payroll
     Route::get('payroll', [PayrollController::class, 'index'])->name('payroll.index')->middleware('permission:hr.payroll.view');
     Route::get('payroll/monthly', [PayrollController::class, 'monthly'])->name('payroll.monthly')->middleware('permission:hr.payroll.view');

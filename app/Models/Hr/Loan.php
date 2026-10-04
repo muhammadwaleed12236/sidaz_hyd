@@ -45,6 +45,6 @@ class Loan extends Model
     // Scopes
     public function scopeActive($query)
     {
-        return $query->where('status', 'approved')->whereRaw('paid_amount < amount');
+        return $query->whereIn('status', ['approved', 'pending'])->whereRaw('paid_amount < amount');
     }
 }

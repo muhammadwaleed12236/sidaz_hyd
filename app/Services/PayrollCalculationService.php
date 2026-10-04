@@ -26,26 +26,40 @@ class PayrollCalculationService
             ->latest('start_date')
             ->first();
 
-        if (! $activeAssignment || ! $activeAssignment->salaryStructure) {
-            // Fallback to legacy relationship
+        if ($activeAssignment && $activeAssignment->salaryStructure) {
+            $structure = $activeAssignment->salaryStructure;
+
+            // If this is a custom assignment, check if there's a child structure for this employee
+            if ($activeAssignment->is_custom) {
+                // Look for an employee-specific child structure
+                $customStructure = SalaryStructure::where('parent_structure_id', $structure->id)
+                    ->where('employee_id', $employee->id)
+                    ->first();
+
+                if ($customStructure) {
+                    return $customStructure;
+                }
+            }
+
+            return $structure;
+        }
+
+        // Fallback to legacy relationship
+        if ($employee->salaryStructure) {
             return $employee->salaryStructure;
         }
 
-        $structure = $activeAssignment->salaryStructure;
-
-        // If this is a custom assignment, check if there's a child structure for this employee
-        if ($activeAssignment->is_custom) {
-            // Look for an employee-specific child structure
-            $customStructure = SalaryStructure::where('parent_structure_id', $structure->id)
-                ->where('employee_id', $employee->id)
-                ->first();
-
-            if ($customStructure) {
-                return $customStructure;
+        // Fallback: match by designation or default structure
+        if ($employee->designation) {
+            $designationName = strtolower($employee->designation->name);
+            $matched = SalaryStructure::whereRaw('LOWER(name) LIKE ?', ['%' . $designationName . '%'])->first();
+            if ($matched) {
+                return $matched;
             }
         }
 
-        return $structure;
+        // Default fallback to Labor structure (ID 7) or first available structure
+        return SalaryStructure::find(7) ?? SalaryStructure::first();
     }
 
     /**

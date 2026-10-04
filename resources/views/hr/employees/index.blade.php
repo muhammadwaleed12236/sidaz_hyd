@@ -7,6 +7,52 @@
     @include('hr.partials.hr-styles')
 
     <style>
+        /* Row-wise Table Styles */
+        .policy-table-card {
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            background: #ffffff;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            overflow: hidden;
+        }
+        .policy-table th {
+            background-color: #f8fafc;
+            color: #475569;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            padding: 12px 14px;
+            border-bottom: 2px solid #e2e8f0;
+            vertical-align: middle;
+        }
+        .policy-table td {
+            padding: 12px 14px;
+            vertical-align: middle;
+            border-bottom: 1px solid #f1f5f9;
+            color: #334155;
+            font-size: 0.84rem;
+        }
+        .policy-table tr:hover td {
+            background-color: #f8fafc;
+        }
+        .policy-badge {
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 16px;
+            display: inline-block;
+        }
+        .rule-pill {
+            font-size: 0.74rem;
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 6px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
         /* Modern Employee Modal Specific Styling */
         #employeeModal .modal-dialog {
             max-width: 860px;
@@ -617,116 +663,149 @@
                         </span>
                     </div>
 
-                    <div class="hr-grid" id="empGrid">
-                        @forelse($employees as $emp)
-                            <div class="hr-item-card" data-id="{{ $emp->id }}"
-                                data-name="{{ strtolower($emp->first_name . ' ' . $emp->last_name) }}"
-                                data-email="{{ strtolower(str_contains($emp->email, '@system.local') ? '' : $emp->email) }}"
-                                data-dept="{{ strtolower($emp->department->name ?? '') }}"
-                                data-desig="{{ strtolower($emp->designation->name ?? '') }}"
-                                data-status="{{ strtolower($emp->status) }}">
-                                <div class="hr-item-header">
-                                    <div class="d-flex align-items-center">
-                                        <div class="hr-avatar">
-                                            {{ strtoupper(substr($emp->first_name, 0, 1) . substr($emp->last_name, 0, 1)) }}
-                                        </div>
-                                        <div class="hr-item-info">
-                                            <h4 class="hr-item-name">{{ $emp->first_name }} {{ $emp->last_name }}</h4>
-                                            <div class="hr-item-subtitle">
-                                                @if (!str_contains($emp->email, '@system.local'))
-                                                    <i class="fa fa-envelope me-1"></i>{{ $emp->email }}
-                                                @elseif($emp->phone)
-                                                    <i class="fa fa-phone me-1"></i>{{ $emp->phone }}
+                    <div class="policy-table-card" id="empGrid">
+                        <div class="table-responsive">
+                            <table class="table policy-table align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        <th style="min-width: 220px;">Employee & Contact</th>
+                                        <th style="min-width: 180px;">Department & Job Title</th>
+                                        <th style="min-width: 170px;">Shift / Work Hours</th>
+                                        <th style="min-width: 160px;">Status & Access</th>
+                                        <th class="text-end" style="min-width: 200px;">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse($employees as $emp)
+                                        <tr class="hr-item-card" data-id="{{ $emp->id }}"
+                                            data-name="{{ strtolower($emp->first_name . ' ' . $emp->last_name) }}"
+                                            data-email="{{ strtolower(str_contains($emp->email, '@system.local') ? '' : $emp->email) }}"
+                                            data-dept="{{ strtolower(optional($emp->department)->name ?? '') }}"
+                                            data-desig="{{ strtolower(optional($emp->designation)->name ?? '') }}"
+                                            data-status="{{ strtolower($emp->status) }}">
+                                            <td>
+                                                <div class="d-flex align-items-center gap-2">
+                                                    <div class="hr-avatar" style="width:36px; height:36px; font-size:0.82rem; border-radius:10px; flex-shrink:0;">
+                                                        {{ strtoupper(substr($emp->first_name, 0, 1) . substr($emp->last_name, 0, 1)) }}
+                                                    </div>
+                                                    <div class="overflow-hidden">
+                                                        <div class="font-weight-bold text-dark text-truncate" style="font-size: 0.88rem;">
+                                                            {{ $emp->first_name }} {{ $emp->last_name }}
+                                                        </div>
+                                                        <div class="sub-help-text text-muted text-truncate" style="font-size: 0.73rem;">
+                                                            @if (!str_contains($emp->email, '@system.local'))
+                                                                <i class="fa fa-envelope me-1"></i>{{ $emp->email }}
+                                                            @elseif($emp->phone)
+                                                                <i class="fa fa-phone me-1"></i>{{ $emp->phone }}
+                                                            @else
+                                                                <span class="text-muted">No Email</span>
+                                                            @endif
+                                                        </div>
+                                                        <div class="text-muted" style="font-size: 0.7rem;">
+                                                            ID: #{{ $emp->id }} • Joined {{ $emp->joining_date ? \Carbon\Carbon::parse($emp->joining_date)->format('d/m/Y') : 'N/A' }}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="mb-1">
+                                                    <span class="rule-pill bg-light text-dark border" style="font-size:0.75rem;">
+                                                        <i class="fa fa-building text-primary me-1"></i>{{ optional($emp->department)->name ?? 'N/A' }}
+                                                    </span>
+                                                </div>
+                                                <div>
+                                                    <span class="rule-pill bg-light text-muted border" style="font-size:0.73rem;">
+                                                        <i class="fa fa-briefcase me-1"></i>{{ optional($emp->designation)->name ?? 'N/A' }}
+                                                    </span>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                @if ($emp->custom_start_time)
+                                                    <span class="rule-pill" style="background:#fef3c7; color:#b45309; border:1px solid #fde68a;">
+                                                        <i class="fa fa-clock me-1"></i>Custom: {{ \Carbon\Carbon::parse($emp->custom_start_time)->format('h:i A') }} - {{ \Carbon\Carbon::parse($emp->custom_end_time)->format('h:i A') }}
+                                                    </span>
                                                 @else
-                                                    <span class="text-muted">No email assigned</span>
+                                                    <span class="rule-pill" style="background:#e0f2fe; color:#0369a1; border:1px solid #bae6fd;">
+                                                        <i class="fa fa-clock me-1"></i>{{ optional($emp->shift)->name ?? 'Default Shift' }}
+                                                    </span>
                                                 @endif
-                                            </div>
-                                            <div class="hr-item-meta">
-                                                ID: #{{ $emp->id }} • Joined
-                                                {{ $emp->joining_date ? \Carbon\Carbon::parse($emp->joining_date)->format('d/m/Y') : 'N/A' }}
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="hr-actions">
-                                        <button type="button" class="btn btn-info btn-sm view-monthly-detail-btn" data-id="{{ $emp->id }}"
-                                            data-name="{{ $emp->first_name }} {{ $emp->last_name }}" title="View Monthly Attendance & Payroll Report">
-                                            <i class="fa fa-calendar-alt me-1"></i> Detail
-                                        </button>
-                                        @can('hr.employees.edit')
-                                            <button class="btn btn-success btn-sm register-face-btn" data-id="{{ $emp->id }}"
-                                                data-name="{{ $emp->first_name }} {{ $emp->last_name }}" title="Register Face ID">
-                                                <i class="fa fa-camera"></i>
-                                            </button>
-                                            <button class="btn btn-edit btn-sm edit-btn" title="Edit Employee">
-                                                <i class="fa fa-pen"></i>
-                                            </button>
-                                        @endcan
-                                        @can('hr.employees.delete')
-                                            <button class="btn btn-delete btn-sm delete-btn"
-                                                data-url="{{ route('hr.employees.destroy', $emp->id) }}" title="Delete">
-                                                <i class="fa fa-trash"></i>
-                                            </button>
-                                        @endcan
-                                    </div>
-                                </div>
-                                <div class="hr-tags">
-                                    <span class="hr-tag default mb-1"><i
-                                            class="fa fa-building me-1"></i>{{ $emp->department->name ?? 'N/A' }}</span>
-                                    <span class="hr-tag default mb-1"><i
-                                            class="fa fa-briefcase me-1"></i>{{ $emp->designation->name ?? 'N/A' }}</span>
-                                    @if ($emp->custom_start_time)
-                                        <span class="hr-tag warning mb-1"><i class="fa fa-clock me-1"></i>Custom Timing</span>
-                                    @else
-                                        <span class="hr-tag info mb-1"><i
-                                                class="fa fa-clock me-1"></i>{{ $emp->shift->name ?? 'Default' }}</span>
-                                    @endif
-                                    <span
-                                        class="hr-tag {{ $emp->status == 'active' ? 'success' : ($emp->status == 'non-active' ? 'warning' : 'danger') }} mb-1">
-                                        {{ ucfirst($emp->status) }}
-                                    </span>
+                                            </td>
+                                            <td>
+                                                <div class="mb-1">
+                                                    <span class="policy-badge" style="{{ $emp->status == 'active' ? 'background:#dcfce7; color:#15803d; border:1px solid #86efac;' : ($emp->status == 'non-active' ? 'background:#fef3c7; color:#b45309; border:1px solid #fde68a;' : 'background:#fee2e2; color:#b91c1c; border:1px solid #fca5a5;') }}">
+                                                        {{ ucfirst($emp->status) }}
+                                                    </span>
+                                                </div>
+                                                <div class="d-flex flex-wrap gap-1">
+                                                    @if ($emp->user_id)
+                                                        <span class="badge bg-primary text-white" style="font-size:0.65rem;"><i class="fa fa-key me-1"></i>Portal</span>
+                                                    @endif
+                                                    @if (!empty($emp->face_encoding) && is_array($emp->face_encoding) && count($emp->face_encoding) > 0)
+                                                        <span class="badge bg-info text-white" style="font-size:0.65rem;"><i class="fa fa-smile me-1"></i>Face ID</span>
+                                                    @endif
+                                                </div>
+                                            </td>
+                                            <td class="text-end">
+                                                <div class="d-inline-flex gap-1">
+                                                    <button type="button" class="btn btn-sm btn-outline-info rounded-pill px-2 font-weight-bold view-monthly-detail-btn" data-id="{{ $emp->id }}"
+                                                        data-name="{{ $emp->first_name }} {{ $emp->last_name }}" title="Monthly Attendance & Payroll">
+                                                        <i class="fa fa-calendar-alt me-1"></i> Detail
+                                                    </button>
 
-                                    <!-- Portal User Badge -->
-                                    @if ($emp->user_id)
-                                        <span class="badge bg-primary text-white p-1 mb-1"><i class="fa fa-key me-1"></i>Portal User</span>
-                                    @else
-                                        <span class="badge bg-light text-muted border p-1 mb-1"><i class="fa fa-user-slash me-1"></i>No Portal</span>
-                                    @endif
+                                                    @can('hr.employees.edit')
+                                                        <button class="btn btn-sm btn-outline-success rounded-pill px-2 register-face-btn" data-id="{{ $emp->id }}"
+                                                            data-name="{{ $emp->first_name }} {{ $emp->last_name }}" title="Register Face ID">
+                                                            <i class="fa fa-camera"></i>
+                                                        </button>
+                                                        <button class="btn btn-sm btn-outline-primary rounded-pill px-2 edit-btn" title="Edit Employee">
+                                                            <i class="fa fa-edit"></i>
+                                                        </button>
+                                                    @endcan
 
-                                    <!-- Face ID Badge -->
-                                    @if (!empty($emp->face_encoding) && is_array($emp->face_encoding) && count($emp->face_encoding) > 0)
-                                        <span class="badge bg-info text-white p-1 mb-1"><i class="fa fa-smile me-1"></i>Face ID</span>
-                                    @endif
-                                </div>
+                                                    @can('hr.employees.delete')
+                                                        <button class="btn btn-sm btn-outline-danger rounded-pill px-2 delete-btn"
+                                                            data-url="{{ route('hr.employees.destroy', $emp->id) }}" title="Delete">
+                                                            <i class="fa fa-trash"></i>
+                                                        </button>
+                                                    @endcan
+                                                </div>
 
-                                <!-- Hidden fields for edit -->
-                                <input type="hidden" class="first_name" value="{{ $emp->first_name }}">
-                                <input type="hidden" class="last_name" value="{{ $emp->last_name }}">
-                                <input type="hidden" class="email" value="{{ str_contains($emp->email, '@system.local') ? '' : $emp->email }}">
-                                <input type="hidden" class="has_portal_access" value="{{ $emp->user_id ? '1' : '0' }}">
-                                <input type="hidden" class="phone" value="{{ $emp->phone }}">
-                                <input type="hidden" class="address" value="{{ $emp->address }}">
-                                <input type="hidden" class="department_id" value="{{ $emp->department_id }}">
-                                <input type="hidden" class="designation_id" value="{{ $emp->designation_id }}">
-                                <input type="hidden" class="shift_id" value="{{ $emp->shift_id }}">
-                                <input type="hidden" class="custom_start_time" value="{{ $emp->custom_start_time }}">
-                                <input type="hidden" class="custom_end_time" value="{{ $emp->custom_end_time }}">
-                                <input type="hidden" class="joining_date" value="{{ $emp->joining_date }}">
-                                <input type="hidden" class="status" value="{{ $emp->status }}">
-                                <input type="hidden" class="is_docs_submitted" value="{{ $emp->is_docs_submitted }}">
-                                <input type="hidden" class="doc_degree" value="{{ $emp->getDocument('degree') }}">
-                                <input type="hidden" class="doc_certificate" value="{{ $emp->getDocument('certificate') }}">
-                                <input type="hidden" class="doc_hsc_marksheet" value="{{ $emp->getDocument('hsc_marksheet') }}">
-                                <input type="hidden" class="doc_ssc_marksheet" value="{{ $emp->getDocument('ssc_marksheet') }}">
-                                <input type="hidden" class="doc_cv" value="{{ $emp->getDocument('cv') }}">
-                                <input type="hidden" class="casual_leave_dates"
-                                    value="{{ $emp->leaves->pluck('start_date')->map(fn($d) => \Carbon\Carbon::parse($d)->format('Y-m-d'))->implode(', ') }}">
-                            </div>
-                        @empty
-                            <div class="empty-state" style="grid-column: 1/-1;">
-                                <i class="fa fa-users"></i>
-                                <p>No employees found. Add your first employee!</p>
-                            </div>
-                        @endforelse
+                                                <!-- Hidden fields for JS edit -->
+                                                <input type="hidden" class="first_name" value="{{ $emp->first_name }}">
+                                                <input type="hidden" class="last_name" value="{{ $emp->last_name }}">
+                                                <input type="hidden" class="email" value="{{ str_contains($emp->email, '@system.local') ? '' : $emp->email }}">
+                                                <input type="hidden" class="has_portal_access" value="{{ $emp->user_id ? '1' : '0' }}">
+                                                <input type="hidden" class="phone" value="{{ $emp->phone }}">
+                                                <input type="hidden" class="address" value="{{ $emp->address }}">
+                                                <input type="hidden" class="department_id" value="{{ $emp->department_id }}">
+                                                <input type="hidden" class="designation_id" value="{{ $emp->designation_id }}">
+                                                <input type="hidden" class="shift_id" value="{{ $emp->shift_id }}">
+                                                <input type="hidden" class="custom_start_time" value="{{ $emp->custom_start_time }}">
+                                                <input type="hidden" class="custom_end_time" value="{{ $emp->custom_end_time }}">
+                                                <input type="hidden" class="joining_date" value="{{ $emp->joining_date }}">
+                                                <input type="hidden" class="status" value="{{ $emp->status }}">
+                                                <input type="hidden" class="is_docs_submitted" value="{{ $emp->is_docs_submitted }}">
+                                                <input type="hidden" class="doc_degree" value="{{ $emp->getDocument('degree') }}">
+                                                <input type="hidden" class="doc_certificate" value="{{ $emp->getDocument('certificate') }}">
+                                                <input type="hidden" class="doc_hsc_marksheet" value="{{ $emp->getDocument('hsc_marksheet') }}">
+                                                <input type="hidden" class="doc_ssc_marksheet" value="{{ $emp->getDocument('ssc_marksheet') }}">
+                                                <input type="hidden" class="doc_cv" value="{{ $emp->getDocument('cv') }}">
+                                                <input type="hidden" class="casual_leave_dates"
+                                                    value="{{ $emp->leaves->pluck('start_date')->map(fn($d) => \Carbon\Carbon::parse($d)->format('Y-m-d'))->implode(', ') }}">
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="5" class="text-center py-4">
+                                                <i class="fa fa-users text-muted mb-2" style="font-size: 2rem;"></i>
+                                                <h6 class="font-weight-bold text-dark mb-1">No Employees Found</h6>
+                                                <p class="text-muted small">Click "Add Employee" to create your first employee record.</p>
+                                            </td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                     <div class="px-4 py-3 border-top">
                         {{ $employees->links() }}
@@ -1627,7 +1706,15 @@
                             $('#kpiTotalDays').text(sum.total_days);
                             $('#kpiPresent').text(sum.present);
                             $('#kpiLate').text(sum.late);
-                            $('#kpiLateMins').text(sum.total_late_minutes + ' mins');
+                            let formatMins = function(minutes) {
+                                let mins = parseInt(minutes) || 0;
+                                if (mins <= 0) return '0m';
+                                if (mins < 60) return mins + 'm';
+                                let hrs = Math.floor(mins / 60);
+                                let rem = mins % 60;
+                                return rem > 0 ? hrs + 'h ' + rem + 'm' : hrs + 'h';
+                            };
+                            $('#kpiLateMins').text(formatMins(sum.total_late_minutes));
                             $('#kpiAbsent').text(sum.absent);
                             $('#kpiLeave').text(sum.leave);
                             $('#kpiHours').text(sum.total_hours + ' hrs');
@@ -1688,7 +1775,7 @@
                             <p class="small text-white-50 mb-0" id="empDetailMeta">Department • Designation</p>
                         </div>
                     </div>
-                    <button type="button" class="btn-close btn-close-white" data-dismiss="modal" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="close text-white border-0 bg-transparent opacity-75" data-dismiss="modal" data-bs-dismiss="modal" aria-label="Close" style="font-size: 1.6rem; line-height: 1; outline: none; cursor: pointer;"><span aria-hidden="true">&times;</span></button>
                 </div>
                 <div class="modal-body p-4" style="background: #f8fafc; max-height: 80vh; overflow-y: auto;">
                     

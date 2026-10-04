@@ -235,31 +235,54 @@
             border-top: 2px solid var(--hr-border);
         }
 
-        /* Modern Payroll UI Overhaul */
-        :root {
-            --modern-primary: #6366f1;
-            --modern-success: #10b981;
-            --modern-danger: #ef4444;
-            --modern-warning: #f59e0b;
-            --modern-text: #1e293b;
-            --modern-text-light: #64748b;
-            --modern-bg: #f8fafc;
-            --modern-card-bg: #ffffff;
-            --modern-border: #e2e8f0;
+        .policy-table-card {
+            background: #ffffff;
+            border: 1px solid var(--hr-border, #e2e8f0);
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+            overflow: hidden;
         }
 
+        .policy-table {
+            margin-bottom: 0;
+            width: 100%;
+        }
 
-        /* Modern Payroll UI Overhaul */
-        :root {
-            --modern-primary: #6366f1;
-            --modern-success: #10b981;
-            --modern-danger: #ef4444;
-            --modern-warning: #f59e0b;
-            --modern-text: #1e293b;
-            --modern-text-light: #64748b;
-            --modern-bg: #f8fafc;
-            --modern-card-bg: #ffffff;
-            --modern-border: #e2e8f0;
+        .policy-table thead th {
+            background: #f8fafc;
+            color: #475569;
+            font-weight: 700;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 14px 16px;
+            border-bottom: 2px solid #e2e8f0;
+            white-space: nowrap;
+        }
+
+        .policy-table tbody td {
+            padding: 14px 16px;
+            vertical-align: middle;
+            border-bottom: 1px solid #f1f5f9;
+            color: #334155;
+            font-size: 0.875rem;
+        }
+
+        .policy-table tbody tr:hover {
+            background-color: #f8fafc;
+        }
+
+        .hr-avatar-sm {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.85rem;
+            flex-shrink: 0;
         }
 
         .net-payable {
@@ -647,7 +670,7 @@
 
     <div class="main-content">
         <div class="main-content-inner">
-            <div class="container">
+            <div class="container-fluid px-2 px-md-4">
                 <!-- Page Header -->
                 <div class="page-header d-flex justify-content-between align-items-start">
                     <div>
@@ -684,54 +707,28 @@
                     </div>
                 </div>
 
-                <!-- Stats Row -->
                 @php
-                    $generatedCount = \App\Models\Hr\Payroll::where('status', 'generated')->count();
-                    $reviewedCount = \App\Models\Hr\Payroll::where('status', 'reviewed')->count();
-                    $paidCount = \App\Models\Hr\Payroll::where('status', 'paid')->count();
-                    $totalNet = \App\Models\Hr\Payroll::sum('net_salary');
-                    $monthlyCount = \App\Models\Hr\Payroll::monthly()->count();
-                    $dailyCount = \App\Models\Hr\Payroll::daily()->count();
+                    $monthlyQuery = \App\Models\Hr\Payroll::monthly();
+                    $dailyQuery = \App\Models\Hr\Payroll::daily();
+                    if (!empty($selectedMonth) && $selectedMonth !== 'all') {
+                        $monthlyQuery->where('month', $selectedMonth);
+                        $dailyQuery->where('month', $selectedMonth);
+                    }
+                    $monthlyCount = $monthlyQuery->count();
+                    $dailyCount = $dailyQuery->count();
                 @endphp
-                <div class="stats-row">
-                    <div class="stat-card primary">
-                        <div class="stat-icon"><i class="fa fa-file-invoice-dollar"></i></div>
-                        <div class="stat-value">{{ $payrolls->total() }}</div>
-                        <div class="stat-label">Total Payrolls</div>
-                    </div>
-                    <div class="stat-card warning">
-                        <div class="stat-icon"><i class="fa fa-clock"></i></div>
-                        <div class="stat-value">{{ $generatedCount }}</div>
-                        <div class="stat-label">Generated</div>
-                    </div>
-                    <div class="stat-card info">
-                        <div class="stat-icon"><i class="fa fa-eye"></i></div>
-                        <div class="stat-value">{{ $reviewedCount }}</div>
-                        <div class="stat-label">Reviewed</div>
-                    </div>
-                    <div class="stat-card success">
-                        <div class="stat-icon"><i class="fa fa-check-circle"></i></div>
-                        <div class="stat-value">{{ $paidCount }}</div>
-                        <div class="stat-label">Paid</div>
-                    </div>
-                    <div class="stat-card info">
-                        <div class="stat-icon"><i class="fa fa-coins"></i></div>
-                        <div class="stat-value">{{ number_format($totalNet, 0) }}</div>
-                        <div class="stat-label">Total Amount</div>
-                    </div>
-                </div>
 
                 <!-- Tabs -->
                 <div class="payroll-tabs">
-                    <a href="{{ route('hr.payroll.index') }}"
+                    <a href="{{ route('hr.payroll.index', ['month' => $selectedMonth ?? '']) }}"
                         class="payroll-tab {{ ($activeTab ?? 'all') === 'all' ? 'active' : '' }}">
                         <i class="fa fa-list"></i> All Payrolls ({{ $monthlyCount + $dailyCount }})
                     </a>
-                    <a href="{{ route('hr.payroll.monthly') }}"
+                    <a href="{{ route('hr.payroll.monthly', ['month' => $selectedMonth ?? '']) }}"
                         class="payroll-tab {{ ($activeTab ?? '') === 'monthly' ? 'active' : '' }}">
                         <i class="fa fa-calendar-alt"></i> Monthly ({{ $monthlyCount }})
                     </a>
-                    <a href="{{ route('hr.payroll.daily') }}"
+                    <a href="{{ route('hr.payroll.daily', ['month' => $selectedMonth ?? '']) }}"
                         class="payroll-tab {{ ($activeTab ?? '') === 'daily' ? 'active' : '' }}">
                         <i class="fa fa-calendar-day"></i> Daily ({{ $dailyCount }})
                     </a>
@@ -745,135 +742,162 @@
                                 <i class="fa fa-search"></i>
                                 <input type="search" id="payrollSearch" placeholder="Search by employee name...">
                             </div>
+                            @if(isset($availableMonths) && count($availableMonths) > 0)
+                                <div class="d-flex align-items-center gap-2">
+                                    <label class="small text-muted fw-bold mb-0 text-nowrap"><i class="fa fa-calendar-alt text-primary me-1"></i> Month:</label>
+                                    <select class="form-select form-select-sm" style="min-width: 160px; border-radius: 8px; font-weight: 600;" onchange="window.location.href = this.value">
+                                        @foreach($availableMonths as $m)
+                                            @php
+                                                $mFormatted = \Carbon\Carbon::parse($m . '-01')->format('F Y');
+                                                $currentRoute = request()->routeIs('hr.payroll.monthly') ? route('hr.payroll.monthly', ['month' => $m]) : (request()->routeIs('hr.payroll.daily') ? route('hr.payroll.daily', ['month' => $m]) : route('hr.payroll.index', ['month' => $m]));
+                                            @endphp
+                                            <option value="{{ $currentRoute }}" {{ ($selectedMonth ?? '') === $m ? 'selected' : '' }}>
+                                                {{ $mFormatted }}
+                                            </option>
+                                        @endforeach
+                                        @php
+                                            $allRoute = request()->routeIs('hr.payroll.monthly') ? route('hr.payroll.monthly', ['month' => 'all']) : (request()->routeIs('hr.payroll.daily') ? route('hr.payroll.daily', ['month' => 'all']) : route('hr.payroll.index', ['month' => 'all']));
+                                        @endphp
+                                        <option value="{{ $allRoute }}" {{ ($selectedMonth ?? '') === 'all' ? 'selected' : '' }}>
+                                            All Months (History)
+                                        </option>
+                                    </select>
+                                </div>
+                            @endif
                             <div class="btn-group">
                                 <button class="btn btn-outline-secondary btn-sm active" data-status="all">All</button>
-                                <button class="btn btn-outline-warning btn-sm" data-status="generated">Generated</button>
-                                <button class="btn btn-outline-info btn-sm" data-status="reviewed">Reviewed</button>
+                                <button class="btn btn-outline-warning btn-sm" data-status="generated">Pending</button>
                                 <button class="btn btn-outline-success btn-sm" data-status="paid">Paid</button>
                             </div>
                         </div>
                         <span class="text-muted small" id="payrollCount">{{ $payrolls->total() }} payrolls</span>
                     </div>
 
-                    <div class="hr-grid" id="payrollGrid">
-                        @forelse($payrolls as $payroll)
-                            <div class="payroll-card {{ $payroll->payroll_type }}" data-id="{{ $payroll->id }}"
-                                data-name="{{ strtolower($payroll->employee->full_name ?? '') }}"
-                                data-status="{{ $payroll->status }}" data-type="{{ $payroll->payroll_type }}">
-
-                                <div class="hr-item-header">
-                                    <div class="d-flex align-items-center">
-                                        <div class="hr-avatar"
-                                            style="background: {{ $payroll->payroll_type === 'monthly' ? 'linear-gradient(135deg, #3b82f6, #2563eb)' : 'linear-gradient(135deg, #22c55e, #16a34a)' }};">
-                                            {{ strtoupper(substr($payroll->employee->first_name ?? 'U', 0, 1) . substr($payroll->employee->last_name ?? 'N', 0, 1)) }}
-                                        </div>
-                                        <div class="hr-item-info">
-                                            <h4 class="hr-item-name">{{ $payroll->employee->full_name ?? 'Unknown' }}</h4>
-                                            <div class="hr-item-subtitle">
-                                                {{ $payroll->employee->designation->name ?? 'N/A' }}
+                    <div class="table-responsive" id="payrollGrid">
+                        <table class="table policy-table align-middle mb-0" id="payrollTable">
+                            <thead>
+                                <tr>
+                                    <th class="ps-4">Employee</th>
+                                    <th class="text-end">Basic Salary</th>
+                                    <th class="text-center">Days</th>
+                                    <th class="text-center">Present</th>
+                                    <th class="text-center">Late</th>
+                                    <th class="text-center">Absent</th>
+                                    <th class="text-center">OT Hrs</th>
+                                    <th class="text-end">OT Amount</th>
+                                    <th class="text-end">Deduction</th>
+                                    <th class="text-end">Net Salary</th>
+                                    <th class="text-center">Status</th>
+                                    <th class="text-end pe-4">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($payrolls as $payroll)
+                                    <tr class="payroll-row {{ $payroll->payroll_type }}"
+                                        data-id="{{ $payroll->id }}"
+                                        data-name="{{ strtolower($payroll->employee->full_name ?? '') }}"
+                                        data-status="{{ $payroll->status }}" data-type="{{ $payroll->payroll_type }}">
+                                        <td class="ps-4" style="min-width: 220px;">
+                                            <div class="d-flex align-items-center" style="gap: 12px;">
+                                                <div style="background: {{ $payroll->payroll_type === 'monthly' ? 'linear-gradient(135deg, #3b82f6, #2563eb)' : 'linear-gradient(135deg, #22c55e, #16a34a)' }}; width: 38px; height: 38px; min-width: 38px; border-radius: 10px; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem; flex-shrink: 0;">
+                                                    {{ strtoupper(substr($payroll->employee->first_name ?? 'U', 0, 1) . substr($payroll->employee->last_name ?? 'N', 0, 1)) }}
+                                                </div>
+                                                <div style="min-width: 0; flex: 1;">
+                                                    <div class="fw-bold text-dark text-nowrap mb-0" style="font-size: 0.9rem; line-height: 1.3;">{{ $payroll->employee->full_name ?? 'Unknown' }}</div>
+                                                    <div class="small text-muted text-nowrap" style="font-size: 0.78rem; line-height: 1.3;">
+                                                        <span>{{ $payroll->employee->designation->name ?? 'N/A' }}</span>
+                                                        <span class="text-muted">• {{ $payroll->month }}</span>
+                                                    </div>
+                                                </div>
                                             </div>
-                                        </div>
-                                    </div>
-                                    <div class="d-flex flex-column align-items-end gap-2">
-                                        <span class="payroll-type-badge {{ $payroll->payroll_type }}">
-                                            {{ ucfirst($payroll->payroll_type) }}
-                                        </span>
-                                        <span class="month-badge">{{ $payroll->month }}</span>
-                                    </div>
-                                </div>
+                                        </td>
+                                        <td class="text-end fw-semibold text-dark">
+                                            {{ number_format($payroll->basic_salary, 0) }}
+                                        </td>
+                                        <td class="text-center fw-semibold text-secondary fs-6">
+                                            {{ $payroll->attendance_days ?? 30 }}
+                                        </td>
+                                        <td class="text-center fw-bold text-success fs-6">
+                                            {{ $payroll->attendance_present ?? 0 }}
+                                        </td>
+                                        <td class="text-center fw-bold text-warning fs-6">
+                                            {{ $payroll->attendance_late ?? 0 }}
+                                        </td>
+                                        <td class="text-center fw-bold text-danger fs-6">
+                                            {{ $payroll->attendance_absent ?? 0 }}
+                                        </td>
+                                        <td class="text-center fw-bold text-info fs-6">
+                                            {{ $payroll->ot_hours ?? 0 }}
+                                        </td>
+                                        <td class="text-end fw-semibold text-dark">
+                                            {{ number_format($payroll->ot_amount ?? 0, 0) }}
+                                        </td>
+                                        <td class="text-end text-danger fw-semibold">
+                                            {{ number_format($payroll->total_deductions, 0) }}
+                                        </td>
+                                        <td class="text-end fw-bold text-success fs-6">
+                                            {{ number_format($payroll->net_salary, 0) }}
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="status-badge {{ $payroll->status }}">
+                                                @if ($payroll->status === 'generated')
+                                                    <i class="fa fa-clock me-1"></i>Pending
+                                                @elseif($payroll->status === 'reviewed')
+                                                    <i class="fa fa-eye me-1"></i>Reviewed
+                                                @else
+                                                    <i class="fa fa-check me-1"></i>Paid
+                                                @endif
+                                            </span>
+                                        </td>
+                                        <td class="text-end pe-4">
+                                            <div class="d-flex justify-content-end gap-1">
+                                                @can('hr.payroll.view')
+                                                    <button class="btn btn-sm btn-outline-primary view-details-btn px-2 py-1" title="View Details" data-id="{{ $payroll->id }}">
+                                                        <i class="fa fa-eye"></i>
+                                                    </button>
+                                                @endcan
 
-                                <div class="mt-3">
-                                    <div class="breakdown-row">
-                                        <span class="label">Gross Salary</span>
-                                        <span class="value">Rs. {{ number_format($payroll->gross_salary, 2) }}</span>
-                                    </div>
-                                    <div class="breakdown-row">
-                                        <span class="label">Total Deductions</span>
-                                        <span class="value text-danger">- Rs.
-                                            {{ number_format($payroll->total_deductions, 2) }}</span>
-                                    </div>
-                                    @if ($payroll->carried_forward_to_next > 0)
-                                        <div class="breakdown-row">
-                                            <span class="label text-warning">Carried Fwd (Next)</span>
-                                            <span class="value text-warning">Rs.
-                                                {{ number_format($payroll->carried_forward_to_next, 2) }}</span>
-                                        </div>
-                                    @endif
-                                </div>
+                                                @if ($payroll->canEdit())
+                                                    @can('hr.payroll.edit')
+                                                        <button class="btn btn-sm btn-outline-warning edit-payroll-btn px-2 py-1" title="Edit" data-id="{{ $payroll->id }}">
+                                                            <i class="fa fa-edit"></i>
+                                                        </button>
+                                                    @endcan
+                                                @endif
 
-                                <div class="salary-display {{ $payroll->payroll_type }}">
-                                    <div class="label">Net Payable</div>
-                                    <div class="amount">Rs. {{ number_format($payroll->net_salary, 2) }}</div>
-                                </div>
 
-                                <div class="d-flex justify-content-between align-items-center mt-3">
-                                    <span class="status-badge {{ $payroll->status }}">
-                                        @if ($payroll->status === 'generated')
-                                            <i class="fa fa-clock"></i>
-                                        @elseif($payroll->status === 'reviewed')
-                                            <i class="fa fa-eye"></i>
-                                        @else
-                                            <i class="fa fa-check"></i>
-                                        @endif
-                                        {{ ucfirst($payroll->status) }}
-                                    </span>
-                                    @if ($payroll->auto_generated)
-                                        <small class="text-muted"><i class="fa fa-robot"></i> Auto-generated</small>
-                                    @endif
-                                </div>
 
-                                <div class="payroll-actions">
-                                    @can('hr.payroll.view')
-                                        <button class="btn btn-view view-details-btn" title="View Details"
-                                            data-id="{{ $payroll->id }}">
-                                            <i class="fa fa-eye"></i> Details
-                                        </button>
-                                    @endcan
+                                                @if ($payroll->canMarkPaid())
+                                                    @can('hr.payroll.edit')
+                                                        <button class="btn btn-sm btn-success mark-paid-btn px-2 py-1" title="Mark Paid" data-id="{{ $payroll->id }}">
+                                                            <i class="fa fa-hand-holding-usd me-1"></i> Pay
+                                                        </button>
+                                                    @endcan
+                                                @endif
 
-                                    @if ($payroll->canEdit())
-                                        @can('hr.payroll.edit')
-                                            <button class="btn btn-edit edit-payroll-btn" title="Edit"
-                                                data-id="{{ $payroll->id }}">
-                                                <i class="fa fa-edit"></i> Edit
-                                            </button>
-                                        @endcan
-                                    @endif
-
-                                    @if ($payroll->canMarkReviewed())
-                                        @can('hr.payroll.edit')
-                                            <button class="btn btn-info mark-reviewed-btn" title="Mark Reviewed"
-                                                data-id="{{ $payroll->id }}">
-                                                <i class="fa fa-eye"></i> Review
-                                            </button>
-                                        @endcan
-                                    @endif
-
-                                    @if ($payroll->canMarkPaid())
-                                        @can('hr.payroll.edit')
-                                            <button class="btn btn-success mark-paid-btn" title="Mark Paid"
-                                                data-id="{{ $payroll->id }}">
-                                                <i class="fa fa-check"></i> Pay
-                                            </button>
-                                        @endcan
-                                    @endif
-
-                                    @can('hr.payroll.delete')
-                                        @if ($payroll->status !== 'paid')
-                                            <button class="btn btn-delete delete-btn" title="Delete"
-                                                data-id="{{ $payroll->id }}">
-                                                <i class="fa fa-trash"></i>
-                                            </button>
-                                        @endif
-                                    @endcan
-                                </div>
-                            </div>
-                        @empty
-                            <div class="empty-state" style="grid-column: 1/-1;">
-                                <i class="fa fa-money-bill-wave"></i>
-                                <p>No payrolls generated yet.</p>
-                                <p class="text-muted small">Click "Generate Payroll" to create payroll entries.</p>
-                            </div>
-                        @endforelse
+                                                @can('hr.payroll.delete')
+                                                    @if ($payroll->status !== 'paid')
+                                                        <button class="btn btn-sm btn-outline-danger delete-btn px-2 py-1" title="Delete" data-id="{{ $payroll->id }}">
+                                                            <i class="fa fa-trash"></i>
+                                                        </button>
+                                                    @endif
+                                                @endcan
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="12" class="text-center py-5">
+                                            <div class="empty-state">
+                                                <i class="fa fa-money-bill-wave text-muted mb-3" style="font-size: 3rem;"></i>
+                                                <p class="fw-bold mb-1">No payrolls generated yet.</p>
+                                                <p class="text-muted small mb-0">Click "Generate Payroll" to create payroll entries.</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
                     </div>
 
                     <div class="px-4 py-3 border-top">
@@ -1103,6 +1127,70 @@
                         </button>
                     </div>
                 </form>
+    <!-- Pay Payroll Modal -->
+    <div class="modal fade" id="payPayrollModal" tabindex="-1" role="dialog" aria-labelledby="payPayrollModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+                <div class="modal-header text-white" style="background: linear-gradient(135deg, #10b981, #059669);">
+                    <h5 class="modal-title font-weight-bold" id="payPayrollModalLabel">
+                        <i class="fa fa-hand-holding-usd me-2"></i> Complete Salary Payment
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" data-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="payPayrollForm" method="POST">
+                    @csrf
+                    @method('PATCH')
+                    <input type="hidden" id="payPayrollId" name="payroll_id">
+                    <div class="modal-body p-4">
+                        <!-- Employee & Breakdown Slip -->
+                        <div id="payBreakdownContent">
+                            <div class="text-center py-4">
+                                <i class="fa fa-spinner fa-spin fa-2x text-success mb-2"></i>
+                                <div class="text-muted fw-semibold">Loading salary details...</div>
+                            </div>
+                        </div>
+
+                        <!-- Payment Source Account & Method Options -->
+                        <div class="card border-0 bg-light rounded-3 p-3 mt-3">
+                            <h6 class="fw-bold text-dark mb-3 border-bottom pb-2">
+                                <i class="fa fa-university text-primary me-2"></i> Payment Source & Method Details
+                            </h6>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label text-dark fw-bold small">Paying Account (Bank / Cash)</label>
+                                    <select name="account_id" class="form-select shadow-sm">
+                                        <option value="">-- Select Payment Account (Optional) --</option>
+                                        @if(isset($accounts) && count($accounts) > 0)
+                                            @foreach($accounts as $acc)
+                                                <option value="{{ $acc->id }}">
+                                                    {{ $acc->title }} {{ isset($acc->current_balance) ? '- Rs. '.number_format($acc->current_balance, 0) : '' }}
+                                                </option>
+                                            @endforeach
+                                        @endif
+                                    </select>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label text-dark fw-bold small">Payment Date</label>
+                                    <input type="date" name="payment_date" class="form-control shadow-sm" value="{{ date('Y-m-d') }}" required>
+                                </div>
+
+                                <div class="col-12">
+                                    <label class="form-label text-dark fw-bold small">Payment Notes / Remarks (Optional)</label>
+                                    <input type="text" name="notes" class="form-control shadow-sm" placeholder="Add optional payment remarks...">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light px-4 py-3 border-top d-flex justify-content-between">
+                        <button type="button" class="btn btn-secondary px-4 fw-semibold" data-bs-dismiss="modal" data-dismiss="modal">
+                            <i class="fa fa-times me-1"></i> Cancel
+                        </button>
+                        <button type="submit" class="btn btn-success px-4 py-2 fw-bold text-white shadow-sm" id="paySubmitBtn">
+                            <i class="fa fa-check-circle me-1"></i> Confirm & Pay Salary
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -1116,7 +1204,7 @@
                 $(this).addClass('active').siblings().removeClass('active');
                 var tab = $(this).data('tab');
 
-                $('.payroll-card').each(function() {
+                $('.payroll-row, .payroll-card').each(function() {
                     if (tab === 'all') {
                         $(this).show();
                     } else {
@@ -1131,7 +1219,7 @@
                 $(this).addClass('active').siblings().removeClass('active');
                 var status = $(this).data('status');
 
-                $('.payroll-card').each(function() {
+                $('.payroll-row, .payroll-card').each(function() {
                     if (status === 'all') {
                         $(this).show();
                     } else {
@@ -1144,7 +1232,7 @@
             // Search
             $('#payrollSearch').on('input', function() {
                 var q = $(this).val().toLowerCase();
-                $('.payroll-card').each(function() {
+                $('.payroll-row, .payroll-card').each(function() {
                     var name = $(this).data('name') || '';
                     $(this).toggle(name.indexOf(q) !== -1);
                 });
@@ -1152,25 +1240,25 @@
             });
 
             function updateCount() {
-                $('#payrollCount').text($('.payroll-card:visible').length + ' payrolls');
+                $('#payrollCount').text($('.payroll-row:visible, .payroll-card:visible').length + ' payrolls');
             }
 
             // Generate payroll modal
             $('#generateBtn').click(function() {
                 $('#generatePayrollForm')[0].reset();
-                $('#generatePayrollModal').modal('show');
+                safeShowModal('#generatePayrollModal');
             });
 
             // Generate monthly modal
             $('#generateMonthlyBtn').click(function() {
                 $('#generateMonthlyForm')[0].reset();
-                $('#generateMonthlyModal').modal('show');
+                safeShowModal('#generateMonthlyModal');
             });
 
             // Generate daily modal
             $('#generateDailyBtn').click(function() {
                 $('#generateDailyForm')[0].reset();
-                $('#generateDailyModal').modal('show');
+                safeShowModal('#generateDailyModal');
             });
 
             // Payroll type change
@@ -1187,7 +1275,7 @@
             // View details
             $(document).on('click', '.view-details-btn', function() {
                 var id = $(this).data('id');
-                $('#detailsModal').modal('show');
+                safeShowModal('#detailsModal');
 
                 $.ajax({
                     url: '/hr/payroll/' + id + '/details',
@@ -1202,40 +1290,133 @@
                 });
             });
 
+            function formatCurrency(amount) {
+                var num = parseFloat(amount) || 0;
+                return num.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+            }
+
             function formatMinsToHours(minutes) {
                 var mins = parseInt(minutes) || 0;
                 if (mins <= 0) return '0m';
+                if (mins < 60) return mins + 'm';
                 var hrs = Math.floor(mins / 60);
                 var rem = mins % 60;
-                if (hrs > 0 && rem > 0) {
-                    return hrs + 'hrs ' + rem + 'm';
-                } else if (hrs > 0) {
-                    return hrs + 'hrs';
+                if (rem > 0) {
+                    return hrs + 'h ' + rem + 'm';
                 } else {
-                    return rem + 'm';
+                    return hrs + 'h';
                 }
             }
 
             function renderDetails(data) {
-                // Compact Header with Period & Employee
+                // Header with Period & Employee
                 var headerHtml = `
                     <div class="d-flex align-items-center justify-content-between mb-3 p-3 bg-light rounded-3 border">
                         <div class="d-flex align-items-center gap-3">
-                            <div style="background: #e0e7ff; color: #4338ca; width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 700;">
+                            <div style="background: linear-gradient(135deg, #6366f1, #4f46e5); color: white; width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1rem;">
                                 ${data.payroll.employee.first_name.charAt(0)}${data.payroll.employee.last_name.charAt(0)}
                             </div>
                             <div>
-                                <h6 style="margin:0; font-weight:700;">${data.payroll.employee.first_name} ${data.payroll.employee.last_name}</h6>
+                                <h6 style="margin:0; font-weight:700;" class="text-dark">${data.payroll.employee.first_name} ${data.payroll.employee.last_name}</h6>
                                 <div class="text-muted small">${data.payroll.employee.designation ? data.payroll.employee.designation.name : 'N/A'}</div>
                             </div>
                         </div>
-                        <div class="text-end d-flex gap-2">
-                             <div class="badge bg-white text-dark border px-3 py-2 d-flex align-items-center" style="font-weight: 600;">
-                                <i class="fa fa-tag me-2 text-muted"></i>
+                        <div class="text-end d-flex gap-2 align-items-center">
+                             <div class="badge bg-white text-dark border px-3 py-2 fw-semibold">
+                                <i class="fa fa-tag me-1 text-muted"></i>
                                 ${data.payroll.payroll_type.charAt(0).toUpperCase() + data.payroll.payroll_type.slice(1)} Payroll
                             </div>
-                             <div class="period-badge mb-0 py-1 px-3" style="font-size: 0.85rem;">
+                             <div class="badge bg-primary px-3 py-2 fw-bold" style="font-size: 0.85rem;">
                                 <i class="fa fa-calendar-alt me-1"></i> ${data.payroll_period.formatted}
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                var basicSalary = parseFloat(data.breakdown.earnings.basic_salary) || 0;
+                var allowances = (parseFloat(data.breakdown.earnings.allowances) || 0) + (parseFloat(data.breakdown.earnings.manual_allowances) || 0);
+                var overtime = parseFloat(data.attendance_breakdown.overtime_earnings) || 0;
+                var grossEarnings = basicSalary + allowances + overtime;
+
+                var lateDeduction = parseFloat(data.attendance_breakdown.deduction_details?.late_deduction || data.attendance_breakdown.late_deduction) || 0;
+                var absentDeduction = parseFloat(data.attendance_breakdown.deduction_details?.absence_deduction || data.attendance_breakdown.absence_deduction) || 0;
+                var loanDeduction = parseFloat(data.breakdown.deductions?.loan_deduction || data.payroll?.loan_deduction) || 0;
+                var otherDeductions = (parseFloat(data.breakdown.deductions.fixed_deductions) || 0) + (parseFloat(data.breakdown.deductions.manual_deductions) || 0) + (parseFloat(data.breakdown.deductions.carried_forward) || 0);
+                var totalDeduction = parseFloat(data.breakdown.deductions.total) || (lateDeduction + absentDeduction + loanDeduction + otherDeductions);
+                var netSalary = parseFloat(data.breakdown.net_payable) || (grossEarnings - totalDeduction);
+
+                var slipCardHtml = `
+                    <div class="card border shadow-sm rounded-3 mb-3 bg-white overflow-hidden">
+                        <div class="card-header bg-light py-2 px-3 fw-bold text-dark d-flex justify-content-between align-items-center border-bottom">
+                            <span><i class="fa fa-file-invoice-dollar text-primary me-2"></i> Pay Salary Breakdown Slip</span>
+                            <span class="badge ${data.payroll.status === 'paid' ? 'bg-success' : 'bg-warning text-dark'} px-2 py-1">${data.payroll.status.toUpperCase()}</span>
+                        </div>
+                        <div class="card-body p-3">
+                            <div class="row g-4">
+                                <!-- Gross Earnings Column -->
+                                <div class="col-md-6 border-end">
+                                    <div class="text-success fw-bold border-bottom pb-1 mb-2 small text-uppercase d-flex justify-content-between">
+                                        <span><i class="fa fa-plus-circle me-1"></i> Earnings</span>
+                                        <span>Amount (Rs.)</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between py-1 border-bottom border-dashed">
+                                        <span class="text-secondary">Basic Salary</span>
+                                        <span class="fw-semibold text-dark">${formatCurrency(basicSalary)}</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between py-1 border-bottom border-dashed">
+                                        <span class="text-secondary">Allowances</span>
+                                        <span class="fw-semibold text-dark">${formatCurrency(allowances)}</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between py-1 border-bottom border-dashed">
+                                        <span class="text-secondary">Overtime</span>
+                                        <span class="fw-semibold text-dark">${formatCurrency(overtime)}</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between py-2 mt-3 bg-light px-3 rounded fw-bold text-success" style="font-size: 1.05rem; border: 1px solid #bbf7d0;">
+                                        <span>Gross Earnings</span>
+                                        <span>${formatCurrency(grossEarnings)}</span>
+                                    </div>
+                                </div>
+
+                                <!-- Total Deductions Column -->
+                                <div class="col-md-6">
+                                    <div class="text-danger fw-bold border-bottom pb-1 mb-2 small text-uppercase d-flex justify-content-between">
+                                        <span><i class="fa fa-minus-circle me-1"></i> Deductions</span>
+                                        <span>Amount (Rs.)</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between py-1 border-bottom border-dashed">
+                                        <span class="text-secondary">Late Deduction</span>
+                                        <span class="fw-semibold text-danger">${formatCurrency(lateDeduction)}</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between py-1 border-bottom border-dashed">
+                                        <span class="text-secondary">Absent Deduction</span>
+                                        <span class="fw-semibold text-danger">${formatCurrency(absentDeduction)}</span>
+                                    </div>
+                                    ${loanDeduction > 0 ? `
+                                        <div class="d-flex justify-content-between py-1 border-bottom border-dashed">
+                                            <span class="text-secondary">Loan Deduction</span>
+                                            <span class="fw-semibold text-danger">${formatCurrency(loanDeduction)}</span>
+                                        </div>
+                                    ` : ''}
+                                    ${otherDeductions > 0 ? `
+                                        <div class="d-flex justify-content-between py-1 border-bottom border-dashed">
+                                            <span class="text-secondary">Other Deductions</span>
+                                            <span class="fw-semibold text-danger">${formatCurrency(otherDeductions)}</span>
+                                        </div>
+                                    ` : ''}
+                                    <div class="d-flex justify-content-between py-2 mt-3 bg-light px-3 rounded fw-bold text-danger" style="font-size: 1.05rem; border: 1px solid #fecaca;">
+                                        <span>Total Deduction</span>
+                                        <span>${formatCurrency(totalDeduction)}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- NET SALARY Banner -->
+                            <div class="net-payable py-3 px-4 mt-3 d-flex align-items-center justify-content-between" style="border-radius: 12px; background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);">
+                                <div>
+                                    <div class="label text-white-50 mb-0 small fw-bold" style="letter-spacing: 1px;">NET SALARY</div>
+                                    <div class="small text-white-50">${data.payroll.status.toUpperCase()}</div>
+                                </div>
+                                <div class="amount mb-0" style="font-size: 2.2rem; font-weight: 800; color: white;">Rs. ${formatCurrency(netSalary)}</div>
                             </div>
                         </div>
                     </div>
@@ -1249,9 +1430,9 @@
                                 <div>
                                     <h6 class="font-weight-bold mb-0 text-dark" style="font-size: 0.95rem;">
                                         <i class="fa fa-calendar-check text-primary me-2"></i>
-                                        Monthly Attendance Summary (1st to ${data.attendance_breakdown.total_days_in_month || 30} ${data.payroll_period.month || ''})
+                                        Monthly Attendance Summary (${data.attendance_breakdown.month_start_formatted || '01'} to ${data.attendance_breakdown.month_end_formatted || '30'})
                                     </h6>
-                                    <small class="text-muted">Period: <b>${data.attendance_breakdown.month_start_formatted || '01'} to ${data.attendance_breakdown.month_end_formatted || '30'}</b> • Working Days: <b>${data.attendance_breakdown.total_working_days || 0}</b></small>
+                                    <small class="text-muted">Working Days: <b>${data.attendance_breakdown.total_working_days || 0}</b></small>
                                 </div>
                                 <div>
                                     <a href="{{ route('hr.attendance.ledger') }}?employee_id=${data.payroll.employee_id}&month=${data.payroll.month}" target="_blank" class="btn btn-sm btn-dark font-weight-bold px-3 shadow-sm">
@@ -1265,41 +1446,36 @@
                                     <div class="p-2 rounded bg-white border border-success">
                                         <div class="small text-success font-weight-bold" style="font-size: 0.68rem;">PRESENT</div>
                                         <div class="font-weight-bold text-success" style="font-size: 1.15rem;">${data.attendance_breakdown.days_present || 0}</div>
-                                        <div class="text-muted" style="font-size: 0.65rem;">(${data.attendance_breakdown.days_present_total || 0} Attended)</div>
                                     </div>
                                 </div>
                                 <div class="col-4 col-md-2">
                                     <div class="p-2 rounded bg-white border border-danger">
                                         <div class="small text-danger font-weight-bold" style="font-size: 0.68rem;">ABSENT</div>
                                         <div class="font-weight-bold text-danger" style="font-size: 1.15rem;">${data.attendance_breakdown.days_absent || 0}</div>
-                                        <div class="text-muted" style="font-size: 0.65rem;">Days</div>
                                     </div>
                                 </div>
                                 <div class="col-4 col-md-2">
                                     <div class="p-2 rounded bg-white border border-warning">
                                         <div class="small text-warning font-weight-bold" style="font-size: 0.68rem;">LATE</div>
                                         <div class="font-weight-bold text-warning" style="font-size: 1.15rem;">${data.attendance_breakdown.late_check_ins || 0}</div>
-                                        <div class="text-muted" style="font-size: 0.65rem;">(${formatMinsToHours(data.attendance_breakdown.late_minutes_total)})</div>
                                     </div>
                                 </div>
                                 <div class="col-4 col-md-2">
                                     <div class="p-2 rounded bg-white border border-info">
                                         <div class="small text-info font-weight-bold" style="font-size: 0.68rem;">LEAVE</div>
                                         <div class="font-weight-bold text-info" style="font-size: 1.15rem;">${data.attendance_breakdown.days_leave || 0}</div>
-                                        <div class="text-muted" style="font-size: 0.65rem;">Days</div>
                                     </div>
                                 </div>
                                 <div class="col-4 col-md-2">
                                     <div class="p-2 rounded bg-white border">
-                                        <div class="small text-muted font-weight-bold" style="font-size: 0.68rem;">TOTAL HOURS</div>
-                                        <div class="font-weight-bold text-dark" style="font-size: 1.15rem;">${data.attendance_breakdown.total_hours_worked || 0}</div>
-                                        <div class="text-muted" style="font-size: 0.65rem;">Hours</div>
+                                        <div class="small text-muted font-weight-bold" style="font-size: 0.68rem;">OT HOURS</div>
+                                        <div class="font-weight-bold text-info" style="font-size: 1.15rem;">${data.attendance_breakdown.overtime_hours || 0}</div>
                                     </div>
                                 </div>
                                 <div class="col-4 col-md-2">
                                     <div class="p-2 rounded bg-white border border-danger">
                                         <div class="small text-danger font-weight-bold" style="font-size: 0.68rem;">ATT. DEDUCT</div>
-                                        <div class="font-weight-bold text-danger" style="font-size: 1.05rem;">Rs. ${parseFloat(data.breakdown.deductions.attendance_deductions).toFixed(2)}</div>
+                                        <div class="font-weight-bold text-danger" style="font-size: 1.05rem;">Rs. ${formatCurrency(data.breakdown.deductions.attendance_deductions)}</div>
                                     </div>
                                 </div>
                             </div>
@@ -1309,258 +1485,18 @@
 
                 var html = `
                     ${headerHtml}
+                    ${slipCardHtml}
                     ${attendanceOverviewHtml}
-                    
-                    <div class="row g-3">
-                        <!-- Left Column: Earnings -->
-                        <div class="col-md-6">
-                            <div class="section-card h-100 mb-0">
-                                <div class="section-header mb-3 py-2 text-primary border-primary border-opacity-25" style="border-bottom-width: 2px;">
-                                    <i class="fa fa-wallet"></i> Earnings
-                                </div>
-                                
-                                <div class="detail-row py-2">
-                                    <span class="label">Basic Salary</span>
-                                    <span class="value fw-bold">Rs. ${parseFloat(data.breakdown.earnings.basic_salary).toFixed(2)}</span>
-                                </div>
-                                
-                                <div class="expandable-section allowances-section my-2 shadow-sm border-0 bg-light">
-                                    <div class="expandable-header py-2 px-3" onclick="toggleExpandable(this)" style="background: transparent;">
-                                        <div class="expandable-title small">Allowances</div>
-                                        <div class="d-flex align-items-center gap-2">
-                                            <span class="expandable-value small">Rs. ${parseFloat(data.breakdown.earnings.allowances).toFixed(2)}</span>
-                                            <i class="fa fa-chevron-down expand-icon" style="font-size: 0.7rem;"></i>
-                                        </div>
-                                    </div>
-                                    <div class="expandable-content">
-                                        ${data.allowance_details.length > 0 ? 
-                                            data.allowance_details.map(allowance => `
-                                                                                <div class="d-flex justify-content-between py-1 border-bottom border-light">
-                                                                                    <small class="text-muted">${allowance.name}</small>
-                                                                                    <small class="fw-bold">Rs. ${parseFloat(allowance.amount).toFixed(2)}</small>
-                                                                                </div>
-                                                                            `).join('') 
-                                            : '<div class="text-center small text-muted py-1">- None -</div>'
-                                        }
-                                    </div>
-                                </div>
-                                
-                                <div class="detail-row py-2">
-                                    <span class="label">Manual Allowances</span>
-                                    <span class="value">Rs. ${parseFloat(data.breakdown.earnings.manual_allowances).toFixed(2)}</span>
-                                </div>
-                                <div class="detail-row total mt-auto bg-green-50 border-green-200">
-                                    <span class="label text-success">Total Earnings</span>
-                                    <span class="value text-success">Rs. ${parseFloat(data.breakdown.earnings.total).toFixed(2)}</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Right Column: Deductions -->
-                        <div class="col-md-6">
-                            <div class="section-card h-100 mb-0">
-                                <div class="section-header mb-3 py-2 text-danger border-danger border-opacity-25" style="border-bottom-width: 2px;">
-                                    <i class="fa fa-file-invoice-dollar"></i> Deductions
-                                </div>
-                                
-                                <div class="detail-row py-2">
-                                    <span class="label">Fixed Deductions</span>
-                                    <span class="value fw-bold">Rs. ${parseFloat(data.breakdown.deductions.fixed_deductions).toFixed(2)}</span>
-                                </div>
-                                
-                                <div class="expandable-section attendance-section my-2 shadow-sm border-0 bg-light">
-                                    <div class="expandable-header py-2 px-3" onclick="toggleExpandable(this)" style="background: transparent;">
-                                        <div class="expandable-title small">Attendance Deductions</div>
-                                        <div class="d-flex align-items-center gap-2">
-                                            <span class="expandable-value small">Rs. ${parseFloat(data.breakdown.deductions.attendance_deductions).toFixed(2)}</span>
-                                            <i class="fa fa-chevron-down expand-icon" style="font-size: 0.7rem;"></i>
-                                        </div>
-                                    </div>
-                                    <div class="expandable-content">
-                                        ${data.payroll.payroll_type === 'daily' ? `
-                                                                <!-- Daily Payroll View -->
-                                                                <div class="py-3">
-                                                                    <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
-                                                                        <span class="text-muted small fw-bold text-uppercase">Total Deduction</span>
-                                                                        <span class="text-danger fw-bold fs-6">Rs. ${parseFloat(data.attendance_breakdown.total_deduction || 0).toFixed(2)}</span>
-                                                                    </div>
-                                                                    
-                                                                    ${data.attendance_breakdown.has_data ? `
-                                                    <div class="d-flex justify-content-between gap-3">
-                                                        <div class="text-center p-2 rounded bg-white border ${data.attendance_breakdown.is_late ? 'border-warning apple-glow-warning' : 'border-light'} flex-fill">
-                                                            <div class="small text-muted mb-1">Check In</div>
-                                                            ${data.attendance_breakdown.late_deduction_amount > 0 ? `
-                                                                                <div class="text-danger fw-bold small mb-1">-Rs. ${parseFloat(data.attendance_breakdown.late_deduction_amount).toFixed(2)}</div>
-                                                                            ` : ''}
-                                                            <div class="fw-bold ${data.attendance_breakdown.is_late ? 'text-warning' : 'text-dark'}">
-                                                                ${data.attendance_breakdown.check_in || '--:--'}
-                                                            </div>
-                                                            ${data.attendance_breakdown.is_late ? `
-                                                                                <div class="badge bg-warning text-dark mt-1" style="font-size: 0.7rem;">Late (${formatMinsToHours(data.attendance_breakdown.late_minutes)})</div>
-                                                                            ` : ''}
-                                                        </div>
-                                                        
-                                                        <div class="text-center p-2 rounded bg-white border ${data.attendance_breakdown.is_early_out ? 'border-info apple-glow-info' : 'border-light'} flex-fill">
-                                                            <div class="small text-muted mb-1">Check Out</div>
-                                                            ${data.attendance_breakdown.early_deduction_amount > 0 ? `
-                                                                                <div class="text-danger fw-bold small mb-1">-Rs. ${parseFloat(data.attendance_breakdown.early_deduction_amount).toFixed(2)}</div>
-                                                                            ` : ''}
-                                                            <div class="fw-bold ${data.attendance_breakdown.is_early_out ? 'text-info' : 'text-dark'}">
-                                                                ${data.attendance_breakdown.check_out || '--:--'}
-                                                            </div>
-                                                            ${data.attendance_breakdown.is_early_out ? `
-                                                                                <div class="badge bg-info text-white mt-1" style="font-size: 0.7rem;">Early (${formatMinsToHours(data.attendance_breakdown.early_checkout_minutes)})</div>
-                                                                            ` : ''}
-                                                        </div>
-                                                    </div>
-                                                ` : `
-                                                    <div class="text-center text-muted small py-2">
-                                                        <i class="fa fa-exclamation-circle"></i> No attendance record
-                                                    </div>
-                                                `}
-                                                                </div>
-                                                            ` : `
-                                                                <!-- Monthly Payroll View -->
-                                                                <!-- Summary Badges -->
-                                                                <div class="d-flex flex-wrap gap-2 justify-content-center py-2 border-bottom mb-2">
-                                                                     <span class="badge bg-white text-muted border border-light shadow-sm">
-                                                                        Present (On-Time): <b class="text-success">${data.attendance_breakdown.days_present || 0}</b>
-                                                                     </span>
-                                                                     <span class="badge bg-white text-muted border border-light shadow-sm">
-                                                                        Late: <b class="text-warning">${data.attendance_breakdown.late_check_ins || 0}</b>
-                                                                     </span>
-                                                                     <span class="badge bg-white text-muted border border-light shadow-sm">
-                                                                        Total Attended: <b class="text-primary">${data.attendance_breakdown.days_present_total || 0}</b>
-                                                                     </span>
-                                                                     <span class="badge bg-white text-muted border border-light shadow-sm">
-                                                                        Absent: <b class="text-danger">${data.attendance_breakdown.days_absent || 0}</b>
-                                                                     </span>
-                                                                     <span class="badge bg-white text-muted border border-light shadow-sm">
-                                                                        Early Out: <b class="text-info">${data.attendance_breakdown.early_check_outs || 0}</b>
-                                                                     </span>
-                                                                </div>
-                                                                
-                                                                ${!data.attendance_breakdown.has_data ? `
-                                                <div class="alert alert-warning py-2 mb-0 small text-center">
-                                                    <i class="fa fa-exclamation-triangle me-1"></i>
-                                                    ${data.attendance_breakdown.data_message || 'Attendance data incomplete for this period'}
-                                                </div>
-                                            ` : `
-                                                <!-- Detailed Records with Scroll -->
-                                                <div class="attendance-details-scroll" style="max-height: 200px; overflow-y: auto;">
-                                                    
-                                                    ${(data.attendance_breakdown.absent_records && data.attendance_breakdown.absent_records.length > 0) ? `
-                                                                            <div class="mb-3">
-                                                                                <div class="small fw-bold text-danger mb-2 px-2">
-                                                                                    <i class="fa fa-times-circle me-1"></i> Absent Days (${data.attendance_breakdown.absent_records.length})
-                                                                                </div>
-                                                                                ${data.attendance_breakdown.absent_records.map(record => `
-                                                                <div class="d-flex justify-content-between align-items-center py-1 px-2 border-bottom" style="font-size: 0.8rem;">
-                                                                    <div>
-                                                                        <span class="text-muted">${record.date}</span>
-                                                                        <span class="badge bg-light text-muted ms-1">${record.day}</span>
-                                                                    </div>
-                                                                    <span class="text-danger fw-bold">-Rs. ${parseFloat(record.deduction).toFixed(2)}</span>
-                                                                </div>
-                                                            `).join('')}
-                                                                            </div>
-                                                                        ` : ''}
-                                                    
-                                                    ${(data.attendance_breakdown.late_records && data.attendance_breakdown.late_records.length > 0) ? `
-                                                                            <div class="mb-3">
-                                                                                <div class="small fw-bold text-warning mb-2 px-2">
-                                                                                    <i class="fa fa-clock me-1"></i> Late Check-ins (${data.attendance_breakdown.late_records.length})
-                                                                                </div>
-                                                                                ${data.attendance_breakdown.late_records.map(record => `
-                                                                <div class="d-flex justify-content-between align-items-center py-1 px-2 border-bottom" style="font-size: 0.8rem;">
-                                                                    <div>
-                                                                        <span class="text-muted">${record.date}</span>
-                                                                        <span class="badge bg-warning text-dark ms-1">${record.check_in}</span>
-                                                                        <span class="text-muted small ms-1">(${formatMinsToHours(record.late_minutes)} late)</span>
-                                                                    </div>
-                                                                    <span class="text-danger fw-bold">-Rs. ${parseFloat(record.deduction).toFixed(2)}</span>
-                                                                </div>
-                                                            `).join('')}
-                                                                            </div>
-                                                                        ` : ''}
-                                                    
-                                                    ${(data.attendance_breakdown.early_records && data.attendance_breakdown.early_records.length > 0) ? `
-                                                                            <div class="mb-2">
-                                                                                <div class="small fw-bold text-info mb-2 px-2">
-                                                                                    <i class="fa fa-sign-out-alt me-1"></i> Early Check-outs (${data.attendance_breakdown.early_records.length})
-                                                                                </div>
-                                                                                ${data.attendance_breakdown.early_records.map(record => `
-                                                                <div class="d-flex justify-content-between align-items-center py-1 px-2 border-bottom" style="font-size: 0.8rem;">
-                                                                    <div>
-                                                                        <span class="text-muted">${record.date}</span>
-                                                                        <span class="badge bg-info text-white ms-1">${record.check_out}</span>
-                                                                        <span class="text-muted small ms-1">(${record.early_minutes} min early)</span>
-                                                                    </div>
-                                                                    <span class="text-danger fw-bold">-Rs. ${parseFloat(record.deduction).toFixed(2)}</span>
-                                                                </div>
-                                                            `).join('')}
-                                                                            </div>
-                                                                        ` : ''}
-                                                    
-                                                    ${(!data.attendance_breakdown.absent_records?.length && !data.attendance_breakdown.late_records?.length && !data.attendance_breakdown.early_records?.length) ? `
-                                                                            <div class="text-center text-muted py-2 small">
-                                                                                <i class="fa fa-check-circle text-success me-1"></i> No attendance issues this period
-                                                                            </div>
-                                                                        ` : ''}
-                                                </div>
-                                            `}
-                                                            `}
-                                    </div>
-                                </div>
-                                
-                                ${data.breakdown.deductions.carried_forward > 0 ? `
-                                                                    <div class="detail-row py-2" style="background: #fff1f2; border-radius: 6px; padding: 8px 12px; margin-bottom: 8px; border: 1px dashed #fecaca;">
-                                                                        <div class="d-flex justify-content-between w-100">
-                                                                            <span class="label text-danger small fw-bold">Carried Forward (From Prev)</span>
-                                                                            <span class="value text-danger small fw-bold">Rs. ${parseFloat(data.breakdown.deductions.carried_forward).toFixed(2)}</span>
-                                                                        </div>
-                                                                    </div>
-                                                                ` : ''}
-
-                                <div class="detail-row py-2">
-                                    <div class="d-flex justify-content-between w-100">
-                                        <span class="label small text-muted">Carry Fwd (To Next)</span>
-                                        <span class="value text-warning small">Rs. ${parseFloat(data.breakdown.deductions.carried_forward_to_next || 0).toFixed(2)}</span>
-                                    </div>
-                                </div>
-                                 <div class="detail-row py-2">
-                                    <span class="label">Manual Deductions</span>
-                                    <span class="value">Rs. ${parseFloat(data.breakdown.deductions.manual_deductions).toFixed(2)}</span>
-                                </div>
-                                <div class="detail-row total-deduction mt-auto">
-                                    <span class="label">Total Deductions</span>
-                                    <span class="value">Rs. ${parseFloat(data.breakdown.deductions.total).toFixed(2)}</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Net Payable & Footer Notes -->
-                    <div class="row g-3 mt-1">
-                        <div class="col-12">
-                             <div class="net-payable py-3 px-4 mt-2 d-flex align-items-center justify-content-between" style="border-radius: 12px;">
-                                <div class="text-start">
-                                    <div class="label text-white-50 mb-0 small">Net Payable Amount</div>
-                                    <div class="small text-white-50" style="font-size: 0.8rem;">${data.payroll.status.toUpperCase()}</div>
-                                </div>
-                                <div class="amount mb-0" style="font-size: 2rem;">Rs. ${parseFloat(data.breakdown.net_payable).toFixed(2)}</div>
-                            </div>
-                        </div>
-                        ${data.payroll.notes ? `
-                                                                <div class="col-12">
-                                                                    <div class="alert alert-warning mb-0 py-2 fs-7 small d-flex align-items-center">
-                                                                        <i class="fa fa-sticky-note me-2 text-warning"></i> 
-                                                                        <span class="fst-italic text-truncate">${data.payroll.notes}</span>
-                                                                    </div>
-                                                                </div>
-                                                            ` : ''}
-                    </div>
                 `;
+
+                if (data.payroll.notes) {
+                    html += `
+                        <div class="alert alert-warning py-2 fs-7 small d-flex align-items-center mt-2">
+                            <i class="fa fa-sticky-note me-2 text-warning"></i> 
+                            <span class="fst-italic text-truncate">${data.payroll.notes}</span>
+                        </div>
+                    `;
+                }
 
                 $('#detailsContent').html(html);
             }
@@ -1615,31 +1551,284 @@
                 });
             });
 
-            // Mark paid
+            // Helper for Bootstrap 4/5 modal safety
+            function safeShowModal(selector) {
+                var el = document.querySelector(selector);
+                if (!el) return;
+                
+                // Move modal element to body to prevent dark backdrop trapping bug
+                if (el.parentNode !== document.body) {
+                    document.body.appendChild(el);
+                }
+
+                try {
+                    if (window.bootstrap && bootstrap.Modal) {
+                        var inst = bootstrap.Modal.getInstance(el) || new bootstrap.Modal(el);
+                        inst.show();
+                        return;
+                    }
+                } catch(e) {}
+
+                if (typeof $(selector).modal === 'function') {
+                    $(selector).modal('show');
+                } else {
+                    $(selector).addClass('show').css({ 'display': 'block', 'z-index': 1055 });
+                    $('body').addClass('modal-open');
+                }
+            }
+
+            function safeHideModal(selector) {
+                var el = document.querySelector(selector);
+                if (!el) return;
+                try {
+                    if (window.bootstrap && bootstrap.Modal) {
+                        var inst = bootstrap.Modal.getInstance(el);
+                        if (inst) { inst.hide(); }
+                    }
+                } catch(e) {}
+                if (typeof $(selector).modal === 'function') {
+                    $(selector).modal('hide');
+                }
+                $(selector).removeClass('show').css('display', 'none');
+                $('.modal-backdrop').remove();
+                $('body').removeClass('modal-open').css('padding-right', '');
+            }
+
+            // Mark paid modal handler
             $(document).on('click', '.mark-paid-btn', function() {
                 var id = $(this).data('id');
-                Swal.fire({
-                    title: 'Mark as Paid?',
-                    text: 'This will mark the payroll as paid and cannot be undone.',
-                    icon: 'question',
-                    showCancelButton: true,
-                    confirmButtonColor: '#22c55e',
-                    confirmButtonText: 'Yes, Mark Paid'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        $.ajax({
-                            url: '/hr/payroll/' + id + '/mark-paid',
-                            type: 'PATCH',
-                            data: {
-                                _token: '{{ csrf_token() }}'
-                            },
-                            success: function(response) {
-                                if (response.success) {
-                                    Swal.fire('Success', response.success, 'success')
-                                        .then(() => location.reload());
-                                }
+                $('#payPayrollId').val(id);
+                $('#payPayrollForm').attr('action', '/hr/payroll/' + id + '/mark-paid');
+                $('#payBreakdownContent').html(`
+                    <div class="text-center py-4">
+                        <i class="fa fa-spinner fa-spin fa-2x text-success mb-2"></i>
+                        <div class="text-muted fw-semibold">Loading salary details...</div>
+                    </div>
+                `);
+                safeShowModal('#payPayrollModal');
+
+                $.ajax({
+                    url: '/hr/payroll/' + id + '/details',
+                    type: 'GET',
+                    success: function(response) {
+                        var emp = (response.payroll && response.payroll.employee) ? response.payroll.employee : {};
+                        var fName = emp.first_name || '';
+                        var lName = emp.last_name || '';
+                        var initials = ((fName ? fName.charAt(0) : 'E') + (lName ? lName.charAt(0) : '')).toUpperCase();
+                        var fullName = (fName + ' ' + lName).trim() || 'Employee';
+                        var designationName = (emp.designation && emp.designation.name) ? emp.designation.name : 'N/A';
+                        var periodFormatted = (response.payroll_period && response.payroll_period.formatted) ? response.payroll_period.formatted : '';
+
+                        var header = `
+                            <div class="d-flex align-items-center justify-content-between mb-3 p-3 bg-white rounded-3 border shadow-sm">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div style="background: linear-gradient(135deg, #10b981, #059669); color: white; width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1rem;">
+                                        ${initials}
+                                    </div>
+                                    <div>
+                                        <h6 style="margin:0; font-weight:700;" class="text-dark">${fullName}</h6>
+                                        <div class="text-muted small">${designationName}</div>
+                                    </div>
+                                </div>
+                                <div class="text-end">
+                                    <div class="badge bg-light text-dark border px-3 py-2 fw-semibold">
+                                        Period: ${periodFormatted}
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+
+                        var basicSalary = parseFloat(response.breakdown?.earnings?.basic_salary) || 0;
+                        var allowances = (parseFloat(response.breakdown?.earnings?.allowances) || 0) + (parseFloat(response.breakdown?.earnings?.manual_allowances) || 0);
+                        var overtime = parseFloat(response.attendance_breakdown?.overtime_earnings) || 0;
+                        var grossEarnings = basicSalary + allowances + overtime;
+
+                        var lateDeduction = parseFloat(response.attendance_breakdown?.deduction_details?.late_deduction || response.attendance_breakdown?.late_deduction) || 0;
+                        var absentDeduction = parseFloat(response.attendance_breakdown?.deduction_details?.absence_deduction || response.attendance_breakdown?.absence_deduction) || 0;
+                        var otherDeductions = (parseFloat(response.breakdown?.deductions?.fixed_deductions) || 0) + (parseFloat(response.breakdown?.deductions?.manual_deductions) || 0) + (parseFloat(response.breakdown?.deductions?.carried_forward) || 0);
+
+                        var loanSummary = response.loan_summary || {};
+                        var hasActiveLoan = loanSummary.has_active_loan || false;
+                        var totalLoan = parseFloat(loanSummary.total_loan_amount) || 0;
+                        var paidLoan = parseFloat(loanSummary.total_paid_amount) || 0;
+                        var remainingLoan = parseFloat(loanSummary.total_remaining) || 0;
+                        var suggestedInstallment = parseFloat(loanSummary.suggested_installment) || 0;
+
+                        var defaultLoanCut = 0;
+                        if (parseFloat(response.payroll?.loan_deduction) > 0) {
+                            defaultLoanCut = parseFloat(response.payroll.loan_deduction);
+                        } else if (hasActiveLoan) {
+                            if (suggestedInstallment > 0) {
+                                defaultLoanCut = Math.min(suggestedInstallment, remainingLoan);
+                            } else {
+                                defaultLoanCut = remainingLoan;
                             }
-                        });
+                        }
+
+                        var totalDeduction = lateDeduction + absentDeduction + otherDeductions + defaultLoanCut;
+                        var netSalary = Math.max(0, grossEarnings - totalDeduction);
+
+                        var loanAlertHtml = '';
+                        if (hasActiveLoan || totalLoan > 0) {
+                            loanAlertHtml = `
+                                <div class="p-2 px-3 mb-3 rounded-3 border d-flex align-items-center justify-content-between" style="background-color: #fffbeb; border-color: #fef3c7 !important;">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <i class="fa fa-hand-holding-usd text-warning fs-5"></i>
+                                        <div class="small text-dark">
+                                            <strong>Active Employee Loan:</strong> Total: <b>Rs. ${formatCurrency(totalLoan)}</b> | Paid: <b class="text-success">Rs. ${formatCurrency(paidLoan)}</b> | Remaining Balance: <b class="text-danger">Rs. ${formatCurrency(remainingLoan)}</b>
+                                        </div>
+                                    </div>
+                                    ${suggestedInstallment > 0 ? `<span class="badge bg-warning text-dark border px-2 py-1">Monthly Cut: Rs. ${formatCurrency(suggestedInstallment)}</span>` : ''}
+                                </div>
+                            `;
+                        }
+
+                        var breakdownHtml = `
+                            ${header}
+                            ${loanAlertHtml}
+                            <input type="hidden" id="grossEarningsHidden" value="${grossEarnings}">
+                            <input type="hidden" id="attendanceDeductionsHidden" name="attendance_deductions" value="${lateDeduction + absentDeduction}">
+                            <input type="hidden" id="manualDeductionsHidden" name="manual_deductions" value="${otherDeductions}">
+                            <input type="hidden" id="loanDeductionHidden" name="loan_deduction" value="${defaultLoanCut}">
+                            <input type="hidden" id="netSalaryHidden" name="net_salary" value="${netSalary}">
+
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="p-3 bg-white rounded-3 border h-100">
+                                        <div class="text-success fw-bold border-bottom pb-2 mb-2 small text-uppercase d-flex justify-content-between align-items-center">
+                                            <span>Earnings</span><span>Amount</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between py-1 small">
+                                            <span class="text-muted">Basic Salary</span>
+                                            <span class="fw-semibold">Rs. ${formatCurrency(basicSalary)}</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between py-1 small">
+                                            <span class="text-muted">Allowances</span>
+                                            <span class="fw-semibold">Rs. ${formatCurrency(allowances)}</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between py-1 small">
+                                            <span class="text-muted">Overtime</span>
+                                            <span class="fw-semibold">Rs. ${formatCurrency(overtime)}</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between py-2 mt-2 border-top fw-bold text-success">
+                                            <span>Gross Earnings</span>
+                                            <span>Rs. ${formatCurrency(grossEarnings)}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="p-3 bg-white rounded-3 border h-100">
+                                        <div class="text-danger fw-bold border-bottom pb-2 mb-2 small text-uppercase d-flex justify-content-between align-items-center">
+                                            <span>Deductions</span>
+                                            <span class="badge bg-light text-secondary border fw-normal" style="font-size: 0.7rem;">Editable (Rs.)</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between align-items-center py-1 small mb-1">
+                                            <span class="text-muted">Late Deduction</span>
+                                            <div class="input-group input-group-sm" style="width: 125px;">
+                                                <span class="input-group-text bg-light text-muted px-2">Rs.</span>
+                                                <input type="number" step="1" min="0" name="late_deduction_input" class="form-control text-danger fw-bold text-end deduction-calc-input px-2 shadow-none" value="${Math.round(lateDeduction)}">
+                                            </div>
+                                        </div>
+                                        <div class="d-flex justify-content-between align-items-center py-1 small mb-1">
+                                            <span class="text-muted">Absent Deduction</span>
+                                            <div class="input-group input-group-sm" style="width: 125px;">
+                                                <span class="input-group-text bg-light text-muted px-2">Rs.</span>
+                                                <input type="number" step="1" min="0" name="absent_deduction_input" class="form-control text-danger fw-bold text-end deduction-calc-input px-2 shadow-none" value="${Math.round(absentDeduction)}">
+                                            </div>
+                                        </div>
+                                        <div class="d-flex justify-content-between align-items-center py-1 small mb-1">
+                                            <span class="text-muted d-flex align-items-center">
+                                                Loan Deduction
+                                                ${hasActiveLoan ? `<span class="badge bg-warning text-dark ms-1" style="font-size:0.6rem;">Active</span>` : ''}
+                                            </span>
+                                            <div class="input-group input-group-sm" style="width: 125px;">
+                                                <span class="input-group-text bg-light text-muted px-2">Rs.</span>
+                                                <input type="number" step="1" min="0" ${remainingLoan > 0 ? `max="${Math.round(remainingLoan)}"` : ''} name="loan_deduction_input" class="form-control text-danger fw-bold text-end deduction-calc-input px-2 shadow-none" value="${Math.round(defaultLoanCut)}">
+                                            </div>
+                                        </div>
+                                        <div class="d-flex justify-content-between align-items-center py-1 small mb-1">
+                                            <span class="text-muted">Other Deduction</span>
+                                            <div class="input-group input-group-sm" style="width: 125px;">
+                                                <span class="input-group-text bg-light text-muted px-2">Rs.</span>
+                                                <input type="number" step="1" min="0" name="manual_deductions_input" class="form-control text-danger fw-bold text-end deduction-calc-input px-2 shadow-none" value="${Math.round(otherDeductions)}">
+                                            </div>
+                                        </div>
+                                        <div class="d-flex justify-content-between align-items-center py-2 mt-2 border-top fw-bold text-danger">
+                                            <span>Total Deductions</span>
+                                            <span id="totalDeductionSpan">Rs. ${formatCurrency(totalDeduction)}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="net-payable py-2 px-3 mt-3 d-flex align-items-center justify-content-between rounded-3" style="background: linear-gradient(135deg, #10b981, #059669); color: white;">
+                                <div>
+                                    <div class="small text-white-50 fw-bold" style="letter-spacing: 1px;">TOTAL NET PAYABLE</div>
+                                    <div class="small text-white-50">${fullName}'s Salary</div>
+                                </div>
+                                <div id="netSalaryDisplay" style="font-size: 1.6rem; font-weight: 800; color: white;">Rs. ${formatCurrency(netSalary)}</div>
+                            </div>
+                        `;
+
+                        $('#payBreakdownContent').html(breakdownHtml);
+                    },
+                    error: function() {
+                        $('#payBreakdownContent').html('<div class="alert alert-warning p-3 mb-0">Salary breakdown could not be loaded, but you can still proceed with payment below.</div>');
+                    }
+                });
+            });
+
+            // Live deduction recalculation listener inside payment modal
+            $(document).on('input change', '.deduction-calc-input', function() {
+                var late = parseFloat($('input[name="late_deduction_input"]').val()) || 0;
+                var absent = parseFloat($('input[name="absent_deduction_input"]').val()) || 0;
+                var loan = parseFloat($('input[name="loan_deduction_input"]').val()) || 0;
+                var manual = parseFloat($('input[name="manual_deductions_input"]').val()) || 0;
+
+                var totalAttendance = late + absent;
+                var totalDeduction = totalAttendance + manual + loan;
+
+                $('#attendanceDeductionsHidden').val(totalAttendance);
+                $('#manualDeductionsHidden').val(manual);
+                $('#loanDeductionHidden').val(loan);
+
+                $('#totalDeductionSpan').text('Rs. ' + formatCurrency(totalDeduction));
+
+                var gross = parseFloat($('#grossEarningsHidden').val()) || 0;
+                var net = Math.max(0, gross - totalDeduction);
+
+                $('#netSalaryHidden').val(net);
+                $('#netSalaryDisplay').text('Rs. ' + formatCurrency(net));
+            });
+
+            // Form Submit for payPayrollForm
+            $(document).on('submit', '#payPayrollForm', function(e) {
+                e.preventDefault();
+                let form = $(this);
+                let btn = $('#paySubmitBtn');
+                let originalContent = btn.html();
+
+                btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin me-1"></i> Processing Payment...');
+
+                $.ajax({
+                    url: form.attr('action'),
+                    type: 'POST',
+                    data: form.serialize(),
+                    success: function(res) {
+                        safeHideModal('#payPayrollModal');
+                        Swal.fire({
+                            title: 'Paid!',
+                            text: res.success || 'Payroll marked as paid.',
+                            icon: 'success',
+                            confirmButtonColor: '#10b981'
+                        }).then(() => location.reload());
+                    },
+                    error: function(xhr) {
+                        btn.prop('disabled', false).html(originalContent);
+                        let err = xhr.responseJSON?.error || 'Failed to process payment.';
+                        if (xhr.responseJSON?.errors) {
+                            err = Object.values(xhr.responseJSON.errors).flat().join('<br>');
+                        }
+                        Swal.fire('Error', err, 'error');
                     }
                 });
             });

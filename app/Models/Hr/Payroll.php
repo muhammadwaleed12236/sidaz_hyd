@@ -22,6 +22,7 @@ class Payroll extends Model
         'deductions',
         'attendance_deductions',
         'manual_deductions',
+        'loan_deduction',
         'manual_allowances',
         'carried_forward_deduction',
         'carried_forward_to_next',
@@ -33,6 +34,9 @@ class Payroll extends Model
         'reviewed_by',
         'reviewed_at',
         'payment_date',
+        'account_id',
+        'payment_method',
+        'payment_reference',
     ];
 
     protected $casts = [
@@ -57,6 +61,11 @@ class Payroll extends Model
     public function reviewer()
     {
         return $this->belongsTo(User::class, 'reviewed_by');
+    }
+
+    public function account()
+    {
+        return $this->belongsTo(\App\Models\Account::class, 'account_id');
     }
 
     /**
@@ -133,6 +142,7 @@ class Payroll extends Model
         return $this->deductions + 
                $this->attendance_deductions + 
                $this->manual_deductions + 
+               $this->loan_deduction + 
                $this->carried_forward_deduction;
     }
 

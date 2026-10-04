@@ -31,7 +31,13 @@ class PayrollController extends Controller
             abort(403, 'Unauthorized action.');
         }
 
-        $query = Payroll::with(['employee.designation', 'employee.department']);
+        $query = Payroll::with(['employee.designation', 'employee.department', 'details']);
+
+        $availableMonths = Payroll::select('month')->distinct()->orderBy('month', 'desc')->pluck('month');
+        $selectedMonth = $request->get('month');
+        if (! $request->has('month')) {
+            $selectedMonth = $availableMonths->first() ?? date('Y-m');
+        }
 
         // Apply filters
         if ($request->filled('type')) {
@@ -42,18 +48,26 @@ class PayrollController extends Controller
             $query->where('status', $request->status);
         }
 
-        if ($request->filled('month')) {
-            $query->where('month', $request->month);
+        if ($selectedMonth && $selectedMonth !== 'all') {
+            $query->where('month', $selectedMonth);
         }
 
         if ($request->filled('employee_id')) {
             $query->where('employee_id', $request->employee_id);
         }
 
-        $payrolls = $query->latest()->paginate(12);
-        $employees = Employee::all();
+        $excludedCodes = ['AR', 'AP', 'SALES', 'PURCHASE'];
+        $excludedTitles = ['Accounts Receivable', 'Accounts Payable', 'Sales Revenue', 'Purchase Expense'];
 
-        return view('hr.payroll.index', compact('payrolls', 'employees'))->with('activeTab', 'all');
+        $payrolls = $query->latest()->paginate(50);
+        $this->attachAttendanceMetrics($payrolls);
+        $employees = Employee::all();
+        $accounts = \App\Models\Account::whereNotIn('account_code', $excludedCodes)
+            ->whereNotIn('title', $excludedTitles)
+            ->orderBy('title')
+            ->get();
+
+        return view('hr.payroll.index', compact('payrolls', 'employees', 'availableMonths', 'selectedMonth', 'accounts'))->with('activeTab', 'all');
     }
 
     /**
@@ -65,23 +79,37 @@ class PayrollController extends Controller
             abort(403, 'Unauthorized action.');
         }
 
-        $query = Payroll::with(['employee.designation', 'employee.department'])
+        $query = Payroll::with(['employee.designation', 'employee.department', 'details'])
             ->monthly();
+
+        $availableMonths = Payroll::monthly()->select('month')->distinct()->orderBy('month', 'desc')->pluck('month');
+        $selectedMonth = $request->get('month');
+        if (! $request->has('month')) {
+            $selectedMonth = $availableMonths->first() ?? date('Y-m');
+        }
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
 
-        if ($request->filled('month')) {
-            $query->where('month', $request->month);
+        if ($selectedMonth && $selectedMonth !== 'all') {
+            $query->where('month', $selectedMonth);
         }
 
-        $payrolls = $query->latest()->paginate(12);
+        $excludedCodes = ['AR', 'AP', 'SALES', 'PURCHASE'];
+        $excludedTitles = ['Accounts Receivable', 'Accounts Payable', 'Sales Revenue', 'Purchase Expense'];
+
+        $payrolls = $query->latest()->paginate(50);
+        $this->attachAttendanceMetrics($payrolls);
         $employees = Employee::whereHas('salaryStructure', function ($q) {
             $q->whereIn('salary_type', ['salary', 'both']);
         })->get();
+        $accounts = \App\Models\Account::whereNotIn('account_code', $excludedCodes)
+            ->whereNotIn('title', $excludedTitles)
+            ->orderBy('title')
+            ->get();
 
-        return view('hr.payroll.index', compact('payrolls', 'employees'))->with('activeTab', 'monthly');
+        return view('hr.payroll.index', compact('payrolls', 'employees', 'availableMonths', 'selectedMonth', 'accounts'))->with('activeTab', 'monthly');
     }
 
     /**
@@ -93,23 +121,95 @@ class PayrollController extends Controller
             abort(403, 'Unauthorized action.');
         }
 
-        $query = Payroll::with(['employee.designation', 'employee.department'])
+        $query = Payroll::with(['employee.designation', 'employee.department', 'details'])
             ->daily();
+
+        $availableMonths = Payroll::daily()->select('month')->distinct()->orderBy('month', 'desc')->pluck('month');
+        $selectedMonth = $request->get('month');
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
 
-        if ($request->filled('month')) {
-            $query->where('month', $request->month);
+        if ($selectedMonth && $selectedMonth !== 'all') {
+            $query->where('month', $selectedMonth);
         }
 
-        $payrolls = $query->latest()->paginate(12);
+        $excludedCodes = ['AR', 'AP', 'SALES', 'PURCHASE'];
+        $excludedTitles = ['Accounts Receivable', 'Accounts Payable', 'Sales Revenue', 'Purchase Expense'];
+
+        $payrolls = $query->latest()->paginate(50);
+        $this->attachAttendanceMetrics($payrolls);
         $employees = Employee::whereHas('salaryStructure', function ($q) {
             $q->where('use_daily_wages', true);
         })->get();
+        $accounts = \App\Models\Account::whereNotIn('account_code', $excludedCodes)
+            ->whereNotIn('title', $excludedTitles)
+            ->orderBy('title')
+            ->get();
 
-        return view('hr.payroll.index', compact('payrolls', 'employees'))->with('activeTab', 'daily');
+        return view('hr.payroll.index', compact('payrolls', 'employees', 'availableMonths', 'selectedMonth', 'accounts'))->with('activeTab', 'daily');
+    }
+
+    /**
+     * Attach attendance breakdown metrics for payroll table display
+     */
+    private function attachAttendanceMetrics($payrolls)
+    {
+        foreach ($payrolls as $payroll) {
+            if ($payroll->payroll_type === 'daily') {
+                $dateStr = $payroll->month;
+                $att = Attendance::where('employee_id', $payroll->employee_id)
+                    ->where('date', $dateStr)
+                    ->first();
+
+                $payroll->attendance_days = 1;
+                $payroll->attendance_present = ($att && in_array(strtolower($att->status ?? ''), ['present', 'late'])) ? 1 : 0;
+                $payroll->attendance_late = ($att && ($att->is_late || strtolower($att->status ?? '') === 'late')) ? 1 : 0;
+                $payroll->attendance_absent = ($att && strtolower($att->status ?? '') === 'absent') ? 1 : 0;
+                $otHrs = ($att && ($att->total_hours ?? 0) > 8) ? round($att->total_hours - 8, 1) : 0;
+                $payroll->ot_hours = $otHrs;
+                $payroll->ot_amount = round($otHrs * (($payroll->basic_salary ?: 0) / 8 * 1.5), 2);
+            } else {
+                $monthStr = (strlen($payroll->month ?? '') === 7) ? $payroll->month : Carbon::now()->format('Y-m');
+                try {
+                    $startDate = Carbon::parse($monthStr . '-01')->startOfMonth();
+                    $endDate = Carbon::parse($monthStr . '-01')->endOfMonth();
+                    $daysInMonth = $startDate->daysInMonth;
+                } catch (\Exception $e) {
+                    $startDate = Carbon::now()->startOfMonth();
+                    $endDate = Carbon::now()->endOfMonth();
+                    $daysInMonth = 30;
+                }
+
+                $attendances = Attendance::where('employee_id', $payroll->employee_id)
+                    ->whereBetween('date', [$startDate->format('Y-m-d'), $endDate->format('Y-m-d')])
+                    ->get();
+
+                $presentCount = $attendances->filter(fn($a) => in_array(strtolower($a->status ?? ''), ['present', 'late']))->count();
+                $lateCount = $attendances->filter(fn($a) => strtolower($a->status ?? '') === 'late' || $a->is_late)->count();
+                $absentCount = $attendances->filter(fn($a) => strtolower($a->status ?? '') === 'absent')->count();
+
+                $otHours = round($attendances->filter(fn($a) => ($a->total_hours ?? 0) > 8)->sum(fn($a) => $a->total_hours - 8), 1);
+                
+                $otAmount = 0;
+                if ($payroll->relationLoaded('details') && $payroll->details) {
+                    $otAmount = $payroll->details->where('type', 'allowance')->filter(fn($d) => stripos($d->name, 'overtime') !== false || stripos($d->name, 'ot') !== false)->sum('amount');
+                }
+                if ($otAmount == 0 && $otHours > 0) {
+                    $perDayRate = ($payroll->basic_salary ?: 0) / 30;
+                    $hourlyRate = $perDayRate / 8;
+                    $otAmount = round($otHours * $hourlyRate * 1.5, 2);
+                }
+
+                $payroll->attendance_days = $daysInMonth;
+                $payroll->attendance_present = $presentCount;
+                $payroll->attendance_late = $lateCount;
+                $payroll->attendance_absent = $absentCount;
+                $payroll->ot_hours = $otHours;
+                $payroll->ot_amount = $otAmount;
+            }
+        }
     }
 
     /**
@@ -148,6 +248,48 @@ class PayrollController extends Controller
         // Get attendance breakdown for the payroll period
         $attendanceBreakdown = $this->getAttendanceBreakdown($payroll);
 
+        // Get active loans summary for employee (includes approved and pending loans with remaining balance)
+        $activeLoans = \App\Models\Hr\Loan::where('employee_id', $payroll->employee_id)
+            ->active()
+            ->get();
+
+        $suggestedInstallment = 0;
+        foreach ($activeLoans as $l) {
+            $rem = max(0, $l->amount - $l->paid_amount);
+            $scheduled = \App\Models\Hr\LoanScheduledDeduction::where('loan_id', $l->id)
+                ->where('deduction_month', $payroll->month)
+                ->where('status', 'pending')
+                ->first();
+
+            if ($scheduled && $scheduled->amount > 0) {
+                $suggestedInstallment += min($scheduled->amount, $rem);
+            } elseif ($l->installment_amount > 0) {
+                $suggestedInstallment += min($l->installment_amount, $rem);
+            } else {
+                $suggestedInstallment += $rem;
+            }
+        }
+
+        $loanSummary = [
+            'has_active_loan' => $activeLoans->count() > 0,
+            'total_loan_amount' => (float) $activeLoans->sum('amount'),
+            'total_paid_amount' => (float) $activeLoans->sum('paid_amount'),
+            'total_remaining' => (float) ($activeLoans->sum('amount') - $activeLoans->sum('paid_amount')),
+            'suggested_installment' => (float) $suggestedInstallment,
+            'active_loans_count' => $activeLoans->count(),
+            'current_saved_deduction' => (float) ($payroll->loan_deduction ?? 0),
+            'loans' => $activeLoans->map(function ($l) {
+                return [
+                    'id' => $l->id,
+                    'reason' => $l->reason,
+                    'amount' => (float) $l->amount,
+                    'paid_amount' => (float) $l->paid_amount,
+                    'remaining' => (float) ($l->amount - $l->paid_amount),
+                    'installment_amount' => (float) $l->installment_amount,
+                ];
+            }),
+        ];
+
         return response()->json([
             'payroll' => $payroll,
             'payroll_period' => $payrollPeriod,
@@ -164,6 +306,7 @@ class PayrollController extends Controller
                     'carried_forward' => $payroll->carried_forward_deduction,
                     'carried_forward_to_next' => $payroll->carried_forward_to_next,
                     'manual_deductions' => $payroll->manual_deductions,
+                    'loan_deduction' => $payroll->loan_deduction ?? 0,
                     'total' => $payroll->total_deductions,
                 ],
                 'net_payable' => $payroll->net_salary,
@@ -171,6 +314,7 @@ class PayrollController extends Controller
             'allowance_details' => $allowanceDetails,
             'deduction_details' => $deductionDetails,
             'attendance_breakdown' => $attendanceBreakdown,
+            'loan_summary' => $loanSummary,
         ]);
     }
 
@@ -208,13 +352,9 @@ class PayrollController extends Controller
     {
         $employee = $payroll->employee;
         
-        // Get salary structure for deduction policy
-        $structure = $this->payrollService->getEffectiveSalaryStructure($employee);
-        $policy = $structure ? ($structure->attendance_deduction_policy ?? []) : [];
-        $perDayDeduction = floatval($structure ? ($structure->leave_salary_per_day ?? 0) : 0);
-        if ($perDayDeduction <= 0 && $payroll->basic_salary > 0) {
-            $perDayDeduction = round($payroll->basic_salary / 30, 2);
-        }
+        // Get HR Terms & Policy for Employee
+        $hrPolicy = \App\Models\Hr\HrPolicy::getEffectivePolicyForEmployee($employee->id);
+        $perDayRate = ($payroll->basic_salary > 0) ? ($payroll->basic_salary / 30) : 0;
         
         if ($payroll->payroll_type === 'monthly') {
             // For monthly payroll, get attendance stats for the entire month
@@ -242,15 +382,60 @@ class PayrollController extends Controller
             $earlyMinutesTotal = $attendances->sum('early_leave_minutes');
             $totalHoursWorked = round($attendances->sum('total_hours'), 1);
             
-            // Calculate actual deduction amounts (absent + leave)
-            $customRate = floatval($structure ? ($structure->leave_salary_per_day ?? 0) : 0);
-            if ($customRate > 0) {
-                $absenceDeduction = round($totalDeductionDays * $customRate, 2);
+            // Calculate Absence Deduction based on HR Policy
+            if ($hrPolicy && $hrPolicy->absence_deduction_type === 'fixed') {
+                $absenceDeduction = round($totalDeductionDays * $hrPolicy->absence_fixed_amount, 2);
             } else {
-                $absenceDeduction = round(($totalDeductionDays * $payroll->basic_salary) / 30, 2);
+                $absenceDeduction = round($totalDeductionDays * $perDayRate, 2);
+            }
+
+            // Calculate Late Check-in Deduction based on HR Policy
+            $lateDeduction = 0;
+            $latePenaltyRate = 0;
+            if ($hrPolicy && $hrPolicy->late_penalty_type === '3_lates_1_day') {
+                // Every 3 late check-ins deduct 1 day salary
+                $lateDeductionDays = floor($lateCheckIns / 3);
+                $lateDeduction = round($lateDeductionDays * $perDayRate, 2);
+                $latePenaltyRate = round($perDayRate / 3, 2);
+            } elseif ($hrPolicy && $hrPolicy->late_penalty_type === 'fixed_per_instance') {
+                $lateDeduction = round($lateCheckIns * $hrPolicy->late_penalty_amount, 2);
+                $latePenaltyRate = $hrPolicy->late_penalty_amount;
+            }
+
+            // Calculate Overtime Hours & Earnings based on HR Policy
+            $overtimeHoursTotal = 0;
+            $overtimeEarnings = 0;
+            if ($hrPolicy && $hrPolicy->overtime_enabled) {
+                $minOtMins = $hrPolicy->overtime_min_minutes ?? 60;
+                $shift = $employee->shift ?? \App\Models\Hr\Shift::where('is_default', true)->first();
+                $shiftEndStr = $employee->custom_end_time ?: ($shift ? $shift->end_time : '18:00:00');
+                $standardShiftHours = $shift ? max(1, (int)$shift->total_hours) : 8;
+                $hourlySalary = ($payroll->basic_salary > 0) ? ($payroll->basic_salary / 30 / $standardShiftHours) : 0;
+
+                foreach ($attendances as $att) {
+                    if ($att->check_out_time) {
+                        $shiftEndDt = \Carbon\Carbon::parse($att->date . ' ' . \Carbon\Carbon::parse($shiftEndStr)->format('H:i:s'));
+                        $checkOutDt = \Carbon\Carbon::parse($att->date . ' ' . \Carbon\Carbon::parse($att->check_out_time)->format('H:i:s'));
+
+                        if ($checkOutDt->gt($shiftEndDt)) {
+                            $otMinutes = $checkOutDt->diffInMinutes($shiftEndDt);
+                            if ($otMinutes >= $minOtMins) {
+                                $otHours = round($otMinutes / 60, 2);
+                                $overtimeHoursTotal += $otHours;
+                            }
+                        }
+                    }
+                }
+
+                if ($hrPolicy->overtime_rate_type === 'fixed') {
+                    $overtimeEarnings = round($overtimeHoursTotal * $hrPolicy->overtime_fixed_rate, 2);
+                } else {
+                    $multiplier = $hrPolicy->overtime_multiplier ?? 1.5;
+                    $overtimeEarnings = round($overtimeHoursTotal * $hourlySalary * $multiplier, 2);
+                }
             }
             
-            $perDayDeduction = round(($payroll->basic_salary > 0) ? ($payroll->basic_salary / 30) : 0, 2);
+            $perDayDeduction = round($perDayRate, 2);
             $absentDays = $attendances->filter(fn($att) => in_array(strtolower($att->status), ['absent', 'leave']))
                 ->map(function ($att) use ($perDayDeduction) {
                     return [
@@ -261,19 +446,19 @@ class PayrollController extends Controller
                     ];
                 })->values()->toArray();
 
-            $perDayRate = ($payroll->basic_salary > 0) ? ($payroll->basic_salary / 30) : 0;
-            $latePenalty = floatval($policy['late_penalty_per_instance'] ?? 0);
             $earlyPenalty = floatval($policy['early_penalty_per_instance'] ?? 0);
-            $lateRules = $policy['late_rules'] ?? [];
             $earlyRules = $policy['early_rules'] ?? [];
-
-            $lateDeduction = 0;
-            $lateDays = $attendances->where('is_late', true)->map(function ($att) use ($latePenalty, $lateRules, $perDayRate) {
+            $lateDays = $attendances->where('is_late', true)->values()->map(function ($att, $idx) use ($hrPolicy, $perDayRate) {
                 $timeIn = $att->check_in_time ?: $att->clock_in;
-                $itemDeduction = $latePenalty;
-                if ($itemDeduction <= 0 && !empty($lateRules)) {
-                    $itemDeduction = $this->calculateLateRuleDeduction($att->late_minutes ?? 0, $lateRules, $perDayRate);
+                $itemDeduction = 0;
+
+                if ($hrPolicy && $hrPolicy->late_penalty_type === '3_lates_1_day') {
+                    // Show full 1 day deduction on every 3rd late arrival
+                    $itemDeduction = (($idx + 1) % 3 === 0) ? $perDayRate : 0;
+                } elseif ($hrPolicy && $hrPolicy->late_penalty_type === 'fixed_per_instance') {
+                    $itemDeduction = $hrPolicy->late_penalty_amount;
                 }
+
                 return [
                     'date' => \Carbon\Carbon::parse($att->date)->format('d/m/Y'),
                     'day' => \Carbon\Carbon::parse($att->date)->format('l'),
@@ -281,7 +466,7 @@ class PayrollController extends Controller
                     'late_minutes' => $att->late_minutes ?? 0,
                     'deduction' => round($itemDeduction, 2),
                 ];
-            })->values()->toArray();
+            })->toArray();
 
             $lateDeduction = array_sum(array_column($lateDays, 'deduction'));
 
@@ -320,13 +505,15 @@ class PayrollController extends Controller
                 'late_minutes_total' => $lateMinutesTotal,
                 'early_minutes_total' => $earlyMinutesTotal,
                 'total_hours_worked' => $totalHoursWorked,
-                'total_deduction' => $payroll->attendance_deductions,
+                'overtime_hours' => $overtimeHoursTotal ?? 0,
+                'overtime_earnings' => $overtimeEarnings ?? 0,
+                'total_deduction' => round($absenceDeduction + $lateDeduction + $earlyDeduction, 2),
                 'deduction_details' => [
                     'absence_deduction' => $absenceDeduction,
-                    'late_deduction' => $lateDeduction,
+                    'late_deduction' => ($lateDeduction == 0 && $absenceDeduction == 0 && $payroll->attendance_deductions > 0) ? $payroll->attendance_deductions : $lateDeduction,
                     'early_deduction' => $earlyDeduction,
                     'per_day_rate' => $perDayDeduction,
-                    'late_penalty_rate' => $latePenalty,
+                    'late_penalty_rate' => $latePenaltyRate ?? 0,
                     'early_penalty_rate' => $earlyPenalty,
                 ],
                 // Detailed day-by-day records
@@ -760,15 +947,15 @@ class PayrollController extends Controller
     }
 
     /**
-     * Mark payroll as paid
+     * Mark payroll as paid with detailed payment options & account selection
      */
-    public function markPaid($id)
+    public function markPaid(Request $request, $id)
     {
         if (! auth()->user()->can('hr.payroll.edit')) {
             return response()->json(['error' => 'Unauthorized action.'], 403);
         }
 
-        $payroll = Payroll::findOrFail($id);
+        $payroll = Payroll::with('employee')->findOrFail($id);
 
         if (! $payroll->canMarkPaid()) {
             return response()->json([
@@ -776,13 +963,134 @@ class PayrollController extends Controller
             ], 403);
         }
 
-        $payroll->update([
-            'status' => 'paid',
-            'payment_date' => now(),
+        $validator = Validator::make($request->all(), [
+            'payment_date' => 'nullable|date',
+            'account_id' => 'nullable|exists:accounts,id',
+            'payment_method' => 'nullable|string',
+            'payment_reference' => 'nullable|string',
+            'notes' => 'nullable|string',
+            'attendance_deductions' => 'nullable|numeric|min:0',
+            'manual_deductions' => 'nullable|numeric|min:0',
+            'loan_deduction' => 'nullable|numeric|min:0',
+            'manual_allowances' => 'nullable|numeric|min:0',
+            'net_salary' => 'nullable|numeric|min:0',
         ]);
 
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $paymentDate = $request->input('payment_date', now()->format('Y-m-d'));
+        $accountId = $request->input('account_id');
+        $paymentMethod = $request->input('payment_method', 'cash');
+        $paymentReference = $request->input('payment_reference');
+        $notes = $request->input('notes');
+
+        // Check if customized deductions were passed from payment modal
+        $attendanceDeductions = $request->has('attendance_deductions')
+            ? floatval($request->input('attendance_deductions'))
+            : $payroll->attendance_deductions;
+
+        $manualDeductions = $request->has('manual_deductions')
+            ? floatval($request->input('manual_deductions'))
+            : $payroll->manual_deductions;
+
+        $loanDeduction = $request->has('loan_deduction')
+            ? floatval($request->input('loan_deduction'))
+            : ($payroll->loan_deduction ?? 0);
+
+        $manualAllowances = $request->has('manual_allowances')
+            ? floatval($request->input('manual_allowances'))
+            : $payroll->manual_allowances;
+
+        $grossSalary = $payroll->basic_salary + $payroll->allowances + $manualAllowances + ($payroll->ot_amount ?? 0);
+        $totalDeductions = $attendanceDeductions + $manualDeductions + $loanDeduction + $payroll->deductions + $payroll->carried_forward_deduction;
+
+        $netSalary = $request->has('net_salary')
+            ? floatval($request->input('net_salary'))
+            : max(0, $grossSalary - $totalDeductions);
+
+        $payroll->update([
+            'status' => 'paid',
+            'gross_salary' => $grossSalary,
+            'attendance_deductions' => $attendanceDeductions,
+            'manual_deductions' => $manualDeductions,
+            'loan_deduction' => $loanDeduction,
+            'manual_allowances' => $manualAllowances,
+            'net_salary' => $netSalary,
+            'payment_date' => $paymentDate,
+            'account_id' => $accountId,
+            'payment_method' => $paymentMethod,
+            'payment_reference' => $paymentReference,
+            'notes' => $notes ?: $payroll->notes,
+        ]);
+
+        // Automatically update active Employee Loans and record LoanPayment logs if loan deduction was taken
+        if ($loanDeduction > 0) {
+            $remainingDeduction = $loanDeduction;
+            $activeLoans = \App\Models\Hr\Loan::where('employee_id', $payroll->employee_id)
+                ->active()
+                ->orderBy('id', 'asc')
+                ->get();
+
+            foreach ($activeLoans as $loan) {
+                if ($remainingDeduction <= 0) {
+                    break;
+                }
+
+                $dueOnLoan = $loan->amount - $loan->paid_amount;
+                $payAmountForLoan = min($remainingDeduction, $dueOnLoan);
+
+                if ($payAmountForLoan > 0) {
+                    $newPaid = $loan->paid_amount + $payAmountForLoan;
+                    $newStatus = ($newPaid >= $loan->amount) ? 'completed' : 'approved';
+
+                    $loan->update([
+                        'paid_amount' => $newPaid,
+                        'status' => $newStatus,
+                    ]);
+
+                    \App\Models\Hr\LoanPayment::create([
+                        'loan_id' => $loan->id,
+                        'amount' => $payAmountForLoan,
+                        'payment_date' => $paymentDate,
+                        'type' => 'salary_deduction',
+                        'notes' => "Salary Loan Cut for {$payroll->month} (Payroll #{$payroll->id})",
+                    ]);
+
+                    // Mark any pending scheduled deduction for this month as deducted
+                    \App\Models\Hr\LoanScheduledDeduction::where('loan_id', $loan->id)
+                        ->where('deduction_month', $payroll->month)
+                        ->where('status', 'pending')
+                        ->update(['status' => 'deducted']);
+
+                    $remainingDeduction -= $payAmountForLoan;
+                }
+            }
+        }
+
+        // If an account is selected, record account history / deduct balance
+        if ($accountId) {
+            $account = \App\Models\Account::find($accountId);
+            if ($account) {
+                if (class_exists('\App\Models\AccountHistory')) {
+                    \App\Models\AccountHistory::create([
+                        'account_id' => $account->id,
+                        'amount' => $payroll->net_salary,
+                        'type' => 'Debit',
+                        'description' => "Salary Payment for {$payroll->employee->full_name} ({$payroll->month})",
+                        'reference_no' => $paymentReference ?: "PAYROLL-{$payroll->id}",
+                        'date' => $paymentDate,
+                    ]);
+                }
+                if (\Schema::hasColumn('accounts', 'current_balance')) {
+                    $account->decrement('current_balance', $payroll->net_salary);
+                }
+            }
+        }
+
         return response()->json([
-            'success' => 'Payroll marked as paid successfully.',
+            'success' => 'Payroll marked as Paid successfully and loan deductions updated.',
         ]);
     }
 

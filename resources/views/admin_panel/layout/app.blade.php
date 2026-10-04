@@ -1181,6 +1181,8 @@
                                         @can('hr.payroll.view')
                                             <li><a href="{{ route('hr.payroll.index') }}"><i
                                                         class="fa-solid fa-money-check-alt"></i> Payroll</a></li>
+                                            <li><a href="{{ route('hr.policy.index') }}"><i
+                                                        class="fa-solid fa-file-contract"></i> Terms & Conditions</a></li>
                                         @endcan
                                         @can('hr.leaves.view')
                                             <li><a href="{{ route('hr.leaves.index') }}"><i

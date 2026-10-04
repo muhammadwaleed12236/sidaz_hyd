@@ -234,27 +234,27 @@
                         <h1 class="page-title"><i class="fa fa-clock"></i> Daily Attendance</h1>
                         <p class="page-subtitle">{{ \Carbon\Carbon::parse($selectedDate)->format('d/m/Y') }}</p>
                     </div>
-                    <div class="d-flex gap-2">
-                        <a href="{{ route('hr.attendance.ledger') }}" class="btn btn-dark fw-bold">
+                    <div class="d-flex gap-1 flex-wrap align-items-center">
+                        <a href="{{ route('hr.attendance.ledger') }}" class="btn btn-sm btn-dark fw-bold">
                             <i class="fa fa-book-open me-1"></i> Attendance Ledger
                         </a>
-                        <button type="button" class="btn btn-light border" data-bs-toggle="modal"
+                        <button type="button" class="btn btn-sm btn-light border" data-bs-toggle="modal"
                             data-bs-target="#attendanceGuideModal">
                             <i class="fa fa-question-circle text-primary me-1"></i> System Guide
                         </button>
                         @can('hr.attendance.create')
-                            <button type="button" class="btn btn-warning" id="markAbsentBtn">
+                            <button type="button" class="btn btn-sm btn-warning" id="markAbsentBtn">
                                 <i class="fa fa-user-times me-1"></i> Mark Absent
                             </button>
                         @endcan
                         @can('hr.biometric.devices.edit')
-                            <button type="button" class="btn btn-info" id="pullAttendanceBtn">
+                            <button type="button" class="btn btn-sm btn-info text-white" id="pullAttendanceBtn">
                                 <i class="fa fa-sync me-1"></i> Pull Attendance
                             </button>
                         @endcan
                         @can('hr.attendance.create')
-                            <a href="{{ route('hr.attendance.kiosk') }}" class="btn btn-outline-primary">
-                                <i class="fa fa-desktop me-2"></i> Kiosk Mode
+                            <a href="{{ route('hr.attendance.kiosk') }}" class="btn btn-sm btn-outline-primary">
+                                <i class="fa fa-desktop me-1"></i> Kiosk Mode
                             </a>
                         @endcan
                     </div>
@@ -354,16 +354,16 @@
                 </div>
 
                 <!-- Filters -->
-                <div class="card border-0 shadow-sm rounded-4 mb-4 p-3 bg-white">
+                <div class="card border-0 shadow-sm rounded-3 mb-3 p-2 bg-white">
                     <form id="filterForm" method="GET" action="{{ route('hr.attendance.index') }}"
-                        class="d-flex flex-wrap gap-3 align-items-end">
-                        <div style="flex: 1; min-width: 200px;">
-                            <label class="form-label text-muted small fw-bold">DATE</label>
-                            <input type="date" name="date" class="form-control" value="{{ $selectedDate }}">
+                        class="d-flex flex-wrap gap-2 align-items-end">
+                        <div style="flex: 1; min-width: 150px;">
+                            <label class="form-label text-muted small fw-bold mb-1" style="font-size: 0.7rem;">DATE</label>
+                            <input type="date" name="date" class="form-control form-control-sm" value="{{ $selectedDate }}">
                         </div>
-                        <div style="flex: 1; min-width: 200px;">
-                            <label class="form-label text-muted small fw-bold">DEPARTMENT</label>
-                            <select name="department_id" class="form-select">
+                        <div style="flex: 1; min-width: 160px;">
+                            <label class="form-label text-muted small fw-bold mb-1" style="font-size: 0.7rem;">DEPARTMENT</label>
+                            <select name="department_id" class="form-select form-select-sm">
                                 <option value="">All Departments</option>
                                 @foreach ($departments as $dept)
                                     <option value="{{ $dept->id }}"
@@ -373,9 +373,9 @@
                                 @endforeach
                             </select>
                         </div>
-                        <div style="flex: 1; min-width: 200px;">
-                            <label class="form-label text-muted small fw-bold">DESIGNATION</label>
-                            <select name="designation_id" class="form-select">
+                        <div style="flex: 1; min-width: 160px;">
+                            <label class="form-label text-muted small fw-bold mb-1" style="font-size: 0.7rem;">DESIGNATION</label>
+                            <select name="designation_id" class="form-select form-select-sm">
                                 <option value="">All Designations</option>
                                 @foreach ($designations as $desig)
                                     <option value="{{ $desig->id }}"
@@ -385,9 +385,9 @@
                                 @endforeach
                             </select>
                         </div>
-                        <div style="flex: 1; min-width: 150px;">
-                            <label class="form-label text-muted small fw-bold">STATUS</label>
-                            <select name="status" class="form-select">
+                        <div style="flex: 1; min-width: 130px;">
+                            <label class="form-label text-muted small fw-bold mb-1" style="font-size: 0.7rem;">STATUS</label>
+                            <select name="status" class="form-select form-select-sm">
                                 <option value="">All Status</option>
                                 <option value="present" {{ $selectedStatus == 'present' ? 'selected' : '' }}>Present
                                 </option>
@@ -396,12 +396,12 @@
                                 <option value="leave" {{ $selectedStatus == 'leave' ? 'selected' : '' }}>Leave</option>
                             </select>
                         </div>
-                        <div class="d-flex align-items-center gap-2">
-                            <button type="submit" class="btn btn-primary"><i class="fa fa-filter me-1"></i> Apply</button>
-                            <a href="{{ route('hr.attendance.index') }}" class="btn btn-light border"><i class="fa fa-sync"></i></a>
+                        <div class="d-flex align-items-center gap-1">
+                            <button type="submit" class="btn btn-sm btn-primary"><i class="fa fa-filter me-1"></i> Apply</button>
+                            <a href="{{ route('hr.attendance.index') }}" class="btn btn-sm btn-light border"><i class="fa fa-sync"></i></a>
                             
                             <!-- View Switcher -->
-                            <div class="btn-group ms-2" role="group" aria-label="View Switcher">
+                            <div class="btn-group btn-group-sm ms-1" role="group" aria-label="View Switcher">
                                 <button type="button" class="btn btn-outline-secondary active" id="btnGridView" title="Cards View"><i class="fa fa-th-large me-1"></i> Cards</button>
                                 <button type="button" class="btn btn-outline-secondary" id="btnTableView" title="List View"><i class="fa fa-list me-1"></i> List</button>
                             </div>
@@ -525,9 +525,7 @@
                                         @if ($attendance && $attendance->check_in_time)
                                             @if ($attendance->is_late)
                                                 @php
-                                                    $lHrs = floor($attendance->late_minutes / 60);
-                                                    $lMins = $attendance->late_minutes % 60;
-                                                    $lateText = ($lHrs > 0 ? $lHrs . 'h ' : '') . $lMins . 'm';
+                                                    $lateText = format_minutes($attendance->late_minutes);
                                                 @endphp
                                                 <small class="text-warning d-block mt-1"><i
                                                         class="fa fa-exclamation-circle"></i> Late
@@ -535,9 +533,7 @@
                                             @endif
                                             @if ($attendance->is_early_in)
                                                 @php
-                                                    $eHrs = floor($attendance->early_in_minutes / 60);
-                                                    $eMins = $attendance->early_in_minutes % 60;
-                                                    $earlyInText = ($eHrs > 0 ? $eHrs . 'h ' : '') . $eMins . 'm';
+                                                    $earlyInText = format_minutes($attendance->early_in_minutes);
                                                 @endphp
                                                 <small class="text-success d-block mt-1"><i class="fa fa-clock"></i> Early
                                                     In {{ $earlyInText }}</small>
@@ -586,9 +582,7 @@
                                         @if ($attendance && $attendance->check_out_time)
                                             @if ($attendance->is_early_leave)
                                                 @php
-                                                    $hrs = floor($attendance->early_leave_minutes / 60);
-                                                    $mins = $attendance->early_leave_minutes % 60;
-                                                    $earlyText = ($hrs > 0 ? $hrs . 'h ' : '') . $mins . 'm';
+                                                    $earlyText = format_minutes($attendance->early_leave_minutes);
                                                 @endphp
                                                 <small class="text-info d-block mt-1"><i
                                                         class="fa fa-person-walking-arrow-right"></i>
@@ -708,6 +702,8 @@
                                             <div class="small text-muted"><i class="fa fa-clock me-1"></i>{{ $emp->shift->name ?? 'Default' }}</div>
                                         </td>
                                         <td>
+                                            <input type="hidden" name="attendance[{{ $emp->id }}][is_dirty]"
+                                                value="0" class="dirty-marker">
                                             <select name="attendance[{{ $emp->id }}][status]"
                                                 class="form-select form-select-sm status-select {{ $stClass }}"
                                                 onchange="showSaveBar(this)">
@@ -734,9 +730,9 @@
                                         </td>
                                         <td>
                                             @if($att && $att->is_late)
-                                                <span class="badge bg-warning text-dark"><i class="fa fa-exclamation-circle me-1"></i>Late {{ $att->late_minutes }}m</span>
+                                                <span class="badge bg-warning text-dark"><i class="fa fa-exclamation-circle me-1"></i>Late {{ format_minutes($att->late_minutes) }}</span>
                                             @elseif($att && $att->is_early_leave)
-                                                <span class="badge bg-info"><i class="fa fa-clock me-1"></i>Early Leave {{ $att->early_leave_minutes }}m</span>
+                                                <span class="badge bg-info"><i class="fa fa-clock me-1"></i>Early Leave {{ format_minutes($att->early_leave_minutes) }}</span>
                                             @else
                                                 <span class="text-muted">-</span>
                                             @endif
@@ -781,48 +777,59 @@
             let bar = document.getElementById('saveBar');
             if (bar) bar.classList.add('visible');
 
-            // Mark card as dirty and update UI
+            // Mark card/row as dirty and update UI
             if (element) {
-                let card = element.closest('.attendance-card');
+                let card = element.closest('.attendance-card, tr');
                 if (card) {
                     // Mark as dirty
                     let dirtyMarker = card.querySelector('.dirty-marker');
                     if (dirtyMarker) dirtyMarker.value = '1';
 
-                    // Highlight the card being edited
-                    card.style.borderColor = 'var(--hr-primary)';
-                    card.style.boxShadow = '0 0 0 2px var(--hr-primary)20';
+                    // Highlight the item being edited
+                    if (card.classList.contains('attendance-card')) {
+                        card.style.borderColor = 'var(--hr-primary)';
+                        card.style.boxShadow = '0 0 0 2px var(--hr-primary)20';
+                    }
 
-                    // If the change came from a status dropdown
-                    if (element.name && element.name.includes('[status]')) {
-                        let status = element.value;
-                        let timeFields = card.querySelectorAll('.time-field');
-                        let timeGroup = card.querySelector('.time-input-group');
+                    let statusSelect = card.querySelector('.status-select');
+                    let timeFields = card.querySelectorAll('.time-field');
+                    let timeGroup = card.querySelector('.time-input-group');
 
-                        // Update card appearance based on status
+                    // If user typed in time field directly and status was absent/leave, switch status to present
+                    if (element.classList && element.classList.contains('time-field') && element.value) {
+                        if (statusSelect && (statusSelect.value === 'absent' || statusSelect.value === 'leave')) {
+                            statusSelect.value = 'present';
+                        }
+                    }
+
+                    let status = statusSelect ? statusSelect.value : '';
+
+                    // Update card/row appearance based on status
+                    if (card.classList.contains('attendance-card')) {
                         card.classList.remove('present', 'absent', 'late', 'leave');
                         if (status) card.classList.add(status);
+                    }
 
-                        // Update Select Color
-                        element.classList.remove('status-present', 'status-absent', 'status-late', 'status-leave');
-                        element.classList.add('status-' + status);
+                    if (statusSelect) {
+                        statusSelect.classList.remove('status-present', 'status-absent', 'status-late', 'status-leave');
+                        statusSelect.classList.add('status-' + status);
+                    }
 
-                        if (status === 'absent' || status === 'leave') {
-                            timeFields.forEach(f => {
-                                f.value = '';
-                                f.disabled = true;
-                                f.style.opacity = '0.5';
-                                f.style.backgroundColor = '#f1f5f9';
-                            });
-                            if (timeGroup) timeGroup.style.opacity = '0.6';
-                        } else {
-                            timeFields.forEach(f => {
-                                f.disabled = false;
-                                f.style.opacity = '1';
-                                f.style.backgroundColor = '';
-                            });
-                            if (timeGroup) timeGroup.style.opacity = '1';
-                        }
+                    if (status === 'absent' || status === 'leave') {
+                        timeFields.forEach(f => {
+                            f.value = '';
+                            f.disabled = true;
+                            f.style.opacity = '0.5';
+                            f.style.backgroundColor = '#f1f5f9';
+                        });
+                        if (timeGroup) timeGroup.style.opacity = '0.6';
+                    } else {
+                        timeFields.forEach(f => {
+                            f.disabled = false;
+                            f.style.opacity = '1';
+                            f.style.backgroundColor = '';
+                        });
+                        if (timeGroup) timeGroup.style.opacity = '1';
                     }
                 }
             }
@@ -860,13 +867,16 @@
 
         $(document).ready(function() {
             // Initialize state for absent/leave rows on load
-            $('.attendance-card.absent, .attendance-card.leave').each(function() {
+            $('.attendance-card, tr').each(function() {
                 let card = $(this);
-                card.find('.time-field').prop('disabled', true).css({
-                    'opacity': '0.5',
-                    'backgroundColor': '#f1f5f9'
-                });
-                card.find('.time-input-group').css('opacity', '0.6');
+                let statusSelect = card.find('.status-select');
+                if (statusSelect.length && (statusSelect.val() === 'absent' || statusSelect.val() === 'leave')) {
+                    card.find('.time-field').prop('disabled', true).css({
+                        'opacity': '0.5',
+                        'backgroundColor': '#f1f5f9'
+                    });
+                    card.find('.time-input-group').css('opacity', '0.6');
+                }
             });
 
             // Form Submit Handler
@@ -875,6 +885,10 @@
                 console.log('Form Submit Triggered');
 
                 let form = $(this);
+
+                // Enable dirty time fields temporarily so serialize captures them
+                form.find('.dirty-marker[value="1"]').closest('.attendance-card, tr').find('.time-field').prop('disabled', false);
+
                 let btn = form.find('.btn-save');
                 let originalBtnContent = btn.html();
 

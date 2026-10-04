@@ -14,17 +14,17 @@
     }
 
     .page-header {
-        margin-bottom: 28px;
+        margin-bottom: 14px;
     }
 
     .page-title {
-        font-size: 1.75rem;
+        font-size: 1.25rem;
         font-weight: 700;
         color: var(--hr-text);
         margin: 0;
         display: flex;
         align-items: center;
-        gap: 12px;
+        gap: 8px;
     }
 
     .page-title i {
@@ -33,40 +33,40 @@
 
     .page-subtitle {
         color: var(--hr-muted);
-        font-size: 0.9rem;
-        margin-top: 4px;
+        font-size: 0.78rem;
+        margin-top: 2px;
     }
 
     /* Stats Cards */
     .stats-row {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
-        gap: 20px;
-        margin-bottom: 28px;
+        gap: 12px;
+        margin-bottom: 14px;
     }
 
     .stat-card {
         background: var(--hr-card);
-        border-radius: 12px;
-        padding: 20px;
+        border-radius: 10px;
+        padding: 10px 14px;
         border: 1px solid var(--hr-border);
         transition: all 0.2s;
     }
 
     .stat-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        transform: translateY(-1px);
+        box-shadow: 0 3px 8px rgba(0, 0, 0, 0.06);
     }
 
     .stat-card .stat-icon {
-        width: 48px;
-        height: 48px;
-        border-radius: 12px;
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 1.25rem;
-        margin-bottom: 12px;
+        font-size: 0.95rem;
+        margin-bottom: 6px;
     }
 
     .stat-card.primary .stat-icon {
@@ -95,16 +95,17 @@
     }
 
     .stat-card .stat-value {
-        font-size: 1.75rem;
+        font-size: 1.35rem;
         font-weight: 700;
         color: var(--hr-text);
+        line-height: 1.2;
     }
 
     .stat-card .stat-label {
-        font-size: 0.8rem;
+        font-size: 0.72rem;
         color: var(--hr-muted);
         text-transform: uppercase;
-        letter-spacing: 0.05em;
+        letter-spacing: 0.04em;
     }
 
     /* Main Card Container */

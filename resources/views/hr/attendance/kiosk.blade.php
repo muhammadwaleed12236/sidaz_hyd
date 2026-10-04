@@ -473,8 +473,15 @@
                         let msg = '<span class="text-success fw-bold"><i class="fa fa-check-circle"></i> ' +
                             response.message + '</span>';
                         if (response.is_late) {
+                            let formatMins = function(m) {
+                                let mins = parseInt(m) || 0;
+                                if (mins < 60) return mins + ' mins';
+                                let hrs = Math.floor(mins / 60);
+                                let rem = mins % 60;
+                                return rem > 0 ? hrs + ' hr ' + rem + ' mins' : hrs + ' hr';
+                            };
                             msg += '<br><span class="text-warning"><i class="fa fa-clock"></i> Late by ' +
-                                response.late_minutes + ' minutes</span>';
+                                formatMins(response.late_minutes) + '</span>';
                         }
                         $('#statusMessage').html(msg);
                     } else {

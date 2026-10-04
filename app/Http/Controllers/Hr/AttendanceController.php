@@ -334,6 +334,12 @@ class AttendanceController extends Controller
                     $clockIn = $data['clock_in'] ?? null;
                     $clockOut = $data['clock_out'] ?? null;
 
+                    // If status is marked present or late, but clock_in is empty, default clock_in to employee shift start time
+                    $reqStatus = $data['status'] ?? null;
+                    if (in_array($reqStatus, ['present', 'late']) && empty($clockIn)) {
+                        $clockIn = Carbon::parse($employee->getStartTime())->format('H:i');
+                    }
+
                     $updateData['clock_in'] = $clockIn;
                     $updateData['clock_out'] = $clockOut;
 
