@@ -190,24 +190,14 @@ class PayrollController extends Controller
                 $lateCount = $attendances->filter(fn($a) => strtolower($a->status ?? '') === 'late' || $a->is_late)->count();
                 $absentCount = $attendances->filter(fn($a) => strtolower($a->status ?? '') === 'absent')->count();
 
-                $otHours = round($attendances->filter(fn($a) => ($a->total_hours ?? 0) > 8)->sum(fn($a) => $a->total_hours - 8), 1);
-                
-                $otAmount = 0;
-                if ($payroll->relationLoaded('details') && $payroll->details) {
-                    $otAmount = $payroll->details->where('type', 'allowance')->filter(fn($d) => stripos($d->name, 'overtime') !== false || stripos($d->name, 'ot') !== false)->sum('amount');
-                }
-                if ($otAmount == 0 && $otHours > 0) {
-                    $perDayRate = ($payroll->basic_salary ?: 0) / 30;
-                    $hourlyRate = $perDayRate / 8;
-                    $otAmount = round($otHours * $hourlyRate * 1.5, 2);
-                }
+                $otData = $this->calculateOvertimeMetrics($payroll, $attendances);
 
                 $payroll->attendance_days = $daysInMonth;
                 $payroll->attendance_present = $presentCount;
                 $payroll->attendance_late = $lateCount;
                 $payroll->attendance_absent = $absentCount;
-                $payroll->ot_hours = $otHours;
-                $payroll->ot_amount = $otAmount;
+                $payroll->ot_hours = $otData['hours'];
+                $payroll->ot_amount = $otData['earnings'];
             }
         }
     }
@@ -406,38 +396,10 @@ class PayrollController extends Controller
                 $latePenaltyRate = $hrPolicy->late_penalty_amount;
             }
 
-            // Calculate Overtime Hours & Earnings based on HR Policy
-            $overtimeHoursTotal = 0;
-            $overtimeEarnings = 0;
-            if ($hrPolicy && $hrPolicy->overtime_enabled) {
-                $minOtMins = $hrPolicy->overtime_min_minutes ?? 60;
-                $shift = $employee->shift ?? \App\Models\Hr\Shift::where('is_default', true)->first();
-                $shiftEndStr = $employee->custom_end_time ?: ($shift ? $shift->end_time : '18:00:00');
-                $standardShiftHours = $shift ? max(1, (int)$shift->total_hours) : 8;
-                $hourlySalary = ($payroll->basic_salary > 0) ? ($payroll->basic_salary / 30 / $standardShiftHours) : 0;
-
-                foreach ($attendances as $att) {
-                    if ($att->check_out_time) {
-                        $shiftEndDt = \Carbon\Carbon::parse($att->date . ' ' . \Carbon\Carbon::parse($shiftEndStr)->format('H:i:s'));
-                        $checkOutDt = \Carbon\Carbon::parse($att->date . ' ' . \Carbon\Carbon::parse($att->check_out_time)->format('H:i:s'));
-
-                        if ($checkOutDt->gt($shiftEndDt)) {
-                            $otMinutes = $checkOutDt->diffInMinutes($shiftEndDt);
-                            if ($otMinutes >= $minOtMins) {
-                                $otHours = round($otMinutes / 60, 2);
-                                $overtimeHoursTotal += $otHours;
-                            }
-                        }
-                    }
-                }
-
-                if ($hrPolicy->overtime_rate_type === 'fixed') {
-                    $overtimeEarnings = round($overtimeHoursTotal * $hrPolicy->overtime_fixed_rate, 2);
-                } else {
-                    $multiplier = $hrPolicy->overtime_multiplier ?? 1.5;
-                    $overtimeEarnings = round($overtimeHoursTotal * $hourlySalary * $multiplier, 2);
-                }
-            }
+            // Calculate Overtime Hours & Earnings based on unified helper
+            $otData = $this->calculateOvertimeMetrics($payroll, $attendances);
+            $overtimeHoursTotal = $otData['hours'];
+            $overtimeEarnings = $otData['earnings'];
             
             $perDayDeduction = round($perDayRate, 2);
             $absentDays = $attendances->filter(fn($att) => in_array(strtolower($att->status), ['absent', 'leave']))
@@ -1229,5 +1191,63 @@ class PayrollController extends Controller
         }
 
         return 0;
+    }
+
+    /**
+     * Unified calculation for Overtime Hours & Earnings across tables and modals
+     */
+    private function calculateOvertimeMetrics($payroll, $attendances): array
+    {
+        $employee = $payroll->employee;
+        $hrPolicy = \App\Models\Hr\HrPolicy::getEffectivePolicyForEmployee($employee->id);
+
+        if ($payroll->relationLoaded('details') && $payroll->details) {
+            $detailOt = $payroll->details->where('type', 'allowance')
+                ->filter(fn($d) => stripos($d->name, 'overtime') !== false || stripos($d->name, 'ot') !== false)
+                ->sum('amount');
+            if ($detailOt > 0) {
+                $otHours = round($attendances->filter(fn($a) => ($a->total_hours ?? 0) > 8)->sum(fn($a) => $a->total_hours - 8), 1);
+                return ['hours' => $otHours, 'earnings' => round($detailOt, 2)];
+            }
+        }
+
+        $shift = $employee->shift ?? \App\Models\Hr\Shift::where('is_default', true)->first();
+        $shiftEndStr = $employee->custom_end_time ?: ($shift ? $shift->end_time : '18:00:00');
+        $standardShiftHours = ($shift && floatval($shift->total_hours) > 0) ? floatval($shift->total_hours) : 8;
+
+        $overtimeHoursTotal = 0;
+        foreach ($attendances as $att) {
+            $hoursWorked = floatval($att->total_hours ?? 0);
+            $dailyOt = 0;
+
+            if ($hoursWorked > $standardShiftHours) {
+                $dailyOt = $hoursWorked - $standardShiftHours;
+            }
+
+            if ($dailyOt <= 0 && $att->check_out_time) {
+                $shiftEndDt = \Carbon\Carbon::parse($att->date . ' ' . \Carbon\Carbon::parse($shiftEndStr)->format('H:i:s'));
+                $checkOutDt = \Carbon\Carbon::parse($att->date . ' ' . \Carbon\Carbon::parse($att->check_out_time)->format('H:i:s'));
+                if ($checkOutDt->gt($shiftEndDt)) {
+                    $dailyOt = round($checkOutDt->diffInMinutes($shiftEndDt) / 60, 2);
+                }
+            }
+
+            if ($dailyOt > 0) {
+                $overtimeHoursTotal += $dailyOt;
+            }
+        }
+
+        $overtimeHoursTotal = round($overtimeHoursTotal, 2);
+        $perDayRate = ($payroll->basic_salary > 0) ? ($payroll->basic_salary / 30) : 0;
+        $hourlySalary = ($standardShiftHours > 0) ? ($perDayRate / $standardShiftHours) : 0;
+
+        if ($hrPolicy && $hrPolicy->overtime_rate_type === 'fixed' && $hrPolicy->overtime_fixed_rate > 0) {
+            $overtimeEarnings = round($overtimeHoursTotal * $hrPolicy->overtime_fixed_rate, 2);
+        } else {
+            $multiplier = ($hrPolicy && $hrPolicy->overtime_multiplier > 0) ? $hrPolicy->overtime_multiplier : 1.5;
+            $overtimeEarnings = round($overtimeHoursTotal * $hourlySalary * $multiplier, 2);
+        }
+
+        return ['hours' => $overtimeHoursTotal, 'earnings' => $overtimeEarnings];
     }
 }
