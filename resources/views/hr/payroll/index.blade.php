@@ -1939,35 +1939,72 @@
                 } else if (type === 'late') {
                     title = '<i class="fa fa-user-clock text-danger me-2"></i> Late Check-in Breakdown - ' + empName;
                     var records = data.attendance_breakdown?.late_records || [];
-
-                    // Show only dates where deduction actually occurred if any
-                    var deductedRecords = records.filter(function(r) {
-                        return parseFloat(r.deduction || 0) > 0;
-                    });
-                    if (deductedRecords.length > 0) {
-                        records = deductedRecords;
-                    }
+                    var latePolicyType = data.attendance_breakdown?.deduction_details?.late_penalty_type || '3_lates_1_day';
+                    var perDayRate = parseFloat(data.attendance_breakdown?.deduction_details?.per_day_rate) || 0;
 
                     if (records.length === 0) {
-                        contentHtml = '<div class="alert alert-success py-2 my-2 small text-start">No late check-in deduction records found for this period.</div>';
+                        contentHtml = '<div class="alert alert-success py-2 my-2 small text-start">No late check-in records found for this period.</div>';
                     } else {
                         var rows = '';
                         var totalDeduct = 0;
-                        records.forEach(function(r) {
-                            totalDeduct += parseFloat(r.deduction || 0);
-                            rows += `
-                                <tr>
-                                    <td class="text-start"><strong>${r.date}</strong> <span class="text-muted small">(${r.day})</span></td>
-                                    <td><span class="badge bg-warning text-dark">${r.check_in}</span></td>
-                                    <td><span class="fw-semibold text-dark">${formatMinsToHours(r.late_minutes)}</span></td>
-                                    <td class="fw-bold text-danger">${r.deduction > 0 ? '-Rs. ' + formatCurrency(r.deduction) : 'No Cut'}</td>
-                                </tr>
-                            `;
-                        });
+
+                        if (latePolicyType === '3_lates_1_day') {
+                            // Group records in chunks of 3 (3 lates = 1 day salary deduction)
+                            for (var i = 0; i < records.length; i += 3) {
+                                var chunk = records.slice(i, i + 3);
+                                var isFullGroup = (chunk.length === 3);
+                                var groupDeduction = isFullGroup ? perDayRate : 0;
+                                totalDeduct += groupDeduction;
+
+                                for (var j = 0; j < chunk.length; j++) {
+                                    var r = chunk[j];
+                                    rows += '<tr>';
+                                    rows += `<td class="text-start"><strong>${r.date}</strong> <span class="text-muted small">(${r.day})</span></td>`;
+                                    rows += `<td><span class="badge bg-warning text-dark">${r.check_in}</span></td>`;
+                                    rows += `<td><span class="fw-semibold text-dark">${formatMinsToHours(r.late_minutes)}</span></td>`;
+                                    
+                                    // Rowspan for the 3-late group deduction on the first item of the chunk
+                                    if (j === 0) {
+                                        if (isFullGroup) {
+                                            rows += `
+                                                <td rowspan="3" class="align-middle fw-bold text-danger bg-light border-start" style="vertical-align: middle;">
+                                                    <div>-Rs. ${formatCurrency(perDayRate)}</div>
+                                                    <div class="small text-muted fw-normal mt-1" style="font-size: 0.72rem;">(1 Day Cut for 3 Lates)</div>
+                                                </td>
+                                            `;
+                                        } else {
+                                            rows += `
+                                                <td rowspan="${chunk.length}" class="align-middle text-secondary bg-light border-start" style="vertical-align: middle;">
+                                                    <span class="badge bg-secondary">No Cut Yet</span>
+                                                    <div class="small text-muted fw-normal mt-1" style="font-size: 0.72rem;">(${chunk.length} / 3 Lates)</div>
+                                                </td>
+                                            `;
+                                        }
+                                    }
+                                    rows += '</tr>';
+                                }
+                            }
+                        } else {
+                            // Fixed per instance late penalty
+                            records.forEach(function(r) {
+                                totalDeduct += parseFloat(r.deduction || 0);
+                                rows += `
+                                    <tr>
+                                        <td class="text-start"><strong>${r.date}</strong> <span class="text-muted small">(${r.day})</span></td>
+                                        <td><span class="badge bg-warning text-dark">${r.check_in}</span></td>
+                                        <td><span class="fw-semibold text-dark">${formatMinsToHours(r.late_minutes)}</span></td>
+                                        <td class="fw-bold text-danger">${r.deduction > 0 ? '-Rs. ' + formatCurrency(r.deduction) : 'No Cut'}</td>
+                                    </tr>
+                                `;
+                            });
+                        }
+
                         contentHtml = `
-                            <div class="text-muted small mb-2 text-start">Date-wise Late Arrival Deductions (${period}):</div>
-                            <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
-                                <table class="table table-sm table-bordered table-striped align-middle mb-0 text-center" style="font-size: 0.85rem;">
+                            <div class="text-muted small mb-2 text-start">
+                                <strong>Late Policy:</strong> ${latePolicyType === '3_lates_1_day' ? 'Every 3 Late Check-ins = 1 Day Salary Cut (Rs. ' + formatCurrency(perDayRate) + ')' : 'Fixed Per Instance'} (${period}):
+                            </div>
+                            <div class="table-responsive" style="max-height: 320px; overflow-y: auto;">
+                                <table class="table table-sm table-bordered align-middle mb-0 text-center" style="font-size: 0.85rem;">
                                     <thead class="table-light sticky-top">
                                         <tr>
                                             <th>Date</th>

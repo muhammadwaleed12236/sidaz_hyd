@@ -399,14 +399,11 @@ class PayrollController extends Controller
             $lateThreshold = \Carbon\Carbon::parse($shiftStartStr)->addMinutes($graceMins)->format('H:i:s');
 
             $lateAttendancesList = $attendances->filter(function ($att) use ($lateThreshold) {
-                if ($att->is_late || strtolower($att->status ?? '') === 'late') {
-                    return true;
-                }
                 if ($att->check_in_time) {
                     $checkInTimeStr = \Carbon\Carbon::parse($att->check_in_time)->format('H:i:s');
                     return $checkInTimeStr > $lateThreshold;
                 }
-                return false;
+                return ($att->is_late || strtolower($att->status ?? '') === 'late');
             })->values();
 
             $lateCheckIns = $lateAttendancesList->count();
@@ -541,6 +538,7 @@ class PayrollController extends Controller
                     'early_deduction' => $earlyDeduction,
                     'per_day_rate' => $perDayDeduction,
                     'late_penalty_rate' => $latePenaltyRate ?? 0,
+                    'late_penalty_type' => $hrPolicy ? ($hrPolicy->late_penalty_type ?? '3_lates_1_day') : '3_lates_1_day',
                     'early_penalty_rate' => $earlyPenalty,
                 ],
                 // Detailed day-by-day records
