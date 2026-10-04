@@ -1378,6 +1378,8 @@
                     `;
                 }
 
+                window.currentPayrollBreakdownData = data;
+
                 var slipCardHtml = `
                     <div class="card border shadow-sm rounded-3 mb-3 bg-white overflow-hidden">
                         <div class="card-header bg-light py-2 px-3 fw-bold text-dark d-flex justify-content-between align-items-center border-bottom">
@@ -1402,7 +1404,7 @@
                                         <span class="fw-semibold text-dark">${formatCurrency(allowances)}</span>
                                     </div>
                                     <div class="d-flex justify-content-between py-1 border-bottom border-dashed">
-                                        <span class="text-secondary">Overtime</span>
+                                        <span class="text-secondary">Overtime <i class="fa fa-info-circle text-primary ms-1 view-date-details-btn" data-type="overtime" title="View Overtime Date Breakdown" style="cursor:pointer;"></i></span>
                                         <span class="fw-semibold text-dark">${formatCurrency(overtime)}</span>
                                     </div>
                                     <div class="d-flex justify-content-between py-2 mt-3 bg-light px-3 rounded fw-bold text-success" style="font-size: 1.05rem; border: 1px solid #bbf7d0;">
@@ -1418,16 +1420,16 @@
                                         <span>Amount (Rs.)</span>
                                     </div>
                                     <div class="d-flex justify-content-between py-1 border-bottom border-dashed">
-                                        <span class="text-secondary">Late Deduction</span>
+                                        <span class="text-secondary">Late Deduction <i class="fa fa-info-circle text-danger ms-1 view-date-details-btn" data-type="late" title="View Late Dates Breakdown" style="cursor:pointer;"></i></span>
                                         <span class="fw-semibold text-danger">${formatCurrency(lateDeduction)}</span>
                                     </div>
                                     <div class="d-flex justify-content-between py-1 border-bottom border-dashed">
-                                        <span class="text-secondary">Absent Deduction</span>
+                                        <span class="text-secondary">Absent Deduction <i class="fa fa-info-circle text-danger ms-1 view-date-details-btn" data-type="absent" title="View Absent Dates Breakdown" style="cursor:pointer;"></i></span>
                                         <span class="fw-semibold text-danger">${formatCurrency(absentDeduction)}</span>
                                     </div>
                                     ${loanDeduction > 0 ? `
                                         <div class="d-flex justify-content-between py-1 border-bottom border-dashed">
-                                            <span class="text-secondary">Loan Deduction</span>
+                                            <span class="text-secondary">Loan Deduction <i class="fa fa-info-circle text-warning ms-1 view-date-details-btn" data-type="loan" title="View Loan Details" style="cursor:pointer;"></i></span>
                                             <span class="fw-semibold text-danger">${formatCurrency(loanDeduction)}</span>
                                         </div>
                                     ` : ''}
@@ -1717,6 +1719,8 @@
                             `;
                         }
 
+                        window.currentPayrollBreakdownData = response;
+
                         var breakdownHtml = `
                             ${header}
                             ${loanAlertHtml}
@@ -1742,7 +1746,7 @@
                                             <span class="fw-semibold">Rs. ${formatCurrency(allowances)}</span>
                                         </div>
                                         <div class="d-flex justify-content-between py-1 small">
-                                            <span class="text-muted">Overtime</span>
+                                            <span class="text-muted">Overtime <i class="fa fa-info-circle text-primary ms-1 view-date-details-btn" data-type="overtime" title="View Overtime Date Breakdown" style="cursor:pointer;"></i></span>
                                             <span class="fw-semibold">Rs. ${formatCurrency(overtime)}</span>
                                         </div>
                                         <div class="d-flex justify-content-between py-2 mt-2 border-top fw-bold text-success">
@@ -1758,14 +1762,14 @@
                                             <span class="badge bg-light text-secondary border fw-normal" style="font-size: 0.7rem;">Editable (Rs.)</span>
                                         </div>
                                         <div class="d-flex justify-content-between align-items-center py-1 small mb-1">
-                                            <span class="text-muted">Late Deduction</span>
+                                            <span class="text-muted">Late Deduction <i class="fa fa-info-circle text-danger ms-1 view-date-details-btn" data-type="late" title="View Late Dates Breakdown" style="cursor:pointer;"></i></span>
                                             <div class="input-group input-group-sm" style="width: 125px;">
                                                 <span class="input-group-text bg-light text-muted px-2">Rs.</span>
                                                 <input type="number" step="1" min="0" name="late_deduction_input" class="form-control text-danger fw-bold text-end deduction-calc-input px-2 shadow-none" value="${Math.round(lateDeduction)}">
                                             </div>
                                         </div>
                                         <div class="d-flex justify-content-between align-items-center py-1 small mb-1">
-                                            <span class="text-muted">Absent Deduction</span>
+                                            <span class="text-muted">Absent Deduction <i class="fa fa-info-circle text-danger ms-1 view-date-details-btn" data-type="absent" title="View Absent Dates Breakdown" style="cursor:pointer;"></i></span>
                                             <div class="input-group input-group-sm" style="width: 125px;">
                                                 <span class="input-group-text bg-light text-muted px-2">Rs.</span>
                                                 <input type="number" step="1" min="0" name="absent_deduction_input" class="form-control text-danger fw-bold text-end deduction-calc-input px-2 shadow-none" value="${Math.round(absentDeduction)}">
@@ -1773,7 +1777,7 @@
                                         </div>
                                         <div class="d-flex justify-content-between align-items-center py-1 small mb-1">
                                             <span class="text-muted d-flex align-items-center">
-                                                Loan Deduction
+                                                Loan Deduction <i class="fa fa-info-circle text-warning ms-1 view-date-details-btn" data-type="loan" title="View Loan Details" style="cursor:pointer;"></i>
                                                 ${hasActiveLoan ? `<span class="badge bg-warning text-dark ms-1" style="font-size:0.6rem;">Active</span>` : ''}
                                             </span>
                                             <div class="input-group input-group-sm" style="width: 125px;">
@@ -1865,6 +1869,206 @@
                         }
                         Swal.fire('Error', err, 'error');
                     }
+                });
+            });
+
+            // Date details modal click handler
+            $(document).on('click', '.view-date-details-btn', function(e) {
+                e.stopPropagation();
+                var type = $(this).data('type');
+                var data = window.currentPayrollBreakdownData;
+                if (!data) {
+                    Swal.fire('Info', 'Breakdown data not available.', 'info');
+                    return;
+                }
+
+                var empName = (data.payroll && data.payroll.employee) ? (data.payroll.employee.first_name + ' ' + (data.payroll.employee.last_name || '')) : 'Employee';
+                var period = (data.payroll_period && data.payroll_period.formatted) ? data.payroll_period.formatted : '';
+                
+                var title = '';
+                var contentHtml = '';
+
+                if (type === 'overtime') {
+                    title = '<i class="fa fa-clock text-primary me-2"></i> Overtime Breakdown - ' + empName;
+                    var records = data.attendance_breakdown?.overtime_records || [];
+                    if (records.length === 0) {
+                        contentHtml = '<div class="alert alert-info py-2 my-2 small text-start">No specific overtime date records found for this period.</div>';
+                    } else {
+                        var rows = '';
+                        var totalHours = 0;
+                        var totalEarning = 0;
+                        records.forEach(function(r) {
+                            totalHours += parseFloat(r.ot_hours || 0);
+                            totalEarning += parseFloat(r.earning || 0);
+                            rows += `
+                                <tr>
+                                    <td class="text-start"><strong>${r.date}</strong> <span class="text-muted small">(${r.day})</span></td>
+                                    <td>${r.check_in}</td>
+                                    <td>${r.check_out}</td>
+                                    <td class="fw-bold text-primary">+${r.ot_hours} hrs</td>
+                                    <td class="fw-bold text-success">+Rs. ${formatCurrency(r.earning)}</td>
+                                </tr>
+                            `;
+                        });
+                        contentHtml = `
+                            <div class="text-muted small mb-2 text-start">Date-wise Overtime Hours & Earnings (${period}):</div>
+                            <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+                                <table class="table table-sm table-bordered table-striped align-middle mb-0 text-center" style="font-size: 0.85rem;">
+                                    <thead class="table-light sticky-top">
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Check In</th>
+                                            <th>Check Out</th>
+                                            <th>OT Hours</th>
+                                            <th>Earning</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>${rows}</tbody>
+                                    <tfoot class="table-light fw-bold">
+                                        <tr>
+                                            <td colspan="3" class="text-end">Total Overtime:</td>
+                                            <td class="text-primary">+${totalHours.toFixed(1)} hrs</td>
+                                            <td class="text-success">+Rs. ${formatCurrency(totalEarning)}</td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        `;
+                    }
+                } else if (type === 'late') {
+                    title = '<i class="fa fa-user-clock text-danger me-2"></i> Late Check-in Breakdown - ' + empName;
+                    var records = data.attendance_breakdown?.late_records || [];
+                    if (records.length === 0) {
+                        contentHtml = '<div class="alert alert-success py-2 my-2 small text-start">No late check-in records found for this period.</div>';
+                    } else {
+                        var rows = '';
+                        var totalDeduct = 0;
+                        records.forEach(function(r) {
+                            totalDeduct += parseFloat(r.deduction || 0);
+                            rows += `
+                                <tr>
+                                    <td class="text-start"><strong>${r.date}</strong> <span class="text-muted small">(${r.day})</span></td>
+                                    <td><span class="badge bg-warning text-dark">${r.check_in}</span></td>
+                                    <td>${r.late_minutes} mins</td>
+                                    <td class="fw-bold text-danger">${r.deduction > 0 ? '-Rs. ' + formatCurrency(r.deduction) : 'No Cut'}</td>
+                                </tr>
+                            `;
+                        });
+                        contentHtml = `
+                            <div class="text-muted small mb-2 text-start">Date-wise Late Arrivals & Deductions (${period}):</div>
+                            <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+                                <table class="table table-sm table-bordered table-striped align-middle mb-0 text-center" style="font-size: 0.85rem;">
+                                    <thead class="table-light sticky-top">
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Check In</th>
+                                            <th>Late By</th>
+                                            <th>Deduction</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>${rows}</tbody>
+                                    <tfoot class="table-light fw-bold">
+                                        <tr>
+                                            <td colspan="3" class="text-end">Total Late Deduction:</td>
+                                            <td class="text-danger">-Rs. ${formatCurrency(totalDeduct)}</td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        `;
+                    }
+                } else if (type === 'absent') {
+                    title = '<i class="fa fa-user-times text-danger me-2"></i> Absent / Leave Breakdown - ' + empName;
+                    var records = data.attendance_breakdown?.absent_records || [];
+                    if (records.length === 0) {
+                        contentHtml = '<div class="alert alert-success py-2 my-2 small text-start">No absent or leave dates found for this period.</div>';
+                    } else {
+                        var rows = '';
+                        var totalDeduct = 0;
+                        records.forEach(function(r) {
+                            totalDeduct += parseFloat(r.deduction || 0);
+                            rows += `
+                                <tr>
+                                    <td class="text-start"><strong>${r.date}</strong> <span class="text-muted small">(${r.day})</span></td>
+                                    <td><span class="badge ${r.status === 'Absent' ? 'bg-danger' : 'bg-info'}">${r.status}</span></td>
+                                    <td class="fw-bold text-danger">-Rs. ${formatCurrency(r.deduction)}</td>
+                                </tr>
+                            `;
+                        });
+                        contentHtml = `
+                            <div class="text-muted small mb-2 text-start">Date-wise Absent / Leave Days (${period}):</div>
+                            <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+                                <table class="table table-sm table-bordered table-striped align-middle mb-0 text-center" style="font-size: 0.85rem;">
+                                    <thead class="table-light sticky-top">
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Status</th>
+                                            <th>Daily Cut</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>${rows}</tbody>
+                                    <tfoot class="table-light fw-bold">
+                                        <tr>
+                                            <td colspan="2" class="text-end">Total Absence Deduction:</td>
+                                            <td class="text-danger">-Rs. ${formatCurrency(totalDeduct)}</td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        `;
+                    }
+                } else if (type === 'loan') {
+                    title = '<i class="fa fa-hand-holding-usd text-warning me-2"></i> Employee Loan Summary - ' + empName;
+                    var loanSum = data.loan_summary || {};
+                    var loans = loanSum.loans || [];
+                    if (!loanSum.has_active_loan && loans.length === 0) {
+                        contentHtml = '<div class="alert alert-info py-2 my-2 small text-start">No active loan records for this employee.</div>';
+                    } else {
+                        var rows = '';
+                        loans.forEach(function(l) {
+                            rows += `
+                                <tr>
+                                    <td class="text-start"><strong>${l.reason || 'Personal Loan'}</strong></td>
+                                    <td>Rs. ${formatCurrency(l.amount)}</td>
+                                    <td class="text-success">Rs. ${formatCurrency(l.paid_amount)}</td>
+                                    <td class="text-danger fw-bold">Rs. ${formatCurrency(l.remaining)}</td>
+                                    <td class="text-warning fw-bold">Rs. ${formatCurrency(l.installment_amount)}</td>
+                                </tr>
+                            `;
+                        });
+                        contentHtml = `
+                            <div class="p-2 mb-3 bg-light rounded text-start small border">
+                                <div><strong>Total Loan Amount:</strong> Rs. ${formatCurrency(loanSum.total_loan_amount)}</div>
+                                <div><strong>Total Paid Amount:</strong> <span class="text-success">Rs. ${formatCurrency(loanSum.total_paid_amount)}</span></div>
+                                <div><strong>Remaining Balance:</strong> <span class="text-danger fw-bold">Rs. ${formatCurrency(loanSum.total_remaining)}</span></div>
+                                <div><strong>Suggested Monthly Cut:</strong> <span class="text-primary fw-bold">Rs. ${formatCurrency(loanSum.suggested_installment)}</span></div>
+                            </div>
+                            <div class="table-responsive" style="max-height: 250px; overflow-y: auto;">
+                                <table class="table table-sm table-bordered align-middle mb-0 text-center" style="font-size: 0.85rem;">
+                                    <thead class="table-light sticky-top">
+                                        <tr>
+                                            <th>Reason</th>
+                                            <th>Total</th>
+                                            <th>Paid</th>
+                                            <th>Remaining</th>
+                                            <th>Monthly Cut</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>${rows}</tbody>
+                                </table>
+                            </div>
+                        `;
+                    }
+                }
+
+                Swal.fire({
+                    title: title,
+                    html: contentHtml,
+                    width: '650px',
+                    showCloseButton: true,
+                    showConfirmButton: true,
+                    confirmButtonText: 'Close',
+                    confirmButtonColor: '#6c757d'
                 });
             });
 

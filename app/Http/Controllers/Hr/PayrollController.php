@@ -534,6 +534,7 @@ class PayrollController extends Controller
                 'absent_records' => $absentDays,
                 'late_records' => $lateDays,
                 'early_records' => $earlyDays,
+                'overtime_records' => $otData['records'] ?? [],
             ];
         } else {
             // For daily payroll
@@ -1249,21 +1250,15 @@ class PayrollController extends Controller
         $employee = $payroll->employee;
         $hrPolicy = \App\Models\Hr\HrPolicy::getEffectivePolicyForEmployee($employee->id);
 
-        if ($payroll->relationLoaded('details') && $payroll->details) {
-            $detailOt = $payroll->details->where('type', 'allowance')
-                ->filter(fn($d) => stripos($d->name, 'overtime') !== false || stripos($d->name, 'ot') !== false)
-                ->sum('amount');
-            if ($detailOt > 0) {
-                $otHours = round($attendances->filter(fn($a) => ($a->total_hours ?? 0) > 8)->sum(fn($a) => $a->total_hours - 8), 1);
-                return ['hours' => $otHours, 'earnings' => round($detailOt, 2)];
-            }
-        }
-
         $shift = $employee->shift ?? \App\Models\Hr\Shift::where('is_default', true)->first();
         $shiftEndStr = $employee->custom_end_time ?: ($shift ? $shift->end_time : '18:00:00');
         $standardShiftHours = ($shift && floatval($shift->total_hours) > 0) ? floatval($shift->total_hours) : 8;
 
+        $perDayRate = ($payroll->basic_salary > 0) ? ($payroll->basic_salary / 30) : 0;
+        $hourlySalary = ($standardShiftHours > 0) ? ($perDayRate / $standardShiftHours) : 0;
+
         $overtimeHoursTotal = 0;
+        $overtimeRecords = [];
         foreach ($attendances as $att) {
             $hoursWorked = floatval($att->total_hours ?? 0);
             $dailyOt = 0;
@@ -1282,12 +1277,38 @@ class PayrollController extends Controller
 
             if ($dailyOt > 0) {
                 $overtimeHoursTotal += $dailyOt;
+
+                if ($hrPolicy && $hrPolicy->overtime_rate_type === 'fixed' && $hrPolicy->overtime_fixed_rate > 0) {
+                    $dailyEarning = round($dailyOt * $hrPolicy->overtime_fixed_rate, 2);
+                } else {
+                    $multiplier = ($hrPolicy && $hrPolicy->overtime_multiplier > 0) ? $hrPolicy->overtime_multiplier : 1.5;
+                    $dailyEarning = round($dailyOt * $hourlySalary * $multiplier, 2);
+                }
+
+                $timeIn = $att->check_in_time ?: $att->clock_in;
+                $timeOut = $att->check_out_time ?: $att->clock_out;
+
+                $overtimeRecords[] = [
+                    'date' => \Carbon\Carbon::parse($att->date)->format('d/m/Y'),
+                    'day' => \Carbon\Carbon::parse($att->date)->format('l'),
+                    'check_in' => $timeIn ? \Carbon\Carbon::parse($timeIn)->format('h:i A') : 'N/A',
+                    'check_out' => $timeOut ? \Carbon\Carbon::parse($timeOut)->format('h:i A') : 'N/A',
+                    'ot_hours' => round($dailyOt, 1),
+                    'earning' => $dailyEarning,
+                ];
             }
         }
 
         $overtimeHoursTotal = round($overtimeHoursTotal, 2);
-        $perDayRate = ($payroll->basic_salary > 0) ? ($payroll->basic_salary / 30) : 0;
-        $hourlySalary = ($standardShiftHours > 0) ? ($perDayRate / $standardShiftHours) : 0;
+
+        if ($payroll->relationLoaded('details') && $payroll->details) {
+            $detailOt = $payroll->details->where('type', 'allowance')
+                ->filter(fn($d) => stripos($d->name, 'overtime') !== false || stripos($d->name, 'ot') !== false)
+                ->sum('amount');
+            if ($detailOt > 0) {
+                return ['hours' => $overtimeHoursTotal, 'earnings' => round($detailOt, 2), 'records' => $overtimeRecords];
+            }
+        }
 
         if ($hrPolicy && $hrPolicy->overtime_rate_type === 'fixed' && $hrPolicy->overtime_fixed_rate > 0) {
             $overtimeEarnings = round($overtimeHoursTotal * $hrPolicy->overtime_fixed_rate, 2);
@@ -1296,6 +1317,6 @@ class PayrollController extends Controller
             $overtimeEarnings = round($overtimeHoursTotal * $hourlySalary * $multiplier, 2);
         }
 
-        return ['hours' => $overtimeHoursTotal, 'earnings' => $overtimeEarnings];
+        return ['hours' => $overtimeHoursTotal, 'earnings' => $overtimeEarnings, 'records' => $overtimeRecords];
     }
 }
