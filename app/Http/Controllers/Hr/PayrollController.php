@@ -472,8 +472,12 @@ class PayrollController extends Controller
 
                 $lateMins = intval($att->late_minutes ?? 0);
                 if (($lateMins <= 0 || $lateMins > 1440) && $timeIn) {
-                    $shiftStartDt = \Carbon\Carbon::parse($att->date . ' ' . $shiftStartStr);
-                    $checkInDt = \Carbon\Carbon::parse($att->date . ' ' . \Carbon\Carbon::parse($timeIn)->format('H:i:s'));
+                    $dateYmd = \Carbon\Carbon::parse($att->date)->format('Y-m-d');
+                    $shiftStartHis = \Carbon\Carbon::parse($shiftStartStr)->format('H:i:s');
+                    $checkInHis = \Carbon\Carbon::parse($timeIn)->format('H:i:s');
+
+                    $shiftStartDt = \Carbon\Carbon::parse($dateYmd . ' ' . $shiftStartHis);
+                    $checkInDt = \Carbon\Carbon::parse($dateYmd . ' ' . $checkInHis);
                     if ($checkInDt->gt($shiftStartDt)) {
                         $lateMins = $checkInDt->diffInMinutes($shiftStartDt);
                     }
@@ -1277,8 +1281,12 @@ class PayrollController extends Controller
             }
 
             if ($dailyOt <= 0 && $att->check_out_time) {
-                $shiftEndDt = \Carbon\Carbon::parse($att->date . ' ' . \Carbon\Carbon::parse($shiftEndStr)->format('H:i:s'));
-                $checkOutDt = \Carbon\Carbon::parse($att->date . ' ' . \Carbon\Carbon::parse($att->check_out_time)->format('H:i:s'));
+                $dateYmd = \Carbon\Carbon::parse($att->date)->format('Y-m-d');
+                $shiftEndHis = \Carbon\Carbon::parse($shiftEndStr)->format('H:i:s');
+                $checkOutHis = \Carbon\Carbon::parse($att->check_out_time)->format('H:i:s');
+
+                $shiftEndDt = \Carbon\Carbon::parse($dateYmd . ' ' . $shiftEndHis);
+                $checkOutDt = \Carbon\Carbon::parse($dateYmd . ' ' . $checkOutHis);
                 if ($checkOutDt->gt($shiftEndDt)) {
                     $dailyOt = round($checkOutDt->diffInMinutes($shiftEndDt) / 60, 2);
                 }
