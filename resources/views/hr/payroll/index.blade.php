@@ -1076,6 +1076,11 @@
                         </div>
                     </div>
                 </div>
+                <div class="modal-footer bg-light py-2 px-3 border-top d-flex justify-content-end">
+                    <button type="button" class="btn btn-secondary px-4 fw-semibold" data-dismiss="modal" data-bs-dismiss="modal">
+                        <i class="fa fa-times me-1"></i> Dismiss
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -1131,11 +1136,14 @@
     <div class="modal fade" id="payPayrollModal" tabindex="-1" role="dialog" aria-labelledby="payPayrollModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-                <div class="modal-header text-white" style="background: linear-gradient(135deg, #10b981, #059669);">
-                    <h5 class="modal-title font-weight-bold" id="payPayrollModalLabel">
+                <div class="modal-header text-white d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, #10b981, #059669);">
+                    <h5 class="modal-title font-weight-bold text-white mb-0" id="payPayrollModalLabel">
                         <i class="fa fa-hand-holding-usd me-2"></i> Complete Salary Payment
                     </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" data-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="close text-white btn-close btn-close-white" data-dismiss="modal" data-bs-dismiss="modal" aria-label="Close"
+                        style="background: none; border: none; font-size: 1.5rem; opacity: 0.9; cursor: pointer;">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
                 </div>
                 <form id="payPayrollForm" method="POST">
                     @csrf
@@ -1184,7 +1192,7 @@
                     </div>
                     <div class="modal-footer bg-light px-4 py-3 border-top d-flex justify-content-between">
                         <button type="button" class="btn btn-secondary px-4 fw-semibold" data-bs-dismiss="modal" data-dismiss="modal">
-                            <i class="fa fa-times me-1"></i> Cancel
+                            <i class="fa fa-times me-1"></i> Dismiss
                         </button>
                         <button type="submit" class="btn btn-success px-4 py-2 fw-bold text-white shadow-sm" id="paySubmitBtn">
                             <i class="fa fa-check-circle me-1"></i> Confirm & Pay Salary
