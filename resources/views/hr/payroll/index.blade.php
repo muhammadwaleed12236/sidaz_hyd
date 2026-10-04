@@ -1297,14 +1297,15 @@
 
             function formatMinsToHours(minutes) {
                 var mins = parseInt(minutes) || 0;
-                if (mins <= 0) return '0m';
-                if (mins < 60) return mins + 'm';
+                if (mins <= 0) return '0 mins';
+                if (mins <= 59) return mins + ' mins';
                 var hrs = Math.floor(mins / 60);
                 var rem = mins % 60;
+                var hrsStr = hrs + (hrs === 1 ? ' hr' : ' hrs');
                 if (rem > 0) {
-                    return hrs + 'h ' + rem + 'm';
+                    return hrsStr + ' ' + rem + ' mins';
                 } else {
-                    return hrs + 'h';
+                    return hrsStr;
                 }
             }
 
@@ -1938,8 +1939,17 @@
                 } else if (type === 'late') {
                     title = '<i class="fa fa-user-clock text-danger me-2"></i> Late Check-in Breakdown - ' + empName;
                     var records = data.attendance_breakdown?.late_records || [];
+
+                    // Show only dates where deduction actually occurred if any
+                    var deductedRecords = records.filter(function(r) {
+                        return parseFloat(r.deduction || 0) > 0;
+                    });
+                    if (deductedRecords.length > 0) {
+                        records = deductedRecords;
+                    }
+
                     if (records.length === 0) {
-                        contentHtml = '<div class="alert alert-success py-2 my-2 small text-start">No late check-in records found for this period.</div>';
+                        contentHtml = '<div class="alert alert-success py-2 my-2 small text-start">No late check-in deduction records found for this period.</div>';
                     } else {
                         var rows = '';
                         var totalDeduct = 0;
@@ -1949,13 +1959,13 @@
                                 <tr>
                                     <td class="text-start"><strong>${r.date}</strong> <span class="text-muted small">(${r.day})</span></td>
                                     <td><span class="badge bg-warning text-dark">${r.check_in}</span></td>
-                                    <td>${r.late_minutes} mins</td>
+                                    <td><span class="fw-semibold text-dark">${formatMinsToHours(r.late_minutes)}</span></td>
                                     <td class="fw-bold text-danger">${r.deduction > 0 ? '-Rs. ' + formatCurrency(r.deduction) : 'No Cut'}</td>
                                 </tr>
                             `;
                         });
                         contentHtml = `
-                            <div class="text-muted small mb-2 text-start">Date-wise Late Arrivals & Deductions (${period}):</div>
+                            <div class="text-muted small mb-2 text-start">Date-wise Late Arrival Deductions (${period}):</div>
                             <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
                                 <table class="table table-sm table-bordered table-striped align-middle mb-0 text-center" style="font-size: 0.85rem;">
                                     <thead class="table-light sticky-top">

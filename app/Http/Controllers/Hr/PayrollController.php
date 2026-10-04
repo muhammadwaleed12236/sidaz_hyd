@@ -459,7 +459,7 @@ class PayrollController extends Controller
 
             $earlyPenalty = floatval($policy['early_penalty_per_instance'] ?? 0);
             $earlyRules = $policy['early_rules'] ?? [];
-            $lateDays = $lateAttendancesList->map(function ($att, $idx) use ($hrPolicy, $perDayRate) {
+            $lateDays = $lateAttendancesList->map(function ($att, $idx) use ($hrPolicy, $perDayRate, $shiftStartStr) {
                 $timeIn = $att->check_in_time ?: $att->clock_in;
                 $itemDeduction = 0;
 
@@ -470,11 +470,20 @@ class PayrollController extends Controller
                     $itemDeduction = $hrPolicy->late_penalty_amount;
                 }
 
+                $lateMins = intval($att->late_minutes ?? 0);
+                if (($lateMins <= 0 || $lateMins > 1440) && $timeIn) {
+                    $shiftStartDt = \Carbon\Carbon::parse($att->date . ' ' . $shiftStartStr);
+                    $checkInDt = \Carbon\Carbon::parse($att->date . ' ' . \Carbon\Carbon::parse($timeIn)->format('H:i:s'));
+                    if ($checkInDt->gt($shiftStartDt)) {
+                        $lateMins = $checkInDt->diffInMinutes($shiftStartDt);
+                    }
+                }
+
                 return [
                     'date' => \Carbon\Carbon::parse($att->date)->format('d/m/Y'),
                     'day' => \Carbon\Carbon::parse($att->date)->format('l'),
                     'check_in' => $timeIn ? \Carbon\Carbon::parse($timeIn)->format('h:i A') : 'N/A',
-                    'late_minutes' => $att->late_minutes ?? 0,
+                    'late_minutes' => $lateMins,
                     'deduction' => round($itemDeduction, 2),
                 ];
             })->toArray();
