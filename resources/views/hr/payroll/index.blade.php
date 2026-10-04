@@ -1335,15 +1335,48 @@
 
                 var basicSalary = parseFloat(data.breakdown.earnings.basic_salary) || 0;
                 var allowances = (parseFloat(data.breakdown.earnings.allowances) || 0) + (parseFloat(data.breakdown.earnings.manual_allowances) || 0);
-                var overtime = parseFloat(data.attendance_breakdown.overtime_earnings) || 0;
+                var overtime = parseFloat(data.breakdown?.earnings?.overtime || data.attendance_breakdown?.overtime_earnings) || 0;
                 var grossEarnings = basicSalary + allowances + overtime;
 
                 var lateDeduction = parseFloat(data.attendance_breakdown.deduction_details?.late_deduction || data.attendance_breakdown.late_deduction) || 0;
                 var absentDeduction = parseFloat(data.attendance_breakdown.deduction_details?.absence_deduction || data.attendance_breakdown.absence_deduction) || 0;
-                var loanDeduction = parseFloat(data.breakdown.deductions?.loan_deduction || data.payroll?.loan_deduction) || 0;
                 var otherDeductions = (parseFloat(data.breakdown.deductions.fixed_deductions) || 0) + (parseFloat(data.breakdown.deductions.manual_deductions) || 0) + (parseFloat(data.breakdown.deductions.carried_forward) || 0);
-                var totalDeduction = parseFloat(data.breakdown.deductions.total) || (lateDeduction + absentDeduction + loanDeduction + otherDeductions);
-                var netSalary = parseFloat(data.breakdown.net_payable) || (grossEarnings - totalDeduction);
+
+                var loanSummary = data.loan_summary || {};
+                var hasActiveLoan = loanSummary.has_active_loan || false;
+                var totalLoan = parseFloat(loanSummary.total_loan_amount) || 0;
+                var paidLoan = parseFloat(loanSummary.total_paid_amount) || 0;
+                var remainingLoan = parseFloat(loanSummary.total_remaining) || 0;
+                var suggestedInstallment = parseFloat(loanSummary.suggested_installment) || 0;
+
+                var loanDeduction = 0;
+                if (parseFloat(data.payroll?.loan_deduction) > 0) {
+                    loanDeduction = parseFloat(data.payroll.loan_deduction);
+                } else if (hasActiveLoan) {
+                    if (suggestedInstallment > 0) {
+                        loanDeduction = Math.min(suggestedInstallment, remainingLoan);
+                    } else {
+                        loanDeduction = remainingLoan;
+                    }
+                }
+
+                var totalDeduction = lateDeduction + absentDeduction + otherDeductions + loanDeduction;
+                var netSalary = Math.max(0, grossEarnings - totalDeduction);
+
+                var loanAlertHtml = '';
+                if (hasActiveLoan || totalLoan > 0) {
+                    loanAlertHtml = `
+                        <div class="p-2 px-3 mb-3 rounded-3 border d-flex align-items-center justify-content-between" style="background-color: #fffbeb; border-color: #fef3c7 !important;">
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="fa fa-hand-holding-usd text-warning fs-5"></i>
+                                <div class="small text-dark">
+                                    <strong>Active Employee Loan:</strong> Total: <b>Rs. ${formatCurrency(totalLoan)}</b> | Paid: <b class="text-success">Rs. ${formatCurrency(paidLoan)}</b> | Remaining Balance: <b class="text-danger">Rs. ${formatCurrency(remainingLoan)}</b>
+                                </div>
+                            </div>
+                            ${suggestedInstallment > 0 ? `<span class="badge bg-warning text-dark border px-2 py-1">Monthly Cut: Rs. ${formatCurrency(suggestedInstallment)}</span>` : ''}
+                        </div>
+                    `;
+                }
 
                 var slipCardHtml = `
                     <div class="card border shadow-sm rounded-3 mb-3 bg-white overflow-hidden">
@@ -1352,6 +1385,7 @@
                             <span class="badge ${data.payroll.status === 'paid' ? 'bg-success' : 'bg-warning text-dark'} px-2 py-1">${data.payroll.status.toUpperCase()}</span>
                         </div>
                         <div class="card-body p-3">
+                            ${loanAlertHtml}
                             <div class="row g-4">
                                 <!-- Gross Earnings Column -->
                                 <div class="col-md-6 border-end">
@@ -1640,7 +1674,7 @@
 
                         var basicSalary = parseFloat(response.breakdown?.earnings?.basic_salary) || 0;
                         var allowances = (parseFloat(response.breakdown?.earnings?.allowances) || 0) + (parseFloat(response.breakdown?.earnings?.manual_allowances) || 0);
-                        var overtime = parseFloat(response.attendance_breakdown?.overtime_earnings) || 0;
+                        var overtime = parseFloat(response.breakdown?.earnings?.overtime || response.attendance_breakdown?.overtime_earnings) || 0;
                         var grossEarnings = basicSalary + allowances + overtime;
 
                         var lateDeduction = parseFloat(response.attendance_breakdown?.deduction_details?.late_deduction || response.attendance_breakdown?.late_deduction) || 0;
@@ -1687,6 +1721,7 @@
                             ${header}
                             ${loanAlertHtml}
                             <input type="hidden" id="grossEarningsHidden" value="${grossEarnings}">
+                            <input type="hidden" id="overtimeHidden" name="overtime" value="${overtime}">
                             <input type="hidden" id="attendanceDeductionsHidden" name="attendance_deductions" value="${lateDeduction + absentDeduction}">
                             <input type="hidden" id="manualDeductionsHidden" name="manual_deductions" value="${otherDeductions}">
                             <input type="hidden" id="loanDeductionHidden" name="loan_deduction" value="${defaultLoanCut}">

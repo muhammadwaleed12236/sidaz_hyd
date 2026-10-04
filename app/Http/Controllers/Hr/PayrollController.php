@@ -290,6 +290,9 @@ class PayrollController extends Controller
             }),
         ];
 
+        $overtimeEarnings = floatval($attendanceBreakdown['overtime_earnings'] ?? 0);
+        $totalGrossEarnings = $payroll->basic_salary + $payroll->allowances + $payroll->manual_allowances + $overtimeEarnings;
+
         return response()->json([
             'payroll' => $payroll,
             'payroll_period' => $payrollPeriod,
@@ -298,7 +301,8 @@ class PayrollController extends Controller
                     'basic_salary' => $payroll->basic_salary,
                     'allowances' => $payroll->allowances,
                     'manual_allowances' => $payroll->manual_allowances,
-                    'total' => $payroll->gross_salary,
+                    'overtime' => $overtimeEarnings,
+                    'total' => max($payroll->gross_salary, $totalGrossEarnings),
                 ],
                 'deductions' => [
                     'fixed_deductions' => $payroll->deductions,
@@ -973,6 +977,7 @@ class PayrollController extends Controller
             'manual_deductions' => 'nullable|numeric|min:0',
             'loan_deduction' => 'nullable|numeric|min:0',
             'manual_allowances' => 'nullable|numeric|min:0',
+            'overtime' => 'nullable|numeric|min:0',
             'net_salary' => 'nullable|numeric|min:0',
         ]);
 
@@ -985,6 +990,12 @@ class PayrollController extends Controller
         $paymentMethod = $request->input('payment_method', 'cash');
         $paymentReference = $request->input('payment_reference');
         $notes = $request->input('notes');
+
+        // Get attendance breakdown to fetch overtime earnings
+        $attendanceBreakdown = $this->getAttendanceBreakdown($payroll);
+        $overtimeEarnings = $request->has('overtime')
+            ? floatval($request->input('overtime'))
+            : floatval($attendanceBreakdown['overtime_earnings'] ?? 0);
 
         // Check if customized deductions were passed from payment modal
         $attendanceDeductions = $request->has('attendance_deductions')
@@ -1003,7 +1014,7 @@ class PayrollController extends Controller
             ? floatval($request->input('manual_allowances'))
             : $payroll->manual_allowances;
 
-        $grossSalary = $payroll->basic_salary + $payroll->allowances + $manualAllowances + ($payroll->ot_amount ?? 0);
+        $grossSalary = $payroll->basic_salary + $payroll->allowances + $manualAllowances + $overtimeEarnings;
         $totalDeductions = $attendanceDeductions + $manualDeductions + $loanDeduction + $payroll->deductions + $payroll->carried_forward_deduction;
 
         $netSalary = $request->has('net_salary')
