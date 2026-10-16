@@ -2050,8 +2050,17 @@
                                 </tr>
                             `;
                         });
+                        var absencePolicyType = data.attendance_breakdown?.deduction_details?.absence_deduction_type || 'salary_divided_by_30';
+                        var absenceFixedAmt = parseFloat(data.attendance_breakdown?.deduction_details?.absence_fixed_amount || 0);
+                        var perDayRate = parseFloat(data.attendance_breakdown?.deduction_details?.per_day_rate || 0);
+                        var policyDesc = absencePolicyType === 'fixed' 
+                            ? 'Fixed Rs. ' + formatCurrency(absenceFixedAmt) + ' per absent day' 
+                            : 'Basic Salary / 30 = Rs. ' + formatCurrency(perDayRate) + ' per day';
+
                         contentHtml = `
-                            <div class="text-muted small mb-2 text-start">Date-wise Absent / Leave Days (${period}):</div>
+                            <div class="text-muted small mb-2 text-start">
+                                <strong>Absence Policy:</strong> ${policyDesc} (${period}):
+                            </div>
                             <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
                                 <table class="table table-sm table-bordered table-striped align-middle mb-0 text-center" style="font-size: 0.85rem;">
                                     <thead class="table-light sticky-top">

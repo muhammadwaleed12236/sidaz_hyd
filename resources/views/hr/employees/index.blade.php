@@ -837,7 +837,7 @@
 
                 <!-- Modal Form -->
                 <form id="employeeForm" action="{{ route('hr.employees.store') }}" method="POST"
-                    enctype="multipart/form-data" data-ajax-validate="true">
+                    enctype="multipart/form-data">
                     @csrf
                     <input type="hidden" name="edit_id" id="edit_id">
                     <div class="modal-body">
@@ -1432,6 +1432,80 @@
                                 Swal.fire('Error', 'Failed to delete employee.', 'error');
                             }
                         });
+                    }
+                });
+            });
+
+            // Employee Form AJAX Submit Handler
+            $('#employeeForm').on('submit', function(e) {
+                e.preventDefault();
+                var form = this;
+                var formData = new FormData(form);
+                var btn = $('#btnSaveEmployee');
+                var originalBtnHtml = btn.html();
+
+                btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin me-1"></i> Saving...');
+                $(form).find('.form-control, .form-select').removeClass('is-invalid');
+                $(form).find('.invalid-feedback-custom').remove();
+
+                $.ajax({
+                    url: $(form).attr('action'),
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    success: function(response) {
+                        btn.prop('disabled', false).html(originalBtnHtml);
+                        $('#employeeModal').modal('hide');
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Success!',
+                            text: response.success || 'Employee saved successfully!',
+                            showConfirmButton: false,
+                            timer: 1500
+                        }).then(() => {
+                            location.reload();
+                        });
+                    },
+                    error: function(xhr) {
+                        btn.prop('disabled', false).html(originalBtnHtml);
+                        if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.errors) {
+                            var errors = xhr.responseJSON.errors;
+                            var errorListHtml = '<ul class="text-left mb-0" style="text-align: left; padding-left: 20px;">';
+                            $.each(errors, function(field, messages) {
+                                var input = $(form).find('[name="' + field + '"]');
+                                if (input.length) {
+                                    input.addClass('is-invalid');
+                                    // If portal credentials container is hidden and the error is on email/password, reveal it
+                                    if (field === 'email' || field === 'password') {
+                                        $('#portal_credentials_container').slideDown(200);
+                                        $('#assign_portal_access').prop('checked', true);
+                                    }
+                                    input.closest('.form-group-modern').append('<div class="invalid-feedback-custom text-danger small mt-1 font-weight-bold"><i class="fa fa-exclamation-circle me-1"></i>' + messages[0] + '</div>');
+                                }
+                                errorListHtml += '<li class="text-danger py-1">' + messages[0] + '</li>';
+                            });
+                            errorListHtml += '</ul>';
+
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Validation Error',
+                                html: errorListHtml,
+                                confirmButtonColor: '#6366f1',
+                                confirmButtonText: 'Review Form'
+                            });
+                        } else {
+                            var msg = (xhr.responseJSON && (xhr.responseJSON.message || xhr.responseJSON.error)) || 'Something went wrong while saving employee.';
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: msg,
+                                confirmButtonColor: '#6366f1'
+                            });
+                        }
                     }
                 });
             });

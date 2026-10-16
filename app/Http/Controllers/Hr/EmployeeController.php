@@ -30,6 +30,23 @@ class EmployeeController extends Controller
     {
         $hasPortalAccess = $request->boolean('assign_portal_access');
 
+        // Normalize joining date format (handles d/m/Y, d-m-Y, Y-m-d)
+        if ($request->filled('joining_date')) {
+            try {
+                $cleanDate = str_replace('/', '-', trim($request->joining_date));
+                $request->merge(['joining_date' => \Carbon\Carbon::parse($cleanDate)->format('Y-m-d')]);
+            } catch (\Exception $e) {
+                // Keep raw so validator catches if invalid
+            }
+        }
+
+        // Clean empty strings to null for email if portal access is disabled
+        if (! $hasPortalAccess && empty(trim($request->email ?? ''))) {
+            $request->merge(['email' => null]);
+        }
+
+        $editId = $request->input('edit_id');
+
         $rules = [
             'first_name' => 'required|string|max:100',
             'last_name' => 'required|string|max:100',
@@ -47,15 +64,37 @@ class EmployeeController extends Controller
         ];
 
         if ($hasPortalAccess) {
-            $rules['email'] = 'required|email|max:255|unique:hr_employees,email,'.$request->edit_id;
+            $rules['email'] = 'required|email|max:255|unique:hr_employees,email,' . ($editId ?: 'NULL') . ',id';
         } else {
-            $rules['email'] = 'nullable|email|max:255|unique:hr_employees,email,'.$request->edit_id;
+            $rules['email'] = 'nullable|email|max:255|unique:hr_employees,email,' . ($editId ?: 'NULL') . ',id';
         }
 
-        $validator = Validator::make($request->all(), $rules);
+        $messages = [
+            'first_name.required' => 'First Name is required.',
+            'last_name.required' => 'Last Name is required.',
+            'department_id.required' => 'Please select a Department.',
+            'department_id.exists' => 'Selected Department does not exist in the database.',
+            'designation_id.required' => 'Please select a Designation.',
+            'designation_id.exists' => 'Selected Designation does not exist in the database.',
+            'joining_date.required' => 'Joining Date is required.',
+            'joining_date.date' => 'Joining Date must be a valid date.',
+            'email.required' => 'Email Address is required when Portal Access is assigned.',
+            'email.email' => 'Please enter a valid email address.',
+            'email.unique' => 'This email address is already assigned to another employee.',
+            'password.min' => 'Password must be at least 6 characters.',
+        ];
+
+        $validator = Validator::make($request->all(), $rules, $messages);
 
         if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
+            \Illuminate\Support\Facades\Log::warning('Employee store validation failed', [
+                'input' => $request->except(['password']),
+                'errors' => $validator->errors()->all()
+            ]);
+            return response()->json([
+                'message' => 'Please correct the errors in the form.',
+                'errors' => $validator->errors()
+            ], 422);
         }
 
         $data = $request->except(['document_degree', 'document_certificate', 'document_hsc_marksheet', 'document_ssc_marksheet', 'document_cv', 'password', 'casual_leave_days', 'assign_portal_access', 'basic_salary']);

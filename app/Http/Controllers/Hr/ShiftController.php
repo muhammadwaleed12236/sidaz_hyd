@@ -43,7 +43,8 @@ class ShiftController extends Controller
         }
 
         $data = $request->only(['name', 'start_time', 'end_time', 'break_start', 'break_end', 'grace_minutes', 'is_default']);
-        $data['weekly_off_days'] = $request->input('weekly_off_days', []);
+        $rawOff = $request->input('weekly_off_days', []);
+        $data['weekly_off_days'] = is_array($rawOff) ? array_values(array_map('intval', $rawOff)) : [];
         $data['is_default'] = $request->boolean('is_default');
 
         if ($request->filled('edit_id')) {

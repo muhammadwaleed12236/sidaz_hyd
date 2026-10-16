@@ -409,7 +409,17 @@ class PayrollController extends Controller
             $lateCheckIns = $lateAttendancesList->count();
             $daysPresentOnTime = $attendances->filter(fn($att) => strtolower($att->status) === 'present' && !$att->is_late)->count();
             $daysPresentTotal = $daysPresentOnTime + $lateCheckIns;
-            $daysAbsent = $attendances->filter(fn($att) => strtolower($att->status) === 'absent')->count();
+            $weeklyOffDays = $employee->getWeeklyOffDays();
+            $daysAbsent = $attendances->filter(function ($att) use ($weeklyOffDays) {
+                if (strtolower($att->status) !== 'absent') return false;
+                $dayOfWeek = \Carbon\Carbon::parse($att->date)->dayOfWeek;
+                return !in_array($dayOfWeek, $weeklyOffDays);
+            })->count();
+            $daysLeave = $attendances->filter(function ($att) use ($weeklyOffDays) {
+                if (strtolower($att->status) !== 'leave') return false;
+                $dayOfWeek = \Carbon\Carbon::parse($att->date)->dayOfWeek;
+                return !in_array($dayOfWeek, $weeklyOffDays);
+            })->count();
             $totalDeductionDays = $daysAbsent + $daysLeave;
             $earlyCheckOuts = $attendances->where('is_early_leave', true)->count();
             
@@ -420,9 +430,11 @@ class PayrollController extends Controller
             
             // Calculate Absence Deduction based on HR Policy
             if ($hrPolicy && $hrPolicy->absence_deduction_type === 'fixed') {
-                $absenceDeduction = round($totalDeductionDays * $hrPolicy->absence_fixed_amount, 2);
+                $singleAbsenceDeduction = floatval($hrPolicy->absence_fixed_amount);
+                $absenceDeduction = round($totalDeductionDays * $singleAbsenceDeduction, 2);
             } else {
-                $absenceDeduction = round($totalDeductionDays * $perDayRate, 2);
+                $singleAbsenceDeduction = round($perDayRate, 2);
+                $absenceDeduction = round($totalDeductionDays * $singleAbsenceDeduction, 2);
             }
 
             // Calculate Late Check-in Deduction based on HR Policy
@@ -443,16 +455,19 @@ class PayrollController extends Controller
             $overtimeHoursTotal = $otData['hours'];
             $overtimeEarnings = $otData['earnings'];
             
-            $perDayDeduction = round($perDayRate, 2);
-            $absentDays = $attendances->filter(fn($att) => in_array(strtolower($att->status), ['absent', 'leave']))
-                ->map(function ($att) use ($perDayDeduction) {
-                    return [
-                        'date' => \Carbon\Carbon::parse($att->date)->format('d/m/Y'),
-                        'day' => \Carbon\Carbon::parse($att->date)->format('l'),
-                        'status' => ucfirst($att->status),
-                        'deduction' => $perDayDeduction,
-                    ];
-                })->values()->toArray();
+            $perDayDeduction = $singleAbsenceDeduction;
+            $absentDays = $attendances->filter(function ($att) use ($weeklyOffDays) {
+                if (!in_array(strtolower($att->status), ['absent', 'leave'])) return false;
+                $dayOfWeek = \Carbon\Carbon::parse($att->date)->dayOfWeek;
+                return !in_array($dayOfWeek, $weeklyOffDays);
+            })->map(function ($att) use ($singleAbsenceDeduction) {
+                return [
+                    'date' => \Carbon\Carbon::parse($att->date)->format('d/m/Y'),
+                    'day' => \Carbon\Carbon::parse($att->date)->format('l'),
+                    'status' => ucfirst($att->status),
+                    'deduction' => $singleAbsenceDeduction,
+                ];
+            })->values()->toArray();
 
             $earlyPenalty = floatval($policy['early_penalty_per_instance'] ?? 0);
             $earlyRules = $policy['early_rules'] ?? [];
@@ -534,7 +549,9 @@ class PayrollController extends Controller
                 'total_deduction' => round($absenceDeduction + $lateDeduction + $earlyDeduction, 2),
                 'deduction_details' => [
                     'absence_deduction' => $absenceDeduction,
-                    'late_deduction' => ($lateDeduction == 0 && $absenceDeduction == 0 && $payroll->attendance_deductions > 0) ? $payroll->attendance_deductions : $lateDeduction,
+                    'absence_deduction_type' => $hrPolicy ? ($hrPolicy->absence_deduction_type ?? 'salary_divided_by_30') : 'salary_divided_by_30',
+                    'absence_fixed_amount' => $hrPolicy ? floatval($hrPolicy->absence_fixed_amount) : 0,
+                    'late_deduction' => $lateDeduction,
                     'early_deduction' => $earlyDeduction,
                     'per_day_rate' => $perDayDeduction,
                     'late_penalty_rate' => $latePenaltyRate ?? 0,

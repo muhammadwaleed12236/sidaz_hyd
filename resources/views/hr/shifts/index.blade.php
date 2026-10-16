@@ -358,10 +358,13 @@
                 $('#is_default').prop('checked', data.data('is_default') == '1');
 
                 // Restore weekly off days
-                var offDays = data.data('weekly_off_days') || [];
-                if (typeof offDays === 'string') { try { offDays = JSON.parse(offDays); } catch(e) { offDays = []; } }
+                var rawOff = data.attr('data-weekly_off_days') || data.data('weekly_off_days') || [];
+                if (typeof rawOff === 'string') {
+                    try { rawOff = JSON.parse(rawOff); } catch(e) { rawOff = []; }
+                }
+                var offDays = Array.isArray(rawOff) ? rawOff.map(function(v) { return parseInt(v, 10); }) : [];
                 $('.off-day-cb').each(function() {
-                    var val = parseInt($(this).val());
+                    var val = parseInt($(this).val(), 10);
                     var isOff = offDays.indexOf(val) !== -1;
                     $(this).prop('checked', isOff);
                     $(this).closest('.off-day-pill').toggleClass('active', isOff);
@@ -410,17 +413,9 @@
 
             $('#refreshBtn').click(() => location.reload());
 
-            // Off-day pill toggle (toggle active state on click)
-            $(document).on('click', '.off-day-pill', function() {
-                var cb = $(this).find('.off-day-cb');
-                var isChecked = !cb.prop('checked');
-                cb.prop('checked', isChecked);
-                $(this).toggleClass('active', isChecked);
-            });
-
-            // Prevent double-toggle from label's native checkbox behavior
-            $(document).on('change', '.off-day-cb', function(e) {
-                e.stopPropagation();
+            // Off-day pill toggle: sync active CSS class whenever checkbox changes
+            $(document).on('change', '.off-day-cb', function() {
+                $(this).closest('.off-day-pill').toggleClass('active', this.checked);
             });
         });
     </script>
