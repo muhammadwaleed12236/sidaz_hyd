@@ -324,14 +324,96 @@ class ProductionController extends Controller
 
     public function dispatch($id)
     {
-        $batch = ProductionBatch::with(['product', 'sale.customer_relation'])->findOrFail($id);
+        try {
+            DB::beginTransaction();
 
-        $batch->update(['status' => 'dispatched']);
+            $batch = ProductionBatch::with(['product', 'sale.customer_relation'])->findOrFail($id);
 
-        if ($batch->sale) {
-            $batch->sale->update(['sale_status' => 'delivered']);
+            if ($batch->status === 'dispatched') {
+                return redirect()->back()->with('error', "Batch #{$batch->batch_no} is already marked as Dispatched!");
+            }
+
+            // 1. Deduct finished product stock from Warehouse
+            $whId = $batch->warehouse_id ?: 1;
+            $product = $batch->product;
+            $whStock = WarehouseStock::where('product_id', $batch->product_id)
+                ->where('warehouse_id', $whId)
+                ->lockForUpdate()
+                ->first();
+
+            $qtyDispatched = (float) $batch->quantity;
+
+            if ($whStock) {
+                $whStock->decrement('total_pieces', $qtyDispatched);
+                $ppb = ($product && $product->pieces_per_box > 0) ? $product->pieces_per_box : 1;
+                $whStock->update(['quantity' => $whStock->total_pieces / $ppb]);
+            }
+
+            // 2. Add StockMovement log (OUT)
+            StockMovement::create([
+                'product_id' => $batch->product_id,
+                'type' => 'out',
+                'qty' => -$qtyDispatched,
+                'ref_type' => 'PRODUCTION_DISPATCH',
+                'ref_id' => $batch->id,
+                'note' => "Dispatched Batch #{$batch->batch_no} ({$qtyDispatched} pcs)" . ($batch->sale ? " for Order #{$batch->sale->invoice_no}" : "")
+            ]);
+
+            // 3. Mark Batch as dispatched
+            $batch->update(['status' => 'dispatched']);
+
+            // 4. Handle Linked Customer Sale (Fulfill Order and Post to Ledger if needed)
+            if ($batch->sale) {
+                $sale = $batch->sale;
+
+                // Check if all batches for this sale are dispatched
+                $pendingBatchesCount = ProductionBatch::where('sale_id', $sale->id)
+                    ->where('id', '!=', $batch->id)
+                    ->where('status', '!=', 'dispatched')
+                    ->count();
+
+                if ($pendingBatchesCount == 0) {
+                    $sale->update(['sale_status' => 'delivered']);
+                }
+
+                // If sale was booked / draft and not yet posted to Ledger, post it now
+                $alreadyPosted = \App\Models\JournalEntry::where('party_type', \App\Models\Customer::class)
+                    ->where('party_id', $sale->customer_id)
+                    ->where('description', 'like', "%{$sale->invoice_no}%")
+                    ->exists();
+
+                if (!$alreadyPosted && $sale->customer_id) {
+                    // Legacy Ledger
+                    app(\App\Http\Controllers\SaleController::class)->updateLedger($sale);
+
+                    // Professional Journal Entry (Accounts Receivable)
+                    $balanceService = app(\App\Services\BalanceService::class);
+                    $custForVoucher = $sale->customer_relation ?? \App\Models\Customer::find($sale->customer_id);
+                    if ($custForVoucher) {
+                        $balanceService->createSaleVoucher(
+                            $custForVoucher,
+                            $sale->total_net,
+                            $sale->invoice_no,
+                            $sale->created_at ? $sale->created_at->format('Y-m-d') : date('Y-m-d')
+                        );
+                    }
+
+                    // Auto Receipt if cash payment was recorded
+                    if ($sale->cash > 0) {
+                        $transactionService = app(\App\Services\TransactionService::class);
+                        $transactionService->createReceiptFromSale($sale);
+                    }
+                }
+            }
+
+            DB::commit();
+
+            return redirect()->back()->with('success', "Batch #{$batch->batch_no} marked as Dispatched! Warehouse stock deducted ({$qtyDispatched} pcs) and customer delivery updated.");
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Batch Dispatch Error: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
+            return redirect()->back()->with('error', 'Failed to dispatch batch: ' . $e->getMessage());
         }
-
-        return redirect()->back()->with('success', "Batch #{$batch->batch_no} marked as Dispatched / Delivered to Customer!");
     }
 }
