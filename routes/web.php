@@ -134,7 +134,7 @@ Route::middleware('auth')->group(function () {
     // ////////
     Route::get('/create_prodcut', [ProductController::class, 'view_store'])->middleware('permission:products.create')->name('store');
     Route::post('/store-product', [ProductController::class, 'store_product'])->middleware('permission:products.create|products.edit')->name('store-product');
-    Route::put('/product/update/{id}', [ProductController::class, 'update'])->middleware('permission:products.edit')->name('product.update');
+    Route::match(['put', 'post'], '/product/update/{id}', [ProductController::class, 'update'])->middleware('permission:products.edit')->name('product.update');
     Route::post('/products/bulk-update', [ProductController::class, 'bulkUpdate'])->middleware('permission:products.edit')->name('products.bulk-update');
     Route::post('/product/{id}/toggle-active', [ProductController::class, 'toggleActive'])->middleware('permission:products.edit')->name('product.toggle.active');
 
@@ -497,6 +497,8 @@ Route::middleware('auth')->group(function () {
     Route::post('report/profit-loss/fetch', [ReportingController::class, 'fetchProfitLoss'])->middleware('permission:profit.loss.report.view')->name('report.profit_loss.fetch');
 
     Route::get('report/vendor/ledger', [ReportingController::class, 'vendor_ledger_report'])->middleware('permission:vendor.ledger.view')->name('report.vendor.ledger');
+    Route::get('report/vendor/ledger/fetch', [ReportingController::class, 'fetch_vendor_ledger'])->middleware('permission:vendor.ledger.view')->name('report.vendor.ledger.fetch');
+    Route::get('report/vendor-ledger/fetch', [ReportingController::class, 'fetch_vendor_ledger'])->middleware('permission:vendor.ledger.view');
     Route::get('report/raw-material-detail', [ReportingController::class, 'raw_material_detail_report'])->name('report.raw_material_detail');
     Route::post('report/raw-material-detail/fetch', [ReportingController::class, 'fetchRawMaterialDetail'])->name('report.raw_material_detail.fetch');
 

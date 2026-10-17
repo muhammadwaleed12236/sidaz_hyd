@@ -1,15 +1,8 @@
 @extends('admin_panel.layout.app')
 
 @section('content')
-    {{-- 
-        SUCCESS: Horizontal Compact Layout Redesign for Edit Page
-        Matches Create Product UI
-    --}}
-    
-    {{-- External Resources --}}
     <link href="{{ asset('assets/vendors/bootstrap5/css/bootstrap.min.css') }}" rel="stylesheet">
     <link href="{{ asset('assets/vendors/select2/css/select2.min.css') }}" rel="stylesheet" />
-    {{-- line-awesome replaced by Font Awesome 6 (local) --}}
     <link rel="stylesheet" href="{{ asset('assets/fonts/inter/inter.css') }}">
 
     <style>
@@ -17,7 +10,7 @@
             --primary: #4f46e5;
             --primary-hover: #4338ca;
             --primary-light: #eef2ff;
-            --bg-body: #f1f5f9;
+            --bg-body: #f8fafc;
             --bg-card: #ffffff;
             --text-main: #0f172a;
             --text-muted: #64748b;
@@ -32,1556 +25,1760 @@
             color: var(--text-main);
         }
 
-        .page-container {
-            max-width: 1350px;
-            margin: 0 auto;
-            padding: 15px;
+        /* Prevent number input spin buttons & scroll-wheel accidental changes */
+        input[type=number]::-webkit-inner-spin-button,
+        input[type=number]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
         }
 
+        .wizard-page-container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 15px 15px 30px;
+        }
+
+        /* --- Sleek Compact Header Bar --- */
+        .wizard-top-bar {
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 14px 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .wizard-top-title-box {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .wizard-icon-badge {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.15rem;
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
+        }
+
+        .wizard-main-heading {
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: var(--text-main);
+            margin: 0;
+            line-height: 1.2;
+        }
+
+        .wizard-sub-heading {
+            font-size: 0.76rem;
+            color: var(--text-muted);
+            margin: 0;
+        }
+
+        /* --- Wizard Navigation Bar --- */
+        .wizard-steps-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 14px 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.03);
+        }
+
+        .wizard-step-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            user-select: none;
+            opacity: 0.55;
+            transition: all 0.25s ease;
+        }
+
+        .wizard-step-item.active {
+            opacity: 1;
+        }
+
+        .wizard-step-item.completed {
+            opacity: 0.9;
+        }
+
+        .step-icon-circle {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            background: #f1f5f9;
+            color: #64748b;
+            font-weight: 700;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.25s ease;
+            border: 2px solid transparent;
+        }
+
+        .wizard-step-item.active .step-icon-circle {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: #ffffff;
+            box-shadow: 0 4px 14px rgba(79, 70, 229, 0.3);
+        }
+
+        .wizard-step-item.completed .step-icon-circle {
+            background: #dcfce7;
+            color: #16a34a;
+            border-color: #86efac;
+        }
+
+        .step-label-box {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .step-badge-text {
+            font-size: 0.65rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: #94a3b8;
+        }
+
+        .wizard-step-item.active .step-badge-text {
+            color: #4f46e5;
+        }
+
+        .step-name-text {
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .wizard-step-divider {
+            flex: 1;
+            height: 2px;
+            background: #e2e8f0;
+            margin: 0 16px;
+            border-radius: 2px;
+        }
+
+        .wizard-step-divider.active {
+            background: linear-gradient(90deg, #4f46e5 0%, #7c3aed 100%);
+        }
+
+        /* --- Cards & Section --- */
         .section-card {
             background: var(--bg-card);
             border-radius: var(--radius-lg);
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.06);
+            box-shadow: 0 4px 18px rgba(0, 0, 0, 0.03);
             border: 1px solid var(--border-color);
             margin-bottom: 20px;
+            overflow: hidden;
         }
 
         .card-header-pro {
             padding: 12px 20px;
             border-bottom: 1px solid var(--border-color);
-            background: #fff;
+            background: #f8fafc;
             display: flex;
             align-items: center;
             justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
         }
 
         .card-title-pro {
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             font-weight: 700;
             color: var(--text-main);
             display: flex;
             align-items: center;
             gap: 8px;
             margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
         }
 
         .card-body-pro {
             padding: 20px;
         }
 
-        /* --- Form Styling --- */
         .form-label-pro {
-            font-size: 0.72rem;
+            font-size: 0.74rem;
             font-weight: 700;
             text-transform: uppercase;
             color: var(--text-muted);
-            margin-bottom: 4px;
-            letter-spacing: 0.02em;
+            margin-bottom: 5px;
+            letter-spacing: 0.03em;
+            display: flex;
+            align-items: center;
+            gap: 5px;
         }
 
-        .form-control-pro {
+        .form-control-pro,
+        .form-select-pro {
             display: block;
             width: 100%;
-            padding: 8px 12px;
+            padding: 9px 13px;
             font-size: 0.88rem;
             font-weight: 500;
             color: var(--text-main);
-            background-color: #fff;
-            background-clip: padding-box;
-            border: 1px solid var(--border-color);
+            background-color: #f8fafc;
+            border: 1.5px solid var(--border-color);
             border-radius: var(--radius-md);
-            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+            transition: all 0.2s ease;
         }
 
-        .form-control-pro:focus {
+        .form-control-pro:focus,
+        .form-select-pro:focus {
             border-color: var(--primary);
+            background-color: #ffffff;
             outline: 0;
-            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
         }
 
-        .form-select-pro {
-            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
-            background-repeat: no-repeat;
-            background-position: right 0.75rem center;
-            background-size: 16px 12px;
+        /* Composition Item Rows */
+        .comp-item-row {
+            background: #f8fafc;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 12px 16px;
+            margin-bottom: 12px;
+            transition: all 0.2s ease;
         }
 
-        /* --- Image Uploader --- */
-        .img-uploader {
-            width: 100%;
+        .comp-item-row:hover {
+            background: #ffffff;
+            border-color: #cbd5e1;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+        }
+
+        /* Live Cost Summary Widget */
+        .cost-calculator-card {
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            color: #ffffff;
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            box-shadow: 0 6px 20px rgba(15, 23, 42, 0.15);
+            margin-bottom: 20px;
+        }
+
+        .cost-stat-box {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            padding: 14px 18px;
+            backdrop-filter: blur(10px);
+        }
+
+        .cost-stat-label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #94a3b8;
+            margin-bottom: 4px;
+        }
+
+        .cost-stat-val {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: #38bdf8;
+            line-height: 1.1;
+        }
+
+        .cost-stat-val-highlight {
+            font-size: 1.45rem;
+            font-weight: 900;
+            color: #4ade80;
+            line-height: 1.1;
+        }
+
+        /* Image Upload Box */
+        .img-uploader-box {
             border: 2px dashed #cbd5e1;
             border-radius: var(--radius-md);
             background: #f8fafc;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
+            padding: 16px;
+            text-align: center;
             cursor: pointer;
-            position: relative;
-            overflow: hidden;
-            transition: all 0.2s;
+            transition: all 0.2s ease;
         }
 
-        .img-uploader:hover {
-            border-color: var(--primary);
-            background: var(--primary-light);
+        .img-uploader-box:hover {
+            border-color: #6366f1;
+            background: #eef2ff;
         }
 
-        .img-uploader img {
-            max-width: 100%;
-            object-fit: contain;
-            padding: 5px;
+        /* Select2 Styling Inside Wizard */
+        .select2-container--default .select2-selection--single {
+            border: 1.5px solid var(--border-color) !important;
+            border-radius: var(--radius-md) !important;
+            height: 42px !important;
+            padding: 6px 10px !important;
+            background-color: #f8fafc !important;
         }
 
-        /* Clean modern styling for variants table */
-        #variantsTable input[type=number]::-webkit-inner-spin-button, 
-        #variantsTable input[type=number]::-webkit-outer-spin-button { 
-            -webkit-appearance: none; 
-            margin: 0; 
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            color: var(--text-main) !important;
+            line-height: 28px !important;
+            font-size: 0.88rem !important;
+            font-weight: 500 !important;
         }
-        #variantsTable input[type=number] {
-            -moz-appearance: textfield;
+
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 40px !important;
         }
-        #variantsTable .form-control-pro, 
-        #variantsTable .form-select {
-            height: 30px;
-            padding: 2px 6px;
-            font-size: 12px;
-            border-radius: 4px;
-            border: 1px solid #ced4da;
-            background-color: #ffffff;
-            box-shadow: none;
+
+        .select2-dropdown {
+            border: 1.5px solid #6366f1 !important;
+            border-radius: 10px !important;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1) !important;
+            z-index: 1065 !important;
         }
-        #variantsTable .form-control-pro:focus, 
-        #variantsTable .form-select:focus {
-            border-color: #4f46e5;
-            box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.15);
+
+        /* Wizard Footer Controls */
+        .wizard-footer-actions {
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.03);
         }
-        #variantsTable .input-group-sm > .form-control-pro {
-            border-top-right-radius: 0;
-            border-bottom-right-radius: 0;
+
+        /* Step Panels */
+        .wizard-step-panel {
+            display: none;
         }
-        #variantsTable .input-group-sm > .input-group-text {
-            height: 30px;
-            font-size: 11px;
-            padding: 0 5px;
-            border-top-left-radius: 0;
-            border-bottom-left-radius: 0;
-            border-color: #ced4da;
-            background-color: #f8fafc;
-            color: #64748b;
-        }
-        #variantsTable th {
-            background-color: #f1f5f9 !important;
-            color: #334155;
-            font-weight: 600;
-            font-size: 11px !important;
-            padding: 6px 4px !important;
-            vertical-align: middle;
-            white-space: nowrap;
-        }
-        #variantsTable td {
-            padding: 4px 3px !important;
-            vertical-align: middle;
+
+        .wizard-step-panel.active {
+            display: block;
         }
     </style>
 
-    <div class="page-container">
-        
-        {{-- Page Title --}}
-        <div class="d-flex align-items-center justify-content-between mb-3">
-            <div class="d-flex align-items-center gap-3">
-                <a href="{{ route('product') }}" class="btn btn-white border shadow-sm rounded-circle p-0" style="width: 36px; height: 36px; display: grid; place-items: center;">
-                    <i class="las la-arrow-left"></i>
-                </a>
-                <div>
-                    <h5 class="fw-bold mb-0 text-dark">Edit Product</h5>
-                    <small class="text-muted" style="font-size:0.8rem;">Update item settings and stock values</small>
-                </div>
-            </div>
-        </div>
+    <div class="main-content">
+        <div class="main-content-inner">
+            <div class="container wizard-page-container">
 
-        <form id="productForm" action="{{ route('product.update', $product->id) }}" method="POST" enctype="multipart/form-data">
-            @csrf
-            @method('PUT')
-
-            <div class="row g-3">
-                
-                {{-- MAIN COLUMN: Full Width --}}
-                <div class="col-12">
-                    
-                    {{-- CARD 1: Identity & Categorization --}}
-                    <div class="section-card">
-                        <div class="card-header-pro">
-                            <h5 class="card-title-pro"><i class="las la-tag text-primary"></i> Product Identity</h5>
+                <!-- Sleek Top Header Bar (Subtle & Compact) -->
+                <div class="wizard-top-bar">
+                    <div class="wizard-top-title-box">
+                        <div class="wizard-icon-badge">
+                            <i class="fa fa-boxes"></i>
                         </div>
-                        <div class="card-body-pro">
-                            <div class="row g-3">
-                                
-                                {{-- Sub-grid for left content, image on the right --}}
-                                <div class="col-md-9">
-                                    <div class="row g-3">
-                                        <div class="col-md-8">
-                                            <label class="form-label-pro">Product Name <span class="text-danger">*</span></label>
-                                            <input type="text" class="form-control-pro fs-6 fw-bold" name="product_name" required value="{{ $product->item_name }}" placeholder="e.g. Ceramic Floor Tile 60x60">
-                                        </div>
-                                        <div class="col-md-4">
-                                            <label class="form-label-pro">Barcode Auto-Gen</label>
-                                            <div class="d-flex">
-                                                <input type="text" class="form-control-pro" id="barcodeInput" name="barcode_path" value="{{ $product->barcode_path }}" style="border-top-right-radius: 0; border-bottom-right-radius: 0;">
-                                                <button type="button" class="btn btn-light border" id="generateBarcodeBtn" style="border-left: 0; border-top-left-radius: 0; border-bottom-left-radius: 0; border-top-right-radius: var(--radius-md); border-bottom-right-radius: var(--radius-md);"><i class="las la-magic"></i></button>
+                        <div>
+                            <div class="d-flex align-items-center gap-2">
+                                <h2 class="wizard-main-heading">Edit Product Profile & Composition</h2>
+                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle font-weight-bold px-2 py-1" style="font-size: 0.75rem;">
+                                    <i class="fa fa-barcode me-1"></i> {{ $product->item_code ?? ('ITEM-' . str_pad($product->id, 4, '0', STR_PAD_LEFT)) }}
+                                </span>
+                            </div>
+                            <p class="wizard-sub-heading">3-step wizard for product setup, recipe composition (BOM) & cost estimation</p>
+                        </div>
+                    </div>
+                    <a href="{{ route('product') }}" class="btn btn-light btn-sm font-weight-bold px-3 py-2 border shadow-sm" style="border-radius: 9px; font-size: 0.82rem;">
+                        <i class="fa fa-arrow-left me-1"></i> Back to Products
+                    </a>
+                </div>
+
+                <!-- Wizard Progress Navigation -->
+                <div class="wizard-steps-bar">
+                    <div class="wizard-step-item active" id="step_tab_1" onclick="switchStep(1)">
+                        <div class="step-icon-circle">1</div>
+                        <div class="step-label-box">
+                            <span class="step-badge-text">STEP 1</span>
+                            <span class="step-name-text">Product Specs</span>
+                        </div>
+                    </div>
+
+                    <div class="wizard-step-divider" id="step_line_1"></div>
+
+                    <div class="wizard-step-item" id="step_tab_2" onclick="switchStep(2)">
+                        <div class="step-icon-circle">2</div>
+                        <div class="step-label-box">
+                            <span class="step-badge-text">STEP 2</span>
+                            <span class="step-name-text">Raw Materials BOM & Costing</span>
+                        </div>
+                    </div>
+
+                    <div class="wizard-step-divider" id="step_line_2"></div>
+
+                    <div class="wizard-step-item" id="step_tab_3" onclick="switchStep(3)">
+                        <div class="step-icon-circle">3</div>
+                        <div class="step-label-box">
+                            <span class="step-badge-text">STEP 3</span>
+                            <span class="step-name-text">Review & Save</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MAIN FORM CONTAINER -->
+                <form id="productWizardForm" action="{{ route('product.update', $product->id) }}" method="POST" enctype="multipart/form-data" novalidate>
+                    @csrf
+                    @method('PUT')
+                    <input type="hidden" name="size_mode" value="{{ $product->size_mode ?? 'by_pieces' }}">
+                    <input type="hidden" name="item_code" value="{{ $product->item_code }}">
+
+                    <!-- ============================================================== -->
+                    <!-- STEP 1: PRODUCT PROFILE CREATION / EDIT -->
+                    <!-- ============================================================== -->
+                    <div class="wizard-step-panel active" id="wizard_step_1">
+                        <div class="row">
+                            <!-- Left Column: Core Identity Specs -->
+                            <div class="col-lg-8">
+                                <div class="section-card">
+                                    <div class="card-header-pro">
+                                        <h5 class="card-title-pro text-primary">
+                                            <i class="fa fa-box-open"></i> 1. Product Identity & Specifications
+                                        </h5>
+                                        <span class="badge bg-primary-subtle text-primary font-weight-bold px-2 py-1">Basic Profile</span>
+                                    </div>
+                                    <div class="card-body-pro">
+                                        <div class="row g-3">
+                                            <!-- Product Type -->
+                                            <div class="col-md-4">
+                                                <label class="form-label-pro">Product Type <span class="text-danger">*</span></label>
+                                                <select name="product_type" id="product_type" class="form-select-pro" required onchange="toggleProductType()">
+                                                    <option value="Finished Good" {{ old('product_type', $product->product_type) == 'Finished Good' ? 'selected' : '' }}>Finished Good</option>
+                                                    <option value="Raw Material" {{ old('product_type', $product->product_type) == 'Raw Material' ? 'selected' : '' }}>Raw Material</option>
+                                                </select>
                                             </div>
-                                        </div>
-                                        
-                                        <div class="col-md-4">
-                                            <label class="form-label-pro">Category <span class="text-danger">*</span></label>
-                                            <div class="d-flex gap-1">
-                                                <select class="form-select form-control-pro form-select-pro" id="category-dropdown" name="category_id" required>
-                                                    <option value="">Select...</option>
+
+                                            <!-- Product Name -->
+                                            <div class="col-md-8">
+                                                <label class="form-label-pro">
+                                                    Product Name <span class="text-danger">*</span>
+                                                </label>
+                                                <input type="text" name="product_name" id="product_name" class="form-control-pro font-weight-bold" required
+                                                    placeholder="e.g. Paracetamol Syrup 120ml, Amoxicillin 250mg Suspension"
+                                                    value="{{ old('product_name', $product->item_name) }}">
+                                            </div>
+
+                                            <!-- Base Unit of Measure -->
+                                            <div class="col-md-4">
+                                                <label class="form-label-pro">
+                                                    Base Unit (UOM) <span class="text-danger">*</span>
+                                                </label>
+                                                @php
+                                                    $selectedUnit = old('unit', $product->unit_id ?? ($product->unit->name ?? ''));
+                                                @endphp
+                                                <select name="unit" id="product_unit" class="form-select-pro" required onchange="updateBatchUnitLabel()">
+                                                    <option value="">-- Select Unit --</option>
+                                                    @foreach ($units as $u)
+                                                        <option value="{{ $u->id }}" {{ ($selectedUnit == $u->id || $selectedUnit == $u->name) ? 'selected' : '' }}>{{ $u->name }}</option>
+                                                    @endforeach
+                                                    <option value="Liter" {{ $selectedUnit == 'Liter' ? 'selected' : '' }}>Liter (Ltr)</option>
+                                                    <option value="mL" {{ $selectedUnit == 'mL' ? 'selected' : '' }}>Milliliter (mL)</option>
+                                                    <option value="Kg" {{ $selectedUnit == 'Kg' ? 'selected' : '' }}>Kilogram (Kg)</option>
+                                                    <option value="Bottle" {{ $selectedUnit == 'Bottle' ? 'selected' : '' }}>Bottle</option>
+                                                    <option value="Pack" {{ $selectedUnit == 'Pack' ? 'selected' : '' }}>Pack</option>
+                                                    <option value="Piece" {{ $selectedUnit == 'Piece' ? 'selected' : '' }}>Piece / Tablet / Vial</option>
+                                                </select>
+                                            </div>
+
+                                            <!-- Category -->
+                                            <div class="col-md-4">
+                                                <label class="form-label-pro">Category <span class="text-danger">*</span></label>
+                                                <select name="category_id" id="category_id" class="form-select-pro" required>
+                                                    <option value="">-- Select Category --</option>
                                                     @foreach ($categories as $cat)
-                                                        <option value="{{ $cat->id }}" {{ $product->category_id == $cat->id ? 'selected' : '' }}>{{ $cat->name }}</option>
+                                                        <option value="{{ $cat->id }}" {{ old('category_id', $product->category_id) == $cat->id ? 'selected' : '' }}>{{ $cat->name }}</option>
                                                     @endforeach
                                                 </select>
-                                                <button type="button" class="btn btn-light border px-2 shadow-sm" data-toggle="modal" data-target="#categoryModal">+</button>
                                             </div>
-                                        </div>
-                                        <div class="col-md-4">
-                                            <label class="form-label-pro">Sub Category</label>
-                                            <div class="d-flex gap-1">
-                                                <select class="form-select form-control-pro form-select-pro" id="subcategory-dropdown" name="sub_category_id">
-                                                    <option value="">Select...</option>
-                                                    @foreach ($subcategories as $subCat)
-                                                        @if ($subCat->category_id == $product->category_id)
-                                                            <option value="{{ $subCat->id }}" {{ $product->sub_category_id == $subCat->id ? 'selected' : '' }}>{{ $subCat->name }}</option>
-                                                        @endif
+
+                                            <!-- Subcategory -->
+                                            <div class="col-md-4">
+                                                <label class="form-label-pro">Subcategory</label>
+                                                <select name="sub_category_id" id="sub_category_id" class="form-select-pro">
+                                                    <option value="">-- Select Subcategory --</option>
+                                                    @foreach ($subcategories as $sub)
+                                                        <option value="{{ $sub->id }}" {{ old('sub_category_id', $product->sub_category_id) == $sub->id ? 'selected' : '' }}>{{ $sub->name }}</option>
                                                     @endforeach
                                                 </select>
-                                                <button type="button" class="btn btn-light border px-2 shadow-sm" data-toggle="modal" data-target="#subcategoryModal">+</button>
                                             </div>
-                                        </div>
-                                        <div class="col-md-4">
-                                            <label class="form-label-pro">Brand</label>
-                                            <div class="d-flex gap-1">
-                                                <select class="form-select form-control-pro form-select-pro" name="brand_id" required>
-                                                    <option value="">Select...</option>
-                                                    @foreach ($brands as $brand)
-                                                        <option value="{{ $brand->id }}" {{ $product->brand_id == $brand->id ? 'selected' : '' }}>{{ $brand->name }}</option>
+
+                                            <!-- Brand -->
+                                            <div class="col-md-4">
+                                                <label class="form-label-pro">Brand / Line</label>
+                                                <select name="brand_id" id="brand_id" class="form-select-pro">
+                                                    <option value="">-- Select Brand --</option>
+                                                    @foreach ($brands as $b)
+                                                        <option value="{{ $b->id }}" {{ old('brand_id', $product->brand_id) == $b->id ? 'selected' : '' }}>{{ $b->name }}</option>
                                                     @endforeach
                                                 </select>
-                                                <button type="button" class="btn btn-light border px-2 shadow-sm" data-toggle="modal" data-target="#brandModal">+</button>
+                                            </div>
+
+                                            <!-- Department -->
+                                            <div class="col-md-4">
+                                                <label class="form-label-pro">Manufacturing Dept.</label>
+                                                @php
+                                                    $selectedDept = old('department_id', $formulation->department_id ?? '');
+                                                @endphp
+                                                <select name="department_id" id="department_id" class="form-select-pro">
+                                                    <option value="">-- Select Department --</option>
+                                                    @foreach ($departments as $dept)
+                                                        <option value="{{ $dept->id }}" {{ $selectedDept == $dept->id ? 'selected' : '' }}>{{ $dept->name }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+
+                                            <!-- Batch Unit Size -->
+                                            <div class="col-md-4">
+                                                <label class="form-label-pro">Batch Output Qty <span class="text-danger">*</span></label>
+                                                <input type="number" step="0.01" name="batch_size" id="batch_size" class="form-control-pro font-weight-bold text-primary" 
+                                                    value="{{ old('batch_size', $formulation->batch_size ?? 100) }}" placeholder="100" min="1" oninput="calculateLiveCosting()">
+                                                <small class="text-muted" style="font-size: 0.72rem;">e.g. 100 Bottles / Tablets per Batch</small>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
 
-                                {{-- Image Uploader side-by-side (Right) --}}
-                                <div class="col-md-3">
-                                    <label class="form-label-pro">Product Image</label>
-                                    <input type="file" id="imageInput" name="image" class="d-none" accept="image/*">
-                                    <div class="img-uploader" style="height: 110px;" onclick="document.getElementById('imageInput').click()">
-                                        <button type="button" id="clearImageBtn" class="btn btn-danger btn-sm position-absolute top-0 end-0 m-1 {{ $product->image ? '' : 'd-none' }} rounded-circle" style="width:20px;height:20px;padding:0;z-index:10; font-size:12px; line-height:1;">&times;</button>
-                                        @if($product->image)
-                                            <img id="preview" src="{{ asset('uploads/products/' . $product->image) }}" style="max-height: 100px;">
-                                            <div id="uploadPlaceholder" class="text-center p-2 d-none">
-                                                <i class="las la-camera fs-3 text-primary"></i>
-                                                <div class="fw-bold" style="font-size: 11px;">Upload</div>
+                                <!-- Pricing & Stock Alerts Card -->
+                                <div class="section-card" id="pricing_card">
+                                    <div class="card-header-pro">
+                                        <h5 class="card-title-pro text-success">
+                                            <i class="fa fa-tags"></i> 2. Pricing & Stock Alert Thresholds
+                                        </h5>
+                                    </div>
+                                    <div class="card-body-pro">
+                                        <div class="row g-3">
+                                            <div class="col-md-4">
+                                                <label class="form-label-pro">Sale Price Per Unit (PKR) <span class="text-muted fw-normal">(Optional)</span></label>
+                                                <input type="number" step="0.01" name="sale_price_per_box" id="sale_price_per_box" class="form-control-pro font-weight-bold text-success" 
+                                                    value="{{ old('sale_price_per_box', $product->sale_price_per_piece ?: ($product->sale_price_per_box ?: '')) }}" placeholder="0.00">
+                                                <small class="text-muted" style="font-size: 0.72rem;">Leave blank or set anytime</small>
                                             </div>
-                                        @else
-                                            <img id="preview" class="d-none" style="max-height: 100px;">
-                                            <div id="uploadPlaceholder" class="text-center p-2">
-                                                <i class="las la-camera fs-3 text-primary"></i>
-                                                <div class="fw-bold" style="font-size: 11px;">Upload</div>
+
+                                            <div class="col-md-4">
+                                                <label class="form-label-pro">Auto Est. Purchase / Production Cost (PKR)</label>
+                                                <input type="number" step="0.01" name="purchase_price_per_piece" id="purchase_price_per_piece" class="form-control-pro font-weight-bold text-dark" 
+                                                    value="{{ old('purchase_price_per_piece', $product->purchase_price_per_piece ?: '') }}" placeholder="0.00" readonly style="background: #eef2ff;">
+                                                <small class="text-muted" style="font-size: 0.72rem;">Calculated automatically from Raw Materials BOM</small>
                                             </div>
-                                        @endif
+
+                                            <div class="col-md-4">
+                                                <label class="form-label-pro">Wholesale Price (PKR) <span class="text-muted fw-normal">(Optional)</span></label>
+                                                <input type="number" step="0.01" name="wholesale_price" class="form-control-pro" 
+                                                    value="{{ old('wholesale_price', $product->wholesale_price ?: '') }}" placeholder="0.00">
+                                            </div>
+
+                                            <div class="col-md-4">
+                                                <label class="form-label-pro">Min Stock Alert Level (Units)</label>
+                                                <input type="number" name="alert_quantity" class="form-control-pro" 
+                                                    value="{{ old('alert_quantity', $product->alert_quantity ?: 10) }}" placeholder="10">
+                                            </div>
+
+                                            <div class="col-md-4">
+                                                <label class="form-label-pro">Reorder Carton / Bulk Threshold</label>
+                                                <input type="number" name="alert_carton_quantity" class="form-control-pro" 
+                                                    value="{{ old('alert_carton_quantity', $product->alert_carton_quantity ?: 5) }}" placeholder="5">
+                                            </div>
+
+                                            <div class="col-md-4">
+                                                <label class="form-label-pro">Current Warehouse Stock</label>
+                                                <div class="form-control-pro font-weight-bold text-primary bg-light d-flex align-items-center justify-content-between" style="height: 42px;">
+                                                    <span>{{ (float)($product->warehouseStocks->sum('total_pieces')) }} Units</span>
+                                                    <span class="badge bg-primary text-white" style="font-size: 0.72rem;">In Stock</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Right Column: Image Uploader & Quick Specs -->
+                            <div class="col-lg-4">
+                                <div class="section-card">
+                                    <div class="card-header-pro">
+                                        <h5 class="card-title-pro text-dark">
+                                            <i class="fa fa-image"></i> Product Image
+                                        </h5>
+                                    </div>
+                                    <div class="card-body-pro text-center">
+                                        <div class="img-uploader-box" onclick="document.getElementById('image').click();">
+                                            <i class="fa fa-cloud-upload-alt fa-2x text-primary mb-2"></i>
+                                            <div class="font-weight-bold text-dark small mb-1">{{ $product->image ? 'Click to Change Image' : 'Click to Upload Image' }}</div>
+                                            <small class="text-muted d-block" style="font-size: 0.72rem;">PNG, JPG or WEBP up to 5MB</small>
+                                            @if ($product->image)
+                                                <img id="imagePreview" src="{{ asset('uploads/products/' . $product->image) }}" style="display: block; max-width: 100%; max-height: 140px; border-radius: 8px; margin: 10px auto 0;">
+                                            @else
+                                                <img id="imagePreview" src="" style="display: none; max-width: 100%; max-height: 140px; border-radius: 8px; margin: 10px auto 0;">
+                                            @endif
+                                        </div>
+                                        <input type="file" name="image" id="image" class="d-none" accept="image/*" onchange="previewProductImage(this);">
                                     </div>
                                 </div>
 
-                                <div class="col-12 mt-3 pt-3 border-top">
-                                    <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
-                                        <h6 class="form-label-pro text-primary mb-0"><i class="fas fa-cubes me-1"></i>Product Variants & Units</h6>
-                                        <button type="button" class="btn btn-sm btn-primary" id="enableVariantsBtn"><i class="fas fa-plus me-1"></i>Add Variant Row</button>
+                                <!-- Quick Summary Widget -->
+                                <div class="p-3 bg-white rounded-3 border">
+                                    <h6 class="font-weight-bold text-dark mb-2" style="font-size: 0.88rem;">
+                                        <i class="fa fa-info-circle text-primary me-1"></i> Automatic Production Costing
+                                    </h6>
+                                    <p class="text-muted small mb-0" style="line-height: 1.45;">
+                                        In Step 2, as you modify raw materials for your batch (e.g. 100 Bottles / Tablets), the system automatically recalculates and updates the <strong>Estimated Purchase / Production Cost Per Unit</strong>!
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <!-- ============================================================== -->
+                    <!-- STEP 2: COMPOSITION & RAW MATERIALS (BOM) & LIVE COSTING -->
+                    <!-- ============================================================== -->
+                    <div class="wizard-step-panel" id="wizard_step_2">
+
+                        <!-- Live Cost & Formula Summary Header Banner -->
+                        <div class="cost-calculator-card">
+                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-3 border-bottom pb-2 border-secondary border-opacity-25">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="fa fa-calculator text-warning fs-5"></i>
+                                    <h5 class="m-0 font-weight-bold text-white fs-6">Live Recipe Costing & Per Unit Estimation</h5>
+                                </div>
+                                <div class="badge bg-primary px-3 py-2 rounded-pill font-weight-bold" style="font-size: 0.78rem;">
+                                    Batch Size: <span id="live_batch_size_display">{{ $formulation->batch_size ?? 100 }}</span> <span id="live_unit_display">Units</span>
+                                </div>
+                            </div>
+
+                            <div class="row g-3">
+                                <div class="col-md-3 col-6">
+                                    <div class="cost-stat-box">
+                                        <div class="cost-stat-label">Raw Materials Cost</div>
+                                        <div class="cost-stat-val" id="live_rm_cost_display">Rs. 0.00</div>
                                     </div>
-                                    <div id="variantsContainer">
-                                        <div class="table-responsive">
-                                            <table class="table table-bordered table-sm align-middle mb-1" id="variantsTable">
-                                                <thead class="table-light">
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <div class="cost-stat-box">
+                                        <div class="cost-stat-label">Packaging Cost</div>
+                                        <div class="cost-stat-val" id="live_pm_cost_display">Rs. 0.00</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <div class="cost-stat-box">
+                                        <div class="cost-stat-label">Total Batch Cost</div>
+                                        <div class="cost-stat-val text-warning" id="live_total_batch_cost_display">Rs. 0.00</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <div class="cost-stat-box" style="border-color: rgba(74, 222, 128, 0.4); background: rgba(74, 222, 128, 0.1);">
+                                        <div class="cost-stat-label text-success">Per Unit Est. Cost</div>
+                                        <div class="cost-stat-val-highlight" id="live_per_unit_cost_display">Rs. 0.00</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 1. Raw Materials Composition Card -->
+                        <div class="section-card">
+                            <div class="card-header-pro py-2" style="background: #f0fdf4;">
+                                <div class="card-title-pro text-success">
+                                    <i class="fa fa-vials text-success"></i>
+                                    <span>Raw Materials & Active Ingredients (For <span class="batch-size-text">{{ $formulation->batch_size ?? 100 }}</span> Batch Output)</span>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-outline-success btn-sm font-weight-bold" data-bs-toggle="modal" data-bs-target="#quickCreateRmModal" data-toggle="modal" data-target="#quickCreateRmModal" style="border-radius: 8px; font-size: 0.8rem;">
+                                        <i class="fa fa-plus-circle me-1"></i> + Create New Material
+                                    </button>
+                                    <button type="button" class="btn btn-success btn-sm px-3 font-weight-bold" id="addRmBtn" style="border-radius: 8px; font-size: 0.8rem;">
+                                        <i class="fa fa-plus me-1"></i> Add Row
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="card-body-pro p-3">
+                                <div id="raw_materials_container">
+                                    <!-- Dynamic Raw Material Rows -->
+                                </div>
+
+                                <div id="no_rm_message" class="text-center text-muted py-4">
+                                    <i class="fa fa-flask fa-2x mb-2 text-secondary"></i>
+                                    <p class="mb-1 font-weight-bold text-dark">No raw materials added to formula yet.</p>
+                                    <small class="text-muted">Click <strong>"+ Add Row"</strong> or <strong>"+ Create New Material"</strong> above to add ingredients.</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 2. Packaging Materials Composition Card -->
+                        <div class="section-card">
+                            <div class="card-header-pro py-2" style="background: #fffbeb;">
+                                <div class="card-title-pro text-warning">
+                                    <i class="fa fa-box text-warning"></i>
+                                    <span>Packaging Materials (Bottles, Caps, Cartons, Labels)</span>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-outline-warning btn-sm font-weight-bold text-dark" data-bs-toggle="modal" data-bs-target="#quickCreatePmModal" data-toggle="modal" data-target="#quickCreatePmModal" style="border-radius: 8px; font-size: 0.8rem;">
+                                        <i class="fa fa-plus-circle me-1"></i> + Create New Packaging
+                                    </button>
+                                    <button type="button" class="btn btn-warning btn-sm px-3 font-weight-bold text-dark" id="addPmBtn" style="border-radius: 8px; font-size: 0.8rem;">
+                                        <i class="fa fa-plus me-1"></i> Add Row
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="card-body-pro p-3">
+                                <div id="packaging_materials_container">
+                                    <!-- Dynamic Packaging Rows -->
+                                </div>
+
+                                <div id="no_pm_message" class="text-center text-muted py-4">
+                                    <i class="fa fa-box-open fa-2x mb-2 text-secondary"></i>
+                                    <p class="mb-1 font-weight-bold text-dark">No packaging items added yet.</p>
+                                    <small class="text-muted">Click <strong>"+ Add Row"</strong> or <strong>"+ Create New Packaging"</strong> to include bottles or caps.</small>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+
+                    <!-- ============================================================== -->
+                    <!-- STEP 3: REVIEW & FINAL SAVE -->
+                    <!-- ============================================================== -->
+                    <div class="wizard-step-panel" id="wizard_step_3">
+                        <div class="section-card">
+                            <div class="card-header-pro" style="background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%); color: #ffffff;">
+                                <h5 class="card-title-pro text-white">
+                                    <i class="fa fa-check-circle text-success"></i> Final Review & Verification Summary
+                                </h5>
+                                <span class="badge bg-success px-3 py-1 font-weight-bold">Ready to Save</span>
+                            </div>
+
+                            <div class="card-body-pro">
+                                <div class="row g-4">
+                                    <!-- Product Profile Summary -->
+                                    <div class="col-md-5 border-end">
+                                        <h6 class="font-weight-bold text-primary mb-3">
+                                            <i class="fa fa-box me-1"></i> Product Profile Summary
+                                        </h6>
+                                        <div class="bg-light p-3 rounded-3 border">
+                                            <div class="d-flex justify-content-between mb-2">
+                                                <span class="text-muted small">Product Name:</span>
+                                                <span class="font-weight-bold text-dark" id="rev_product_name">-</span>
+                                            </div>
+                                            <div class="d-flex justify-content-between mb-2">
+                                                <span class="text-muted small">Base Output Unit:</span>
+                                                <span class="font-weight-bold text-primary" id="rev_unit">-</span>
+                                            </div>
+                                            <div class="d-flex justify-content-between mb-2">
+                                                <span class="text-muted small">Category:</span>
+                                                <span class="font-weight-bold text-dark" id="rev_category">-</span>
+                                            </div>
+                                            <div class="d-flex justify-content-between mb-2">
+                                                <span class="text-muted small">Batch Size Output:</span>
+                                                <span class="font-weight-bold text-dark" id="rev_batch_size">100 Units</span>
+                                            </div>
+                                            <div class="d-flex justify-content-between mb-2">
+                                                <span class="text-muted small">Total Batch Cost:</span>
+                                                <span class="font-weight-bold text-warning" id="rev_total_batch_cost">Rs. 0.00</span>
+                                            </div>
+                                            <div class="d-flex justify-content-between mb-2">
+                                                <span class="text-muted small">Est. Cost Per Unit:</span>
+                                                <span class="font-weight-bold text-success" id="rev_per_unit_cost">Rs. 0.00</span>
+                                            </div>
+                                            <div class="d-flex justify-content-between mb-2">
+                                                <span class="text-muted small">Sale Price (Per Unit):</span>
+                                                <span class="font-weight-bold text-success" id="rev_sale_price">Optional</span>
+                                            </div>
+                                            <div class="d-flex justify-content-between mb-2">
+                                                <span class="text-muted small">Min Stock Alert:</span>
+                                                <span class="font-weight-bold text-dark" id="rev_alert_qty">10 Units</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Composition Recipe Summary -->
+                                    <div class="col-md-7">
+                                        <h6 class="font-weight-bold text-success mb-3">
+                                            <i class="fa fa-flask me-1"></i> Composition & Raw Material Recipe Summary
+                                        </h6>
+
+                                        <div class="table-responsive border rounded-3">
+                                            <table class="table table-sm table-hover mb-0">
+                                                <thead class="bg-light text-muted small">
                                                     <tr>
-                                                        <th class="text-uppercase text-muted p-1" style="min-width: 140px; font-size: 10px;">Variant Name</th>
-                                                        <th class="text-uppercase text-muted p-1" style="width: 80px; font-size: 10px;">Size</th>
-                                                        <th class="text-uppercase text-muted p-1" style="width: 80px; font-size: 10px;">Color</th>
-                                                        <th class="text-uppercase text-muted p-1" style="width: 75px; font-size: 10px;">Unit</th>
-                                                        <th class="text-uppercase text-muted p-1 text-center" style="width: 90px; font-size: 10px;">Initial Stock</th>
-                                                        <th class="text-uppercase text-muted p-1 text-center piece-wt-col" style="width: 95px; font-size: 10px;">Conv Factor</th>
-                                                        <th class="text-uppercase text-muted p-1 text-center piece-wt-col" style="width: 90px; font-size: 10px;">Piece Wt (g)</th>
-                                                        <th class="text-uppercase text-muted p-1" style="width: 90px; font-size: 10px;">Sale Price</th>
-                                                        <th class="text-uppercase text-muted p-1" style="width: 90px; font-size: 10px;">Wholesale</th>
-                                                        <th class="text-uppercase text-muted p-1" style="width: 90px; font-size: 10px;">Purch Price</th>
-                                                        <th class="text-uppercase text-muted p-1" style="width: 55px; font-size: 10px;">Alert</th>
-                                                        <th class="text-uppercase text-muted p-1" style="width: 100px; font-size: 10px;">Barcode</th>
-                                                        <th class="text-uppercase text-muted p-1 text-center" style="width: 50px; font-size: 10px;">Action</th>
+                                                        <th class="py-2 px-3">Type</th>
+                                                        <th class="py-2 px-3">Material / Ingredient</th>
+                                                        <th class="py-2 px-3 text-end">Batch Qty</th>
+                                                        <th class="py-2 px-3">Unit</th>
+                                                        <th class="py-2 px-3 text-end">Est. Cost</th>
                                                     </tr>
                                                 </thead>
-                                                <tbody id="variantsBody">
-                                                    <!-- rows injected by JS -->
+                                                <tbody id="rev_composition_body">
+                                                    <tr>
+                                                        <td colspan="5" class="text-center text-muted py-3">No composition items added</td>
+                                                    </tr>
                                                 </tbody>
                                             </table>
                                         </div>
                                     </div>
-                                    
-                                    {{-- MOBILE VARIANTS CONTAINER --}}
-                                    <div id="mobileVariantsContainer" style="display: none;">
-                                        <div id="mobileVariantsBody" class="d-flex flex-column gap-2 mb-2"></div>
-                                        <button type="button" class="mob-add-btn" onclick="mobileAddVariant()">
-                                            <i class="fas fa-plus"></i> Add Variant
-                                        </button>
-                                    </div>
-                                </div>
-
-                            </div>
-                        </div>
-                    </div>
-
-                    {{-- CARD 2: Stock Specifications & Pricing --}}
-                    <div class="section-card" style="display:none !important;">
-                        <div class="card-header-pro d-flex flex-wrap justify-content-between align-items-center gap-3">
-                            <h5 class="card-title-pro"><i class="las la-box-open text-info"></i> Stock & Pricing</h5>
-                            
-                            <div class="d-flex align-items-center flex-wrap gap-3">
-                                <div class="bg-light px-3 py-1 rounded border d-flex gap-3 text-nowrap align-items-center" style="font-size: 0.82rem;">
-                                    <div>
-                                        <span class="text-muted fw-bold">Total Stock:</span>
-                                        <strong class="text-primary fs-6" id="total_stock_display">0</strong> <span class="text-muted small">pcs</span>
-                                    </div>
-                                    <div class="border-start ps-3">
-                                        <span class="text-muted fw-bold">Est. Value:</span>
-                                        <span class="text-success fw-bold">PKR <span id="sale_total_display">0.00</span></span>
-                                    </div>
-                                </div>
-
-                                {{-- Unit Select --}}
-                                <div class="col-md-4">
-                                     <label class="form-label-pro">Unit</label>
-                                     <select class="form-select form-control-pro form-select-pro fw-bold" name="size_mode" id="unit-dropdown" style="max-width: 200px;">
-                                         <option value="by_pieces" {{ $product->size_mode == 'by_pieces' ? 'selected' : '' }}>Pcs</option>
-                                         <option value="by_cartons" {{ $product->size_mode == 'by_cartons' ? 'selected' : '' }}>Carton</option>
-                                         <option value="by_meter" {{ $product->size_mode == 'by_meter' ? 'selected' : '' }}>Meter</option>
-                                         <option value="by_feet" {{ $product->size_mode == 'by_feet' ? 'selected' : '' }}>Ft (Feet)</option>
-                                         <option value="by_kg" {{ $product->size_mode == 'by_kg' ? 'selected' : '' }}>Kg</option>
-                                         <option value="by_gm" {{ $product->size_mode == 'by_gm' ? 'selected' : '' }}>Gm</option>
-                                         <option value="by_ton" {{ $product->size_mode == 'by_ton' ? 'selected' : '' }}>Ton</option>
-                                     </select>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="card-body-pro">
-                            <div class="row g-3">
-                                
-                                {{-- Dynamic Stock Fields --}}
-                                <div class="col-md-12">
-                                    <div class="row g-3">
-                                        {{-- Carton Mode Fields --}}
-                                        <div class="col-md-3 group-by-size">
-                                            <label class="form-label-pro">Pcs / Carton</label>
-                                            <input type="number" class="form-control-pro" name="pieces_per_box" id="pieces_per_box" value="{{ $product->pieces_per_box }}" placeholder="0">
-                                        </div>
-                                        <div class="col-md-3 group-by-size">
-                                            <label class="form-label-pro">In-Stock Cartons</label>
-                                            <input type="number" class="form-control-pro border-primary text-primary fw-bold" name="boxes_quantity" id="boxes_quantity" value="{{ $product->boxes_quantity }}" placeholder="0">
-                                        </div>
-                                        <div class="col-md-3 group-loose">
-                                            <label class="form-label-pro text-warning">Loose Pieces (Extra)</label>
-                                            <input type="number" class="form-control-pro border-warning" name="loose_pieces" id="loose_pieces" value="{{ $product->loose_pieces }}" placeholder="0">
-                                        </div>
-
-                                        {{-- Piece Mode Fields --}}
-                                        <div class="col-md-6 group-piece-only d-none">
-                                            <label class="form-label-pro text-primary">Total In-Stock Quantity (Pieces)</label>
-                                            <input type="number" class="form-control-pro border-primary text-primary fw-bold" name="piece_quantity" id="piece_quantity" value="{{ $product->piece_quantity }}" placeholder="0">
-                                        </div>
-
-                                        {{-- Common Alert Quantity --}}
-                                        <div class="col-md-3">
-                                            <label class="form-label-pro text-danger">Low Stock Alert (Cartons)</label>
-                                            <input type="number" class="form-control-pro border-danger" name="alert_carton_quantity" id="alert_carton_quantity" min="0" value="{{ $product->alert_carton_quantity }}" placeholder="e.g. 5">
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {{-- Pricing Group --}}
-                                <div class="col-md-12 pt-3 border-top">
-                                    <h6 class="form-label-pro text-primary mb-2">Unit Price Settings (Rs.)</h6>
-                                    <div class="row g-3">
-                                         <div class="col-md-2">
-                                             <label class="form-label-pro text-success">Sale Price <span class="unit-label text-muted fw-normal">(pc)</span></label>
-                                             <input type="number" class="form-control-pro fw-bold text-success" name="sale_price_per_box" id="sale_price_per_box" step="0.01" value="{{ $product->sale_price_per_piece }}" placeholder="0.00">
-                                         </div>
-                                         <div class="col-md-2">
-                                             <label class="form-label-pro text-info">Wholesale Price <span class="unit-label text-muted fw-normal">(pc)</span></label>
-                                             <input type="number" class="form-control-pro fw-bold text-info" name="wholesale_price" id="wholesale_price" step="0.01" value="{{ $product->wholesale_price ?? 0 }}" placeholder="0.00">
-                                         </div>
-                                         <div class="col-md-2">
-                                             <label class="form-label-pro text-secondary">Purchase Price <span class="unit-label text-muted fw-normal">(pc)</span></label>
-                                             <input type="number" class="form-control-pro text-muted" name="purchase_price_per_piece" id="purchase_price_per_piece" step="0.01" value="{{ $product->purchase_price_per_piece }}" placeholder="0.00">
-                                         </div>
-                                         <div class="col-md-2 factor-col-main d-none">
-                                             <label class="form-label-pro text-warning factor-label">Piece Weight (g)</label>
-                                             <input type="number" class="form-control-pro text-warning" name="weight_per_piece" id="weight_per_piece" step="0.0001" value="{{ $product->weight_per_piece ?? 0 }}" placeholder="0.00">
-                                         </div>
-                                         <div class="col-md-2">
-                                             <label class="form-label-pro">Sale Disc (%)</label>
-                                             <input type="number" class="form-control-pro" name="sale_discount_percent" step="0.01" value="{{ $product->sale_discount_percent ?? 0 }}">
-                                         </div>
-                                         <div class="col-md-2">
-                                             <label class="form-label-pro">Purch Disc (%)</label>
-                                             <input type="number" class="form-control-pro" name="purchase_discount_percent" step="0.01" value="{{ $product->purchase_discount_percent ?? 0 }}">
-                                         </div>
-                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    {{-- INLINE ACTIONS ROW --}}
-                    <div class="d-flex justify-content-end align-items-center bg-white p-3 rounded shadow-sm border mb-4 gap-2">
-                        <a href="{{ route('product') }}" class="btn btn-outline-secondary px-4 py-2" style="border-radius: var(--radius-md); font-size: 0.9rem;">Cancel</a>
-                        <button type="submit" class="btn btn-primary px-5 py-2 fw-bold" style="background: var(--primary); border: none; border-radius: var(--radius-md); font-size: 0.9rem;">
-                            <i class="las la-check-circle me-1"></i> UPDATE PRODUCT
+
+                    <!-- WIZARD NAVIGATION FOOTER ACTIONS -->
+                    <div class="wizard-footer-actions mt-3">
+                        <button type="button" class="btn btn-outline-secondary px-4 py-2 font-weight-bold" id="btn_prev_step" style="display: none; border-radius: 9px;" onclick="navigateStep(-1)">
+                            <i class="fa fa-arrow-left me-1"></i> Previous Step
                         </button>
+
+                        <div class="ms-auto d-flex gap-2">
+                            <button type="button" class="btn btn-primary px-4 py-2 font-weight-bold" id="btn_next_step" style="border-radius: 9px;" onclick="navigateStep(1)">
+                                Next: Composition Recipe <i class="fa fa-arrow-right ms-1"></i>
+                            </button>
+
+                            <button type="submit" class="btn btn-success px-5 py-2 font-weight-bold" id="btn_submit_final" style="display: none; border-radius: 9px; background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+                                <i class="fa fa-save me-1"></i> Update Product Profile
+                            </button>
+                        </div>
                     </div>
 
-                </div>
+                </form>
 
-            </div>
-
-            {{-- HIDDEN BY-SIZE FORM CONTROLS FOR MIGRATION BACKWARD COMPATIBILITY --}}
-            <div style="display:none !important;">
-                <input type="number" name="height" id="height" step="0.01" value="{{ $product->height }}">
-                <input type="number" name="width" id="width" step="0.01" value="{{ $product->width }}">
-                <input type="number" name="wholesale_price" id="wholesale_price_hidden" step="0.01" value="0">
-                <input type="number" name="weight_per_piece" id="weight_per_piece_hidden" step="0.0001" value="0">
-                <input type="number" name="price_per_m2" id="price_per_m2" step="0.01" value="{{ $product->price_per_m2 }}">
-                <input type="number" name="purchase_price_per_m2" id="purchase_price_per_m2" step="0.01" value="{{ $product->purchase_price_per_m2 }}">
-            </div>
-
-        </form>
-
-        {{-- Modals --}}
-        <div id="categoryModal" class="modal fade" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered modal-sm">
-                <div class="modal-content border-0 shadow-lg" style="border-radius: var(--radius-md);">
-                    <form action="{{ route('store.category') }}" method="POST">
-                        @csrf
-                        <div class="modal-header border-0 pb-0">
-                            <h6 class="modal-title fw-bold">New Category</h6>
-                            <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                            <input type="hidden" name="page" value="product_page">
-                            <div class="mb-3">
-                                <label class="form-label-pro">Category Name</label>
-                                <input type="text" name="name" class="form-control-pro" required placeholder="e.g. Ceramics">
-                            </div>
-                            <button type="submit" class="btn btn-primary w-100 rounded-pill">Create Category</button>
-                        </div>
-                    </form>
-                </div>
             </div>
         </div>
+    </div>
 
-        <div id="subcategoryModal" class="modal fade" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered modal-sm">
-                <div class="modal-content border-0 shadow-lg" style="border-radius: var(--radius-md);">
-                    <form action="{{ route('store.subcategory') }}" method="POST">
-                        @csrf
-                        <div class="modal-header border-0 pb-0">
-                            <h6 class="modal-title fw-bold">New Subcategory</h6>
-                            <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close"></button>
+    <!-- QUICK CREATE RAW MATERIAL MODAL (AJAX ZERO-REFRESH) -->
+    <div class="modal fade" id="quickCreateRmModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content style-modal" style="border-radius: 16px; border: 1.5px solid #e2e8f0; overflow: hidden;">
+                <div class="modal-header bg-success text-white py-3 px-4">
+                    <h5 class="modal-title font-weight-bold text-white mb-0">
+                        <i class="fa fa-plus-circle me-2"></i> Add New Raw Material Profile
+                    </h5>
+                    <button type="button" class="close text-white border-0 bg-transparent" data-dismiss="modal" data-bs-dismiss="modal" style="font-size: 1.5rem;">&times;</button>
+                </div>
+                <form id="quickRmForm">
+                    @csrf
+                    <div class="modal-body p-4">
+                        <div class="mb-3">
+                            <label class="form-label-pro">Raw Material Name <span class="text-danger">*</span></label>
+                            <input type="text" id="q_rm_name" name="name" class="form-control-pro font-weight-bold" required placeholder="e.g. Paracetamol API, Liquid Base, Glucose">
                         </div>
-                        <div class="modal-body">
-                            <input type="hidden" name="page" value="product_page">
-                            <div class="mb-3">
-                                <label class="form-label-pro">Parent Category</label>
-                                <select name="category_id" class="form-select form-control-pro">
-                                    @foreach ($categories as $c)
-                                        <option value="{{ $c->id }}">{{ $c->name }}</option>
+
+                        <div class="row g-2 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label-pro">Material Code <span class="text-danger">*</span></label>
+                                <input type="text" id="q_rm_code" name="code" class="form-control-pro" required placeholder="RM-001">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label-pro">Material Type <span class="text-danger">*</span></label>
+                                <select id="q_rm_type" name="type" class="form-select-pro" required>
+                                    <option value="Ingredient">Ingredient</option>
+                                    <option value="Chemical">Chemical</option>
+                                    <option value="Powder">Powder</option>
+                                    <option value="Liquid">Liquid</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row g-2 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label-pro">Department <span class="text-danger">*</span></label>
+                                <select id="q_rm_department" name="department_id" class="form-select-pro" required>
+                                    @foreach($departments as $dept)
+                                        <option value="{{ $dept->id }}">{{ $dept->name }}</option>
                                     @endforeach
                                 </select>
                             </div>
-                            <div class="mb-3">
-                                <label class="form-label-pro">Name</label>
-                                <input type="text" name="name" class="form-control-pro" required placeholder="e.g. Floor Tiles">
+                            <div class="col-md-6">
+                                <label class="form-label-pro">Unit <span class="text-danger">*</span></label>
+                                <select id="q_rm_unit" name="unit_id" class="form-select-pro" required>
+                                    @foreach($units as $u)
+                                        <option value="{{ $u->id }}">{{ $u->name }}</option>
+                                    @endforeach
+                                </select>
                             </div>
-                            <button type="submit" class="btn btn-primary w-100 rounded-pill">Create Subcategory</button>
                         </div>
-                    </form>
-                </div>
+
+                        <div class="row g-2 mb-2">
+                            <div class="col-md-6">
+                                <label class="form-label-pro">Price (Per Material Unit) <span class="text-danger">*</span></label>
+                                <input type="number" step="0.01" id="q_rm_price" name="price" class="form-control-pro" value="0.00" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label-pro">Min Stock Alert</label>
+                                <input type="number" id="q_rm_min_stock" name="min_stock" class="form-control-pro" value="10">
+                                <input type="hidden" name="status" value="1">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer bg-light px-4 py-3 border-top">
+                        <button type="button" class="btn btn-outline-secondary btn-sm px-3" data-dismiss="modal" data-bs-dismiss="modal" style="border-radius: 8px;">Cancel</button>
+                        <button type="button" id="saveQuickRmBtn" class="btn btn-success btn-sm px-4 font-weight-bold" style="border-radius: 8px;">
+                            <i class="fa fa-check-circle me-1"></i> Save & Auto Select
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
+    </div>
 
-        {{-- Brand Modal --}}
-        <div id="brandModal" class="modal fade" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered modal-sm">
-                <div class="modal-content border-0 shadow-lg" style="border-radius: var(--radius-md);">
-                    <form action="{{ route('store.Brand') }}" method="POST">
-                        @csrf
-                        <div class="modal-header border-0 pb-0">
-                            <h6 class="modal-title fw-bold">New Brand</h6>
-                            <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                            <input type="hidden" name="page" value="product_page">
-                            <div class="mb-3">
-                                <label class="form-label-pro">Brand Name</label>
-                                <input type="text" name="name" class="form-control-pro" required placeholder="e.g. Johnson">
-                            </div>
-                            <button type="submit" class="btn btn-primary w-100 rounded-pill">Create Brand</button>
-                        </div>
-                    </form>
+    <!-- QUICK CREATE PACKAGING MATERIAL MODAL (AJAX ZERO-REFRESH) -->
+    <div class="modal fade" id="quickCreatePmModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content style-modal" style="border-radius: 16px; border: 1.5px solid #e2e8f0; overflow: hidden;">
+                <div class="modal-header bg-warning text-dark py-3 px-4">
+                    <h5 class="modal-title font-weight-bold mb-0">
+                        <i class="fa fa-plus-circle me-2"></i> Add New Packaging Material Profile
+                    </h5>
+                    <button type="button" class="close text-dark border-0 bg-transparent" data-dismiss="modal" data-bs-dismiss="modal" style="font-size: 1.5rem;">&times;</button>
                 </div>
+                <form id="quickPmForm">
+                    @csrf
+                    <div class="modal-body p-4">
+                        <div class="mb-3">
+                            <label class="form-label-pro">Packaging Item Name <span class="text-danger">*</span></label>
+                            <input type="text" id="q_pm_name" name="name" class="form-control-pro font-weight-bold" required placeholder="e.g. 120ml PET Bottle, Cap, Box Carton">
+                        </div>
+
+                        <div class="row g-2 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label-pro">Item Code <span class="text-danger">*</span></label>
+                                <input type="text" id="q_pm_code" name="code" class="form-control-pro" required placeholder="PM-001">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label-pro">Packaging Type <span class="text-danger">*</span></label>
+                                <select id="q_pm_type" name="packaging_type" class="form-select-pro" required>
+                                    <option value="Bottle">Bottle</option>
+                                    <option value="Box">Box</option>
+                                    <option value="Cap">Cap</option>
+                                    <option value="Label">Label</option>
+                                    <option value="Carton">Carton</option>
+                                    <option value="Seal">Seal</option>
+                                    <option value="Wrapper">Wrapper</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row g-2 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label-pro">Department <span class="text-danger">*</span></label>
+                                <select id="q_pm_department" name="department_id" class="form-select-pro" required>
+                                    @foreach($departments as $dept)
+                                        <option value="{{ $dept->id }}">{{ $dept->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label-pro">Unit <span class="text-danger">*</span></label>
+                                <select id="q_pm_unit" name="unit_id" class="form-select-pro" required>
+                                    @foreach($units as $u)
+                                        <option value="{{ $u->id }}">{{ $u->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-2">
+                            <label class="form-label-pro">Min Stock Alert</label>
+                            <input type="number" id="q_pm_min_stock" name="min_stock" class="form-control-pro" value="50">
+                            <input type="hidden" name="status" value="1">
+                        </div>
+                    </div>
+
+                    <div class="modal-footer bg-light px-4 py-3 border-top">
+                        <button type="button" class="btn btn-outline-secondary btn-sm px-3" data-dismiss="modal" data-bs-dismiss="modal" style="border-radius: 8px;">Cancel</button>
+                        <button type="button" id="saveQuickPmBtn" class="btn btn-warning btn-sm px-4 font-weight-bold text-dark" style="border-radius: 8px;">
+                            <i class="fa fa-check-circle me-1"></i> Save & Auto Select
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
-
     </div>
 @endsection
 
 @section('js')
+    <script src="{{ asset('assets/vendors/select2/js/select2.min.js') }}"></script>
+
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // --- UI Elements ---
-            const unitDropdown = document.getElementById('unit-dropdown');
-            const form = document.getElementById('productForm');
- 
-            // Containers
-            const grpBySize = document.querySelectorAll('.group-by-size');
-            const grpLoose = document.querySelectorAll('.group-loose');
-            const grpPieceOnly = document.querySelectorAll('.group-piece-only');
- 
-            function toggleGroup(els, hide) {
-                els.forEach(el => hide ? el.classList.add('d-none') : el.classList.remove('d-none'));
-            }
- 
-            // Labels
-            const unitLabels = document.querySelectorAll('.unit-label');
- 
-            // --- Logic Update Mode ---
-            function updateMode() {
-                if(!unitDropdown) return;
-                const mode = unitDropdown.value;
- 
-                // Hide ALL dynamic wrappers
-                toggleGroup(grpBySize, true);
-                toggleGroup(grpLoose, true);
-                toggleGroup(grpPieceOnly, true);
- 
-                if (mode === 'by_cartons') {
-                    toggleGroup(grpBySize, false);
-                    toggleGroup(grpLoose, false);
-                    unitLabels.forEach(l => l.innerText = '(pc)');
- 
-                    setRequired(['pieces_per_box', 'boxes_quantity', 'purchase_price_per_piece'], true);
-                    setRequired(['sale_price_per_box', 'piece_quantity'], false);
- 
-                } else {
-                    toggleGroup(grpPieceOnly, false);
-                    unitLabels.forEach(l => l.innerText = '(' + (mode === 'by_pieces' ? 'pc' : (mode === 'by_meter' ? 'm' : 'kg')) + ')');
- 
-                    setRequired(['piece_quantity', 'purchase_price_per_piece'], true);
-                    setRequired(['sale_price_per_box', 'pieces_per_box', 'boxes_quantity'], false);
-                }
- 
-                calculate();
-                toggleFactorColumns();
-            }
-            if (unitDropdown) $(unitDropdown).on('change', updateMode);
+        // Available Raw Materials Data
+        let rawMaterialsData = [
+            @foreach($rawMaterials as $rm)
+                { id: {{ $rm->id }}, name: "{{ addslashes($rm->name) }}", code: "{{ $rm->code }}", unit: "{{ $rm->unit->name ?? 'Unit' }}", unit_id: {{ $rm->unit_id ?? 'null' }}, price: {{ (float)($rm->price ?? 0) }} },
+            @endforeach
+        ];
 
-            function setRequired(ids, isReq) {
-                ids.forEach(id => {
-                    const el = document.getElementById(id);
-                    if (el) isReq ? el.setAttribute('required', 'required') : el.removeAttribute('required');
-                });
-            }
+        // Available Packaging Materials Data
+        let packagingMaterialsData = [
+            @foreach($packagingMaterials as $pm)
+                { id: {{ $pm->id }}, name: "{{ addslashes($pm->name) }}", code: "{{ $pm->code }}", unit: "{{ $pm->unit->name ?? 'Pcs' }}", price: {{ (float)($pm->price ?? 0) }} },
+            @endforeach
+        ];
 
-            function calculate() {
-                if(!unitDropdown) return;
-                const mode = unitDropdown.value;
+        // Pre-populated formulation data from DB
+        let existingRawMaterials = @json($existingRawMaterials ?? []);
+        let existingPackagingMaterials = @json($existingPackagingMaterials ?? []);
+        let isLoadingExisting = true;
 
-                const v = (id) => parseFloat(document.getElementById(id)?.value) || 0;
-                let stock = 0;
-                let saleVal = 0;
+        let currentWizardStep = 1;
+        let rmCounter = 0;
+        let pmCounter = 0;
 
-                if (mode === 'by_cartons') {
-                    stock = (v('pieces_per_box') * v('boxes_quantity')) + v('loose_pieces');
-                    saleVal = stock * v('sale_price_per_box');
-
-                } else {
-                    stock = v('piece_quantity');
-                    saleVal = stock * v('sale_price_per_box');
-                }
-
-                setText('total_stock_display', stock);
-                setText('sale_total_display', saleVal.toLocaleString(undefined, { minimumFractionDigits: 2 }));
-            }
-
-            function setText(id, val) {
-                const el = document.getElementById(id);
-                if (el) el.innerText = val;
-            }
-
-            function toggleFactorColumns() {
-                if (!unitDropdown) return;
-                const mode = unitDropdown.value;
-                const showFactor = (mode === 'by_kg' || mode === 'by_meter');
-                
-                const headers = document.querySelectorAll('.factor-header');
-                headers.forEach(h => {
-                    if (showFactor && variantMode !== 'weight') {
-                        h.classList.remove('d-none');
-                        h.textContent = (mode === 'by_kg') ? 'Piece Weight (g)' : 'Piece Length (m)';
-                    } else {
-                        h.classList.add('d-none');
-                    }
-                });
-                
-                const cols = document.querySelectorAll('.factor-col');
-                cols.forEach(c => {
-                    if (showFactor && variantMode !== 'weight') {
-                        c.classList.remove('d-none');
-                    } else {
-                        c.classList.add('d-none');
-                        const inp = c.querySelector('input');
-                        if (inp) inp.value = '0';
-                    }
-                });
- 
-                const mainFactorCol = document.querySelector('.factor-col-main');
-                if (mainFactorCol) {
-                    if (showFactor) {
-                        mainFactorCol.classList.remove('d-none');
-                        const lbl = mainFactorCol.querySelector('.factor-label');
-                        if (lbl) lbl.textContent = (mode === 'by_kg') ? 'Piece Weight (g)' : 'Piece Length (m)';
-                    } else {
-                        mainFactorCol.classList.add('d-none');
-                        const inp = mainFactorCol.querySelector('input');
-                        if (inp) inp.value = '0';
-                    }
-                }
-            }
-
-            // Events
-            form.querySelectorAll('input').forEach(i => i.addEventListener('input', calculate));
-
-            updateMode();
-
-            // Image Handler
-            const imgInput = document.getElementById('imageInput');
-            const preview = document.getElementById('preview');
-            const ph = document.getElementById('uploadPlaceholder');
-            const clr = document.getElementById('clearImageBtn');
-
-            imgInput.addEventListener('change', function() {
-                if (this.files && this.files[0]) {
-                    const r = new FileReader();
-                    r.onload = (e) => {
-                        preview.src = e.target.result;
-                        preview.classList.remove('d-none');
-                        if(ph) ph.classList.add('d-none');
-                        clr.classList.remove('d-none');
-                    };
-                    r.readAsDataURL(this.files[0]);
-                }
-            });
-
-            clr.addEventListener('click', (e) => {
-                e.stopPropagation();
-                imgInput.value = '';
-                
-                @if($product->image)
-                    preview.src = "{{ asset('uploads/products/' . $product->image) }}";
-                    preview.classList.remove('d-none');
-                    if(ph) ph.classList.add('d-none');
-                @else
-                    preview.classList.add('d-none');
-                    if(ph) ph.classList.remove('d-none');
-                    clr.classList.add('d-none');
-                @endif
-            });
-
-            // AJAX Submission
-            form.addEventListener('submit', function(e) {
-                e.preventDefault();
-                 const vStocks = document.querySelectorAll('input[name="variant_stock[]"]');
-                 const vSale = document.querySelectorAll('input[name="variant_sale_price[]"]');
-                 const vWholesale = document.querySelectorAll('input[name="variant_wholesale_price[]"]');
-                 const vWeight = document.querySelectorAll('input[name="variant_weight_per_piece[]"]');
-                 const vPurch = document.querySelectorAll('input[name="variant_purchase_price[]"]');
-                 const vAlert = document.querySelectorAll('input[name="variant_alert_qty[]"]');
- 
-                 let totalStock = 0;
-                 vStocks.forEach(el => totalStock += (parseFloat(el.value) || 0));
- 
-                 let firstSale = vSale.length > 0 ? (parseFloat(vSale[0].value) || 0) : 0;
-                 let firstWholesale = vWholesale.length > 0 ? (parseFloat(vWholesale[0].value) || 0) : 0;
-                 let firstWeight = vWeight.length > 0 ? (parseFloat(vWeight[0].value) || 0) : 0;
-                 let firstPurch = vPurch.length > 0 ? (parseFloat(vPurch[0].value) || 0) : 0;
-                 let firstAlert = vAlert.length > 0 ? (parseFloat(vAlert[0].value) || 0) : 0;
- 
-                 const mode = unitDropdown ? unitDropdown.value : 'by_pieces';
-                 
-                 if (vStocks.length > 0) {
-                     if(mode === 'by_cartons') {
-                         document.getElementById('boxes_quantity').value = totalStock;
-                         document.getElementById('pieces_per_box').value = 1;
-                         document.getElementById('loose_pieces').value = 0;
-                         document.getElementById('piece_quantity').value = 0;
-                     } else {
-                         document.getElementById('piece_quantity').value = totalStock;
-                         document.getElementById('boxes_quantity').value = 0;
-                     }
-                     document.getElementById('sale_price_per_box').value = firstSale;
-                     document.getElementById('wholesale_price').value = firstWholesale;
-                     document.getElementById('weight_per_piece').value = firstWeight;
-                     document.getElementById('purchase_price_per_piece').value = firstPurch;
-                     document.getElementById('alert_carton_quantity').value = firstAlert;
-                 } else {
-                     document.getElementById('wholesale_price_hidden').value = document.getElementById('wholesale_price').value;
-                     document.getElementById('weight_per_piece_hidden').value = document.getElementById('weight_per_piece').value;
-                 }
-
-                const btn = document.querySelector('button[type="submit"]');
-                const originalContent = btn.innerHTML;
-                btn.innerHTML = '<i class="las la-spinner la-spin"></i> Updating...';
-                btn.disabled = true;
-
-                const formData = new FormData(form);
-                fetch(form.action, {
-                    method: 'POST',
-                    headers: {'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json'},
-                    body: formData
-                })
-                .then(r => r.json().then(data => ({status: r.status, body: data})))
-                .then(({status, body}) => {
-                    if (status === 200 || body.status === 'success') {
-                         Swal.fire({
-                            icon: 'success', title: 'Updated!',
-                            text: 'Product updated successfully', timer: 1500, showConfirmButton: false
-                        }).then(() => window.location.href = "{{ route('product') }}");
-                    } else {
-                        const msg = body.errors ? Object.values(body.errors).flat().join('<br>') : (body.message || 'Error');
-                        Swal.fire({icon: 'error', title: 'Error', html: msg});
-                    }
-                })
-                .catch(err => Swal.fire({icon: 'error', title: 'Error', text: 'Server Error'}))
-                .finally(() => {
-                    btn.innerHTML = originalContent;
-                    btn.disabled = false;
-                });
-            });
-
-            // Barcode
-            const barIn = document.getElementById('barcodeInput');
-            const barBtn = document.getElementById('generateBarcodeBtn');
-            const barcodeUrl = '{{ route('generate-barcode-image') }}';
-            
-            if(barBtn) barBtn.addEventListener('click', () => fetch(barcodeUrl).then(r => r.json()).then(d => barIn.value = d.barcode_number));
-            
-            $('#category-dropdown').on('change', function() {
-                var cid = $(this).val();
-                if (cid) {
-                    $.get('/get-subcategories/' + cid, function(d) {
-                        $('#subcategory-dropdown').empty().append('<option value="">Select...</option>');
-                        $.each(d, function(_, v) {
-                            $('#subcategory-dropdown').append('<option value="' + v.id + '">' + v.name + '</option>');
-                        });
-                    });
-                }
-            });
-
-            // Quick Add AJAX Handlers
-            function handleQuickAdd(modalId, selectSelector) {
-                $('#' + modalId + ' form').on('submit', function(e) {
-                    e.preventDefault();
-                    let form = $(this);
-                    let btn = form.find('button[type="submit"]');
-                    let originalText = btn.text();
-                    btn.text('Saving...').prop('disabled', true);
-                    
-                    $.ajax({
-                        url: form.attr('action'),
-                        method: 'POST',
-                        data: form.serialize(),
-                        headers: { 'X-Requested-With': 'XMLHttpRequest' },
-                        success: function(res) {
-                            if(res.success) {
-                                $(selectSelector).append(new Option(res.name, res.id, true, true)).trigger('change');
-                                $('#' + modalId).modal('hide');
-                                form[0].reset();
-                                Swal.fire({icon: 'success', title: 'Added successfully', toast: true, position: 'top-end', showConfirmButton: false, timer: 1500});
-                            }
-                        },
-                        error: function() {
-                            Swal.fire({icon: 'error', title: 'Error', text: 'Something went wrong!'});
-                        },
-                        complete: function() {
-                            btn.text(originalText).prop('disabled', false);
-                        }
-                    });
-                });
-            }
-
-            handleQuickAdd('categoryModal', '#category-dropdown, #subcategoryModal select[name="category_id"]');
-            handleQuickAdd('subcategoryModal', '#subcategory-dropdown');
-            handleQuickAdd('brandModal', 'select[name="brand_id"]');
-
-            const enableVariantsBtn = document.getElementById('enableVariantsBtn');
-            const variantsContainer = document.getElementById('variantsContainer');
-            const variantsBody = document.getElementById('variantsBody');
-
-            const weightUnits = ['by_kg', 'by_gm', 'by_ton'];
-            let variantMode = 'standard';
-            let manualPrices = {}; // Keep track of manually overridden prices
-            let manualNames = {}; // Keep track of manually overridden names
-
-            function isWeightUnit(unit) {
-                return weightUnits.includes(unit);
-            }
-
-            function updateVariantModeFromDropdown() {
-                const currentUnit = unitDropdown ? unitDropdown.value : 'by_pieces';
-                const newMode = isWeightUnit(currentUnit) ? 'weight' : 'standard';
-                
-                if (variantMode !== newMode) {
-                    if (variantsBody.children.length > 0) {
-                        Swal.fire({
-                            title: 'Change Unit?',
-                            text: 'This product contains variants. Changing the unit will remove the current variant settings from this form. Do you want to continue?',
-                            icon: 'warning',
-                            showCancelButton: true,
-                            confirmButtonText: 'Continue',
-                            cancelButtonText: 'Cancel'
-                        }).then((result) => {
-                            if (result.isConfirmed) {
-                                variantMode = newMode;
-                                variantsBody.innerHTML = '';
-                                manualPrices = {};
-                                manualNames = {};
-                                applyVariantModeUI();
-                                if (variantMode === 'weight' && !variantsContainer.classList.contains('d-none')) {
-                                    addBaseVariantRow();
-                                }
-                            } else {
-                                // Revert dropdown
-                                unitDropdown.value = (variantMode === 'weight') ? 'by_kg' : 'by_pieces';
-                            }
-                        });
-                    } else {
-                        variantMode = newMode;
-                        applyVariantModeUI();
-                    }
-                }
-            }
-
-            if (unitDropdown) {
-                // Remove the old listener and add a wrapper that does both
-                $(unitDropdown).off('change', updateMode);
-                $(unitDropdown).on('change', function() {
-                    updateMode();
-                    updateVariantModeFromDropdown();
-                    toggleFactorColumns();
-                });
-                toggleFactorColumns();
-            }
-
-            function applyVariantModeUI() {
-                const stdCols = document.querySelectorAll('.std-col');
-                const weightCols = document.querySelectorAll('.weight-col');
-                
-                if (variantMode === 'weight') {
-                    stdCols.forEach(col => col.classList.add('d-none'));
-                    weightCols.forEach(col => col.classList.remove('d-none'));
-                } else {
-                    stdCols.forEach(col => col.classList.remove('d-none'));
-                    weightCols.forEach(col => col.classList.add('d-none'));
-                }
-                toggleFactorColumns(); // To handle the legacy factor cols if needed
-            }
-
-            function generateRandomBarcode() {
-                return Math.floor(100000 + Math.random() * 900000).toString();
-            }
-
-            // Sync base variant name with product name
-            const productNameInput = document.querySelector('input[name="product_name"]');
-            productNameInput.addEventListener('input', function() {
-                if (variantMode === 'weight') {
-                    const baseInput = document.querySelector('input.base-name-input');
-                    if (baseInput && !manualNames[baseInput.dataset.vid]) {
-                        baseInput.value = this.value;
-                    }
-                }
-            });
-
-            function addBaseVariantRow(v = null) {
-                const tr = document.createElement('tr');
-                const productName = productNameInput.value || '';
-                const baseUnitName = unitDropdown ? unitDropdown.options[unitDropdown.selectedIndex].text : 'Kg';
-                const vid = 'base_' + Date.now();
-                
-                const nameVal = v ? (v.name || '') : productName;
-                const sizeVal = v ? (v.size || '') : '';
-                const colorVal = v ? (v.color || '') : '';
-                const unitVal = v ? (v.unit || 'Kg') : (baseUnitName.includes('Kg')?'Kg':'Pcs');
-                const stockVal = v ? (v.stock || 0) : '0';
-                const saleVal = v ? (v.sale_price || 0) : '';
-                const wholesaleVal = v ? (v.wholesale_price || 0) : '0';
-                const purchVal = v ? (v.purch_price || 0) : '';
-                const weightVal = v ? (v.weight_per_piece || 1000) : 1000;
-                const alertVal = v ? (v.alert || 0) : '0';
-                const barcodeVal = v ? (v.barcode || '') : generateRandomBarcode();
-                
-                tr.innerHTML = `
-                    <td class="p-1 align-middle">
-                        <input type="text" class="form-control-pro form-control-sm base-name-input fw-bold" name="variant_name[]" value="${nameVal}" placeholder="Name" data-vid="${vid}">
-                        <input type="hidden" name="variant_is_base[]" value="1">
-                    </td>
-                    <td class="p-1"><input type="text" class="form-control-pro form-control-sm" name="variant_size[]" value="${sizeVal}" placeholder="Size"></td>
-                    <td class="p-1"><input type="text" class="form-control-pro form-control-sm" name="variant_color[]" value="${colorVal}" placeholder="Color"></td>
-                    <td class="p-1">
-                        <select class="form-select form-select-sm fw-bold text-primary px-1" name="variant_unit[]" style="font-size:11px;">
-                            <option value="Kg" ${unitVal==='Kg'?'selected':''}>Kg</option>
-                            <option value="Pcs" ${unitVal==='Pcs'?'selected':''}>Pcs</option>
-                            <option value="Gm" ${unitVal==='Gm'?'selected':''}>Gm</option>
-                            <option value="Ft" ${unitVal==='Ft'?'selected':''}>Ft</option>
-                            <option value="Meter" ${unitVal==='Meter'?'selected':''}>Mtr</option>
-                            <option value="Box" ${unitVal==='Box'?'selected':''}>Box</option>
-                            <option value="Dozen" ${unitVal==='Dozen'?'selected':''}>Dzn</option>
-                        </select>
-                    </td>
-                    <td class="p-1">
-                        <input type="number" class="form-control-pro form-control-sm text-center fw-bold text-primary" name="variant_stock[]" step="any" value="${stockVal}" placeholder="0" title="Initial Stock">
-                    </td>
-                    <td class="p-0 piece-wt-col">
-                        <input type="number" class="form-control-pro form-control-sm conv-factor-input text-center" name="variant_conv_factor[]" step="any" value="1" readonly title="Base Conv Factor = 1" style="border-radius:0; border:1px solid #dee2e6; height:30px;">
-                    </td>
-                    <td class="p-0 piece-wt-col">
-                        <div style="position:relative;">
-                            <input type="number" class="form-control-pro form-control-sm" name="variant_weight_per_piece[]" step="any" value="${weightVal}" readonly title="Auto from Conv Factor" style="padding-right:18px; border-radius:0; border:1px solid #dee2e6; height:30px; background:#f8f8f8;">
-                            <span style="position:absolute;right:5px;top:50%;transform:translateY(-50%);font-size:9px;color:#999;pointer-events:none;font-weight:600;">g</span>
-                        </div>
-                    </td>
-                    <td class="p-1"><input type="number" class="form-control-pro form-control-sm base-sale-input" name="variant_sale_price[]" step="any" value="${saleVal}" placeholder="0.00" required></td>
-                    <td class="p-1"><input type="number" class="form-control-pro form-control-sm" name="variant_wholesale_price[]" step="any" value="${wholesaleVal}" placeholder="0.00"></td>
-                    <td class="p-1"><input type="number" class="form-control-pro form-control-sm base-purch-input" name="variant_purchase_price[]" step="any" value="${purchVal}" placeholder="0.00" required></td>
-                    <td class="p-1"><input type="number" class="form-control-pro form-control-sm" name="variant_alert_qty[]" value="${alertVal}" placeholder="0"></td>
-                    <td class="p-1"><input type="text" class="form-control-pro form-control-sm" name="variant_barcode[]" value="${barcodeVal}"></td>
-                    <td class="p-1 text-center">
-                        <span class="badge bg-primary px-2 py-1">Base</span>
-                    </td>
-                `;
-                variantsBody.appendChild(tr);
-
-                const baseSaleInp = tr.querySelector('.base-sale-input');
-                const basePurchInp = tr.querySelector('.base-purch-input');
-                const baseWholesaleInp = tr.querySelector('input[name="variant_wholesale_price[]"]');
-                const baseStockInp = tr.querySelector('input[name="variant_stock[]"]');
-
-                if (baseSaleInp) baseSaleInp.addEventListener('input', updatePriceSuggestions);
-                if (basePurchInp) basePurchInp.addEventListener('input', updatePriceSuggestions);
-                if (baseWholesaleInp) baseWholesaleInp.addEventListener('input', updatePriceSuggestions);
-                if (baseStockInp) baseStockInp.addEventListener('input', updateVariantStocksFromBase);
-                
-                tr.querySelector('.base-name-input').addEventListener('input', function() {
-                    manualNames[vid] = true;
-                });
-                toggleFactorColumns();
-            }
-
-            function updateVariantStocksFromBase() {
-                if (variantMode !== 'weight') return;
-
-                const baseRow = variantsBody.querySelector('tr');
-                if (!baseRow) return;
-
-                const baseStockInp = baseRow.querySelector('input[name="variant_stock[]"]');
-                const baseStock = parseFloat(baseStockInp?.value || 0);
-
-                const rows = variantsBody.querySelectorAll('tr');
-                rows.forEach((row, index) => {
-                    if (index === 0) return;
-
-                    const factorInp = row.querySelector('.conv-factor-input');
-                    const pieceWtInp = row.querySelector('input[name="variant_weight_per_piece[]"]');
-                    const stockInp = row.querySelector('input[name="variant_stock[]"]');
-
-                    let factor = parseFloat(factorInp?.value || 0);
-                    let pieceWt = parseFloat(pieceWtInp?.value || 0);
-
-                    // Removed the fallback that forcibly restored factor from pieceWt, which prevented clearing the input.
-
-                    if (baseStock > 0 && factor > 0 && stockInp) {
-                        const calcPcs = Math.round(baseStock / factor);
-                        stockInp.value = calcPcs;
-                    }
-                });
-            }
-
-            function updatePriceSuggestions() {
-                if (variantMode === 'pcs') return; // Do not auto-overwrite prices in Pcs mode
-
-                const baseRow = variantsBody.querySelector('tr');
-                if (!baseRow) return;
-
-                const baseSale = parseFloat(baseRow.querySelector('.base-sale-input')?.value || 0);
-                const basePurch = parseFloat(baseRow.querySelector('.base-purch-input')?.value || 0);
-                const baseWholesale = parseFloat(baseRow.querySelector('input[name="variant_wholesale_price[]"]')?.value || 0);
-
-                const rows = variantsBody.querySelectorAll('tr');
-                rows.forEach((row, index) => {
-                    if (index === 0) return; // Skip base row
-                    
-                    const vid = row.dataset.vid;
-                    const factorInput = row.querySelector('.conv-factor-input');
-                    const factor = parseFloat(factorInput?.value || 0);
-                    
-                    const saleInp = row.querySelector('.sale-price-input');
-                    const purchInp = row.querySelector('.purch-price-input');
-                    const wholesaleInp = row.querySelector('input[name="variant_wholesale_price[]"]');
-                    const pieceWtInp = row.querySelector('input[name="variant_weight_per_piece[]"]');
-
-                    if (factor > 0) {
-                        if (saleInp && (!vid || !manualPrices[vid + '_sale'])) {
-                            saleInp.value = (baseSale * factor).toFixed(2);
-                        }
-                        if (purchInp && (!vid || !manualPrices[vid + '_purch'])) {
-                            purchInp.value = (basePurch * factor).toFixed(2);
-                        }
-                        if (wholesaleInp && (!vid || !manualPrices[vid + '_wholesale'])) {
-                            wholesaleInp.value = (baseWholesale * factor).toFixed(2);
-                        }
-                        // Piece Wt is always driven by Conv Factor — never manually overridden
-                        if (pieceWtInp) {
-                            pieceWtInp.value = (factor * 1000).toFixed(0);
-                        }
-                    }
-                });
-
-                updateVariantStocksFromBase();
-            }
-
-            function addVariantRow(weightGrams = null, v = null) {
-                const tr = document.createElement('tr');
-                const vid = 'var_' + Date.now();
-                tr.dataset.vid = vid;
-                
-                let factor = v ? parseFloat(v.conv_factor || 1) : 1;
-                let suggestedName = v ? (v.name || '') : (productNameInput.value || '');
-                
-                if (weightGrams && !v) {
-                    factor = parseFloat(weightGrams) > 10 ? parseFloat((weightGrams / 1000).toFixed(6)) : parseFloat(weightGrams);
-                    suggestedName += ` - ${weightGrams}g`;
-                }
-                
-                const baseRow = variantsBody.querySelector('tr');
-                const baseSale = parseFloat(baseRow?.querySelector('.base-sale-input')?.value || document.querySelector('.base-sale-input')?.value || 0);
-                const basePurch = parseFloat(baseRow?.querySelector('.base-purch-input')?.value || document.querySelector('.base-purch-input')?.value || 0);
-                const baseWholesale = parseFloat(baseRow?.querySelector('input[name="variant_wholesale_price[]"]')?.value || 0);
-
-                let suggSale = '';
-                let suggPurch = '';
-                let suggWholesale = '';
-
-                if (v) {
-                    suggSale = v.sale_price || '';
-                    suggPurch = v.purch_price || '';
-                    suggWholesale = v.wholesale_price || '';
-                } else if (variantMode === 'weight') {
-                    suggSale = (baseSale * factor).toFixed(2);
-                    suggPurch = (basePurch * factor).toFixed(2);
-                    suggWholesale = (baseWholesale * factor).toFixed(2);
-                }
-
-                const sizeVal = v ? (v.size || '') : '';
-                const colorVal = v ? (v.color || '') : '';
-                const unitVal = v ? (v.unit || 'Pcs') : 'Pcs';
-                const stockVal = v ? (v.stock || 0) : '0';
-                const weightVal = v ? (v.weight_per_piece || 0) : (weightGrams || (factor < 10 ? (factor * 1000).toFixed(1).replace(/\.0$/, '') : factor));
-                const alertVal = v ? (v.alert || 0) : '0';
-                const barcodeVal = v ? (v.barcode || '') : generateRandomBarcode();
-
-                tr.innerHTML = `
-                    <td class="p-1">
-                        <input type="text" class="form-control-pro form-control-sm var-name-input" name="variant_name[]" value="${suggestedName}" placeholder="Name">
-                        <input type="hidden" name="variant_is_base[]" value="0">
-                    </td>
-                    <td class="p-1"><input type="text" class="form-control-pro form-control-sm" name="variant_size[]" value="${sizeVal}" placeholder="Size (XL, 10x12)"></td>
-                    <td class="p-1"><input type="text" class="form-control-pro form-control-sm" name="variant_color[]" value="${colorVal}" placeholder="Color"></td>
-                    <td class="p-1">
-                        <select class="form-select form-select-sm px-1 fw-bold text-dark" name="variant_unit[]" style="font-size:11px;">
-                            <option value="Pcs" ${unitVal==='Pcs'?'selected':''}>Pcs</option>
-                            <option value="Kg" ${unitVal==='Kg'?'selected':''}>Kg</option>
-                            <option value="Gm" ${unitVal==='Gm'?'selected':''}>Gm</option>
-                            <option value="Ft" ${unitVal==='Ft'?'selected':''}>Ft</option>
-                            <option value="Meter" ${unitVal==='Meter'?'selected':''}>Mtr</option>
-                            <option value="Box" ${unitVal==='Box'?'selected':''}>Box</option>
-                            <option value="Dozen" ${unitVal==='Dozen'?'selected':''}>Dzn</option>
-                        </select>
-                    </td>
-                    <td class="p-1">
-                        <input type="number" class="form-control-pro form-control-sm text-center fw-bold text-primary stock-input" name="variant_stock[]" step="any" value="" placeholder="Auto" title="Initial Stock (auto in weight mode)" ${variantMode === 'weight' ? 'readonly style="background:#f8f9ff;color:#0d6efd;font-weight:bold;"' : ''}>
-                    </td>
-                    <td class="p-0 piece-wt-col">
-                        <input type="text" inputmode="decimal" class="form-control-pro form-control-sm conv-factor-input text-center fw-bold text-success" name="variant_conv_factor[]" value="" placeholder="0.000" title="Conv Factor: weight per Pcs in base unit" style="border-radius:0; border:1px solid #198754; height:30px; border-width:1.5px;">
-                    </td>
-                    <td class="p-0 piece-wt-col">
-                        <div style="position:relative;">
-                            <input type="number" class="form-control-pro form-control-sm piece-wt-display" name="variant_weight_per_piece[]" step="any" value="" placeholder="—" readonly title="Auto = Conv Factor × 1000" style="padding-right:18px; border-radius:0; border:1px solid #dee2e6; height:30px; background:#f0fff4; color:#198754; font-weight:600;">
-                            <span style="position:absolute;right:5px;top:50%;transform:translateY(-50%);font-size:9px;color:#198754;pointer-events:none;font-weight:700;">g</span>
-                        </div>
-                    </td>
-                    <td class="p-1"><input type="number" class="form-control-pro form-control-sm sale-price-input" name="variant_sale_price[]" step="any" value="${suggSale}" placeholder="0.00" required></td>
-                    <td class="p-1"><input type="number" class="form-control-pro form-control-sm" name="variant_wholesale_price[]" step="any" value="${suggWholesale}" placeholder="0.00"></td>
-                    <td class="p-1"><input type="number" class="form-control-pro form-control-sm purch-price-input" name="variant_purchase_price[]" step="any" value="${suggPurch}" placeholder="0.00" required></td>
-                    <td class="p-1"><input type="number" class="form-control-pro form-control-sm" name="variant_alert_qty[]" value="${alertVal}" placeholder="0"></td>
-                    <td class="p-1"><input type="text" class="form-control-pro form-control-sm" name="variant_barcode[]" value="${barcodeVal}"></td>
-                    <td class="p-1 text-center">
-                        <button type="button" class="btn btn-sm btn-outline-danger remove-var-btn p-1 px-2" title="Remove"><i class="fas fa-trash"></i></button>
-                    </td>
-                `;
-                variantsBody.appendChild(tr);
-
-                const saleInput = tr.querySelector('.sale-price-input');
-                const purchInput = tr.querySelector('.purch-price-input');
-                const wholesaleInput = tr.querySelector('input[name="variant_wholesale_price[]"]');
-                const convInput = tr.querySelector('.conv-factor-input');
-                const pieceWtInput = tr.querySelector('input[name="variant_weight_per_piece[]"]');
-
-                if (saleInput) saleInput.addEventListener('input', () => { manualPrices[vid + '_sale'] = true; });
-                if (purchInput) purchInput.addEventListener('input', () => { manualPrices[vid + '_purch'] = true; });
-                if (wholesaleInput) wholesaleInput.addEventListener('input', () => { manualPrices[vid + '_wholesale'] = true; });
-
-                // Conv Factor is the PRIMARY input in weight mode
-                // Piece Wt (g) = Conv Factor x 1000, Initial Stock = Base Stock / Conv Factor
-                // Debounced so user can type freely (e.g. 0.006) without interruption
-                if (convInput) {
-                    let convTimer = null;
-                    convInput.addEventListener('input', function() {
-                        clearTimeout(convTimer);
-                        const self = this;
-                        // Immediate visual update only: Piece Wt
-                        let fImmediate = parseFloat(self.value);
-                        if (isNaN(fImmediate)) fImmediate = 0;
-                        if (pieceWtInput && fImmediate > 0) {
-                            pieceWtInput.value = (fImmediate * 1000).toFixed(0);
-                        } else if (pieceWtInput && fImmediate === 0) {
-                            pieceWtInput.value = '';
-                        }
-                        // Defer heavier calculations 300ms after user stops typing
-                        convTimer = setTimeout(() => {
-                            updatePriceSuggestions();
-                            updateVariantStocksFromBase();
-                        }, 300);
-                    });
-                }
-                toggleFactorColumns();
-                updateVariantStocksFromBase();
-            }
-
-            function toggleFactorColumns() {
-                if (!unitDropdown) return;
-                const mode = unitDropdown.value;
-                const showPieceWt = (mode === 'by_kg');
-                
-                const cols = document.querySelectorAll('.piece-wt-col');
-                cols.forEach(c => {
-                    if (showPieceWt) {
-                        c.classList.remove('d-none');
-                    } else {
-                        c.classList.add('d-none');
-                    }
-                });
-            }
-
-            enableVariantsBtn.addEventListener('click', function() {
-                if (variantsBody.children.length === 0) {
-                    addBaseVariantRow();
-                } else {
-                    addVariantRow();
-                }
-                if (typeof isMobile === 'function' && isMobile()) {
-                    if (typeof rebuildMobileCards === 'function') rebuildMobileCards();
-                    const cards = document.querySelectorAll('.mob-variant-card');
-                    document.querySelectorAll('.mob-variant-card.is-open').forEach(c => c.classList.remove('is-open'));
-                    if (cards.length) cards[cards.length - 1].classList.add('is-open');
-                }
-            });
-
-            // Always ensure the button reads + Add Variant Row
-            enableVariantsBtn.innerHTML = '<i class="fas fa-plus me-1"></i>Add Variant Row';
-            enableVariantsBtn.className = 'btn btn-sm btn-primary';
-
-            variantsBody.addEventListener('click', function(e) {
-                const addBtn = e.target.closest('.add-var-btn');
-                const remBtn = e.target.closest('.remove-var-btn');
-                const genBtn = e.target.closest('.gen-var-barcode');
-
-                if (addBtn) {
-                    addVariantRow();
-                } else if (remBtn) {
-                    const row = remBtn.closest('tr');
-                    if (row.querySelector('.base-name-input')) {
-                        Swal.fire({icon: 'error', title: 'Cannot Delete', text: 'The base variant cannot be deleted.'});
-                        return;
-                    }
-
-                    if (variantsBody.children.length > 1) {
-                        row.remove();
-                    } else {
-                        row.querySelectorAll('input:not([type="hidden"])').forEach(inp => inp.value = '');
-                        const bc = row.querySelector('input[name="variant_barcode[]"]');
-                        if (bc) bc.value = generateRandomBarcode();
-                    }
-                } else if (genBtn) {
-                    const input = genBtn.closest('td').querySelector('input');
-                    input.value = generateRandomBarcode();
-                }
-            });
-
-            form.addEventListener('submit', function(e) {
-                if (variantMode === 'weight' && !variantsContainer.classList.contains('d-none')) {
-                    const factors = Array.from(document.querySelectorAll('input[name="variant_conv_factor[]"]')).map(el => parseFloat(el.value));
-                    const uniqueFactors = new Set(factors);
-                    if (factors.length !== uniqueFactors.size) {
-                        e.preventDefault();
-                        Swal.fire({icon: 'error', title: 'Validation Error', text: 'A variant with the same Conv Factor already exists.'});
-                        return;
-                    }
-                    if (factors.some(f => f <= 0 || isNaN(f))) {
-                        e.preventDefault();
-                        Swal.fire({icon: 'error', title: 'Validation Error', text: 'Conv Factor must be greater than 0.'});
-                        return;
-                    }
-                }
-            });
-
-            // Initialize existing variants
-            const existingColorStr = `{!! addslashes($product->color ?? 'null') !!}`;
-            try {
-                const parsed = JSON.parse(existingColorStr);
-                if (Array.isArray(parsed) && parsed.length > 0 && typeof parsed[0] === 'object') {
-                    // Determine mode initially based on existing data if possible, though unit dropdown should rule
-                    const currentUnit = unitDropdown ? unitDropdown.value : 'by_pieces';
-                    variantMode = isWeightUnit(currentUnit) ? 'weight' : 'standard';
-                    
-                    applyVariantModeUI();
-                    
-                    variantsContainer.classList.remove('d-none');
-                    variantsBody.innerHTML = ''; // clear default empty row
-                    
-                    parsed.forEach(v => {
-                        if (variantMode === 'weight') {
-                            if (v.is_base_variant == 1) {
-                                addBaseVariantRow(v);
-                            } else {
-                                addVariantRow(null, v);
-                            }
-                        } else {
-                            addVariantRow(null, v);
-                        }
-                    });
-                }
-            } catch(e) { console.error(e); }
- 
-            // Call updateMode to set initial visible states
-            updateMode();
- 
+        // Prevent Mouse Wheel Scroll from changing values in numeric inputs
+        $(document).on('wheel', 'input[type=number]', function(e) {
+            $(this).blur();
         });
 
-        // ============================================================
-        //  MOBILE VARIANT CARDS SYSTEM
-        //  Two-way sync: desktop table <-> mobile accordion cards
-        // ============================================================
+        function showAlert(title, message, icon = 'warning') {
+            if (typeof Swal !== 'undefined' && typeof Swal.fire === 'function') {
+                Swal.fire(title, message, icon);
+            } else {
+                alert(title + ': ' + message);
+            }
+        }
 
-        const isMobile = () => window.innerWidth < 768;
-        let mobVariantIndex = 0;
+        function updateBatchUnitLabel() {
+            let unitText = $('#product_unit option:selected').text() || 'Units';
+            if (!unitText || unitText.includes('-- Select')) unitText = 'Units';
+            $('#live_unit_display').text(unitText);
+        }
 
-        // ---- Build a mobile card HTML for a given table row ----
-        function buildMobCard(tr, idx, isBase) {
-            const card = document.createElement('div');
-            card.className = 'mob-variant-card' + (isBase ? ' is-base' : '') + (isBase ? ' is-open' : '');
-            card.dataset.mobIdx = idx;
+        function toggleProductType() {
+            let type = $('#product_type').val();
+            if(type === 'Finished Good') {
+                $('#pricing_card').show();
+                $('#step_tab_2, #step_line_2, #step_tab_3, #step_line_3').show();
+                
+                if(currentWizardStep === 1) {
+                    $('#btn_next_step').show().html('Next: Composition Recipe <i class="fa fa-arrow-right ms-1"></i>');
+                    $('#btn_submit_final').hide();
+                }
+            } else {
+                $('#pricing_card').hide();
+                $('#step_tab_2, #step_line_2, #step_tab_3, #step_line_3').show();
+                
+                if(currentWizardStep === 1) {
+                    $('#btn_next_step').show().html('Next: Composition Recipe <i class="fa fa-arrow-right ms-1"></i>');
+                    $('#btn_submit_final').hide();
+                }
+            }
+        }
 
-            // Mirror the hidden inputs from tr into card as hidden (for shared form state)
-            const isBaseVal = isBase ? '1' : '0';
+        function switchStep(step) {
+            if (step > currentWizardStep) {
+                // Validate current step before proceeding forward
+                if (currentWizardStep === 1) {
+                    const name = $('#product_name').val() ? $('#product_name').val().trim() : '';
+                    const unit = $('#product_unit').val();
+                    const category = $('#category_id').val();
 
-            const nameVal    = tr.querySelector('[name="variant_name[]"]')?.value || '';
-            const sizeVal    = tr.querySelector('[name="variant_size[]"]')?.value || '';
-            const colorVal   = tr.querySelector('[name="variant_color[]"]')?.value || '';
-            const unitVal    = tr.querySelector('[name="variant_unit[]"]')?.value || 'Pcs';
-            const stockInp   = tr.querySelector('[name="variant_stock[]"]');
-            const stockVal   = stockInp?.value || '0';
-            const convVal    = tr.querySelector('[name="variant_conv_factor[]"]')?.value || '';
-            const pieceWtVal = tr.querySelector('[name="variant_weight_per_piece[]"]')?.value || '';
-            const saleVal    = tr.querySelector('[name="variant_sale_price[]"]')?.value || '';
-            const wsaleVal   = tr.querySelector('[name="variant_wholesale_price[]"]')?.value || '';
-            const purchVal   = tr.querySelector('[name="variant_purchase_price[]"]')?.value || '';
-            const alertVal   = tr.querySelector('[name="variant_alert_qty[]"]')?.value || '0';
-            const barcodeVal = tr.querySelector('[name="variant_barcode[]"]')?.value || '';
-            const stockReadonly = stockInp?.hasAttribute('readonly') ? 'readonly' : '';
+                    if (!name) {
+                        showAlert('Required Field', 'Please enter the Product Name before proceeding.', 'warning');
+                        $('#product_name').focus();
+                        return;
+                    }
+                    if (!unit) {
+                        showAlert('Required Field', 'Please select a Base Unit (UOM).', 'warning');
+                        $('#product_unit').focus();
+                        return;
+                    }
+                    if (!category) {
+                        showAlert('Required Field', 'Please select a Product Category.', 'warning');
+                        $('#category_id').focus();
+                        return;
+                    }
+                }
+            }
 
-            const isWeightMode = variantMode === 'weight';
+            currentWizardStep = step;
 
-            const label = nameVal || (isBase ? 'Base Variant' : 'Variant ' + (idx + 1));
+            // Toggle step panels
+            $('.wizard-step-panel').removeClass('active');
+            $('#wizard_step_' + step).addClass('active');
 
-            card.innerHTML = `
-                <div class="mob-card-header" onclick="mobToggleCard(this)">
-                    <div class="mob-card-title">
-                        <i class="fas fa-layer-group" style="color:${isBase ? '#5B4CF7' : '#94a3b8'};font-size:14px;flex-shrink:0;"></i>
-                        <span class="mob-card-label">${label}</span>
-                        ${isBase ? '<span class="mob-base-badge">Base</span>' : ''}
-                    </div>
-                    <svg class="mob-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-                </div>
-                <div class="mob-card-body">
-                    <div class="mob-section-label"><i class="fas fa-info-circle me-1"></i>Basic Info</div>
-                    <div class="mob-field-group">
-                        <div class="mob-label">Variant Name ${isBase ? '<span class="req">*</span>' : ''}</div>
-                        <input type="text" class="mob-input mob-sync" data-field="variant_name[]" value="${nameVal}" placeholder="e.g. Red - XL" autocomplete="off">
-                    </div>
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-                        <div class="mob-field-group">
-                            <div class="mob-label">Size</div>
-                            <input type="text" class="mob-input mob-sync" data-field="variant_size[]" value="${sizeVal}" placeholder="XL, M...">
+            // Update Header Indicators
+            $('.wizard-step-item').removeClass('active completed');
+            for (let i = 1; i <= 3; i++) {
+                if (i < step) {
+                    $('#step_tab_' + i).addClass('completed');
+                    $('#step_line_' + i).addClass('active');
+                } else if (i === step) {
+                    $('#step_tab_' + i).addClass('active');
+                } else {
+                    $('#step_line_' + i).removeClass('active');
+                }
+            }
+
+            // Update Navigation Footer Buttons
+            if (step === 1) {
+                $('#btn_prev_step').hide();
+                $('#btn_next_step').show().html('Next: Composition Recipe <i class="fa fa-arrow-right ms-1"></i>');
+                $('#btn_submit_final').hide();
+            } else if (step === 2) {
+                $('#btn_prev_step').show();
+                $('#btn_next_step').show().html('Next: Review Profile <i class="fa fa-arrow-right ms-1"></i>');
+                $('#btn_submit_final').hide();
+                calculateLiveCosting();
+            } else if (step === 3) {
+                $('#btn_prev_step').show();
+                $('#btn_next_step').hide();
+                $('#btn_submit_final').show();
+                buildReviewSummary();
+            }
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function navigateStep(direction) {
+            switchStep(currentWizardStep + direction);
+        }
+
+        // Live Costing Calculation
+        function calculateLiveCosting() {
+            let batchSize = parseFloat($('#batch_size').val()) || 1;
+            if (batchSize <= 0) batchSize = 1;
+
+            $('#live_batch_size_display').text(batchSize);
+            $('.batch-size-text').text(batchSize);
+
+            let totalRmCost = 0;
+            let totalPmCost = 0;
+
+            // Calculate Raw Material Costs
+            $('.rm-row').each(function() {
+                const $select = $(this).find('.rm-select');
+                const rmId = $select.val();
+                const qty = parseFloat($(this).find('.rm-qty').val()) || 0;
+                if (rmId && qty > 0) {
+                    const price = parseFloat($select.find('option:selected').data('price')) || 0;
+                    totalRmCost += (qty * price);
+                }
+            });
+
+            // Calculate Packaging Material Costs
+            $('.pm-row').each(function() {
+                const $select = $(this).find('.pm-select');
+                const pmId = $select.val();
+                const qty = parseFloat($(this).find('.pm-qty').val()) || 0;
+                if (pmId && qty > 0) {
+                    const price = parseFloat($select.find('option:selected').data('price')) || 0;
+                    totalPmCost += (qty * price);
+                }
+            });
+
+            const totalBatchCost = totalRmCost + totalPmCost;
+            const perUnitCost = totalBatchCost / batchSize;
+
+            $('#live_rm_cost_display').text('Rs. ' + totalRmCost.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+            $('#live_pm_cost_display').text('Rs. ' + totalPmCost.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+            $('#live_total_batch_cost_display').text('Rs. ' + totalBatchCost.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+            $('#live_per_unit_cost_display').text('Rs. ' + perUnitCost.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+
+            // Update Est. Purchase Price input
+            $('#purchase_price_per_piece').val(perUnitCost.toFixed(2));
+        }
+
+        // Generate Options HTML for Raw Material Selects
+        function getRmOptionsHtml() {
+            let optionsHtml = '<option value="">-- Search & Choose Raw Material --</option>';
+            rawMaterialsData.forEach(rm => {
+                optionsHtml += `<option value="${rm.id}" data-unit="${rm.unit}" data-unit-id="${rm.unit_id || ''}" data-price="${rm.price}">${rm.name} (${rm.code})</option>`;
+            });
+            return optionsHtml;
+        }
+
+        // Add Raw Material Row with Searchable Select2 & Auto-Next Row
+        function addRawMaterialRow(autoSelectId = null, initialQty = null, initialNotes = null) {
+            rmCounter++;
+            const optionsHtml = getRmOptionsHtml();
+
+            const html = `
+                <div class="comp-item-row rm-row" id="rm_row_${rmCounter}" data-counter="${rmCounter}">
+                    <div class="row g-2 align-items-center">
+                        <div class="col-md-4">
+                            <label class="form-label-pro" style="font-size: 0.68rem;">Raw Material / Ingredient</label>
+                            <select name="raw_material_id[]" class="form-select-pro rm-select select2-rm">
+                                ${optionsHtml}
+                            </select>
                         </div>
-                        <div class="mob-field-group">
-                            <div class="mob-label">Color</div>
-                            <input type="text" class="mob-input mob-sync" data-field="variant_color[]" value="${colorVal}" placeholder="Red, Blue...">
+                        <div class="col-md-2">
+                            <label class="form-label-pro" style="font-size: 0.68rem;">Batch Qty</label>
+                            <input type="number" step="0.0001" name="rm_quantity[]" class="form-control-pro font-weight-bold rm-qty" placeholder="0.00" value="${initialQty !== null ? initialQty : ''}" oninput="calculateLiveCosting()">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label-pro" style="font-size: 0.68rem;">Unit</label>
+                            <input type="hidden" name="rm_unit_id[]" class="rm-unit-id-val">
+                            <input type="text" class="form-control-pro rm-unit-label" placeholder="mL / mg / Ltr" readonly style="background: #eef2ff; font-weight: 600;">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label-pro" style="font-size: 0.68rem;">Mixing Notes / Stage</label>
+                            <input type="text" name="rm_notes[]" class="form-control-pro rm-notes" placeholder="Press Enter for next row..." value="${initialNotes ? initialNotes : ''}">
+                        </div>
+                        <div class="col-md-1 text-end pt-3">
+                            <button type="button" class="btn btn-outline-danger btn-sm p-1" style="border-radius: 6px;" onclick="removeRmRow(${rmCounter})">
+                                <i class="fa fa-times"></i>
+                            </button>
                         </div>
                     </div>
-                    <div class="mob-field-group">
-                        <div class="mob-label">Unit</div>
-                        <select class="mob-select mob-sync" data-field="variant_unit[]">
-                            <option value="Pcs" ${unitVal==='Pcs'?'selected':''}>Pcs</option>
-                            <option value="Kg" ${unitVal==='Kg'?'selected':''}>Kg</option>
-                            <option value="Gm" ${unitVal==='Gm'?'selected':''}>Gm</option>
-                            <option value="Ft" ${unitVal==='Ft'?'selected':''}>Ft</option>
-                            <option value="Meter" ${unitVal==='Meter'?'selected':''}>Mtr</option>
-                            <option value="Box" ${unitVal==='Box'?'selected':''}>Box</option>
-                            <option value="Dozen" ${unitVal==='Dozen'?'selected':''}>Dzn</option>
-                        </select>
-                    </div>
-
-                    <div class="mob-section-divider"></div>
-                    <div class="mob-section-label"><i class="fas fa-boxes me-1"></i>Stock & Pricing</div>
-
-                    <div class="mob-field-group">
-                        <div class="mob-label">Initial Stock ${isBase ? '' : (isWeightMode ? '🔵 Auto' : '')}</div>
-                        <input type="number" class="mob-input mob-sync ${!isBase && isWeightMode ? 'auto-field mob-stock-auto' : ''}" data-field="variant_stock[]" value="${stockVal}" placeholder="${!isBase && isWeightMode ? 'Auto' : '0'}" ${!isBase && isWeightMode ? 'readonly' : ''} step="any">
-                    </div>
-
-                    ${isWeightMode && !isBase ? `
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-                        <div class="mob-field-group">
-                            <div class="mob-label" style="color:#059669;">🔢 Conv Factor</div>
-                            <input type="text" inputmode="decimal" class="mob-input conv-field mob-sync mob-conv-inp" data-field="variant_conv_factor[]" value="${convVal}" placeholder="0.000" autocomplete="off">
-                        </div>
-                        <div class="mob-field-group">
-                            <div class="mob-label" style="color:#059669;">⚖ Piece Wt (g)</div>
-                            <div class="mob-suffix-wrap">
-                                <input type="number" class="mob-input mob-sync mob-piecewt" data-field="variant_weight_per_piece[]" value="${pieceWtVal}" placeholder="—" readonly style="background:#f0fdf4;color:#059669;font-weight:700;">
-                                <span class="mob-suffix">g</span>
-                            </div>
-                        </div>
-                    </div>
-                    ` : (isWeightMode && isBase ? `
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-                        <div class="mob-field-group">
-                            <div class="mob-label">Conv Factor</div>
-                            <input type="text" class="mob-input" value="1" readonly style="background:#f8fafc;color:#94a3b8;">
-                        </div>
-                        <div class="mob-field-group">
-                            <div class="mob-label">Piece Wt (g)</div>
-                            <div class="mob-suffix-wrap">
-                                <input type="number" class="mob-input" value="1000" readonly style="background:#f8fafc;color:#94a3b8;">
-                                <span class="mob-suffix">g</span>
-                            </div>
-                        </div>
-                    </div>
-                    ` : '')}
-
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-                        <div class="mob-field-group">
-                            <div class="mob-label">Sale Price <span class="req">*</span></div>
-                            <input type="number" class="mob-input mob-sync" data-field="variant_sale_price[]" value="${saleVal}" placeholder="0.00" step="any" required>
-                        </div>
-                        <div class="mob-field-group">
-                            <div class="mob-label">Wholesale Price</div>
-                            <input type="number" class="mob-input mob-sync" data-field="variant_wholesale_price[]" value="${wsaleVal}" placeholder="0.00" step="any">
-                        </div>
-                    </div>
-                    <div class="mob-field-group">
-                        <div class="mob-label">Purchase Price <span class="req">*</span></div>
-                        <input type="number" class="mob-input mob-sync" data-field="variant_purchase_price[]" value="${purchVal}" placeholder="0.00" step="any" required>
-                    </div>
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-                        <div class="mob-field-group">
-                            <div class="mob-label">Alert Qty</div>
-                            <input type="number" class="mob-input mob-sync" data-field="variant_alert_qty[]" value="${alertVal}" placeholder="0" step="any">
-                        </div>
-                        <div class="mob-field-group">
-                            <div class="mob-label">Barcode</div>
-                            <input type="text" class="mob-input mob-sync" data-field="variant_barcode[]" value="${barcodeVal}" placeholder="Scan or type...">
-                        </div>
-                    </div>
-
-                    ${!isBase ? `<button type="button" class="mob-delete-btn" onclick="mobDeleteCard(this)">
-                        <i class="fas fa-trash"></i> Remove Variant
-                    </button>` : ''}
                 </div>
             `;
+            $('#raw_materials_container').append(html);
+            $('#no_rm_message').hide();
 
-            // Event: sync mob input → desktop table
-            card.querySelectorAll('.mob-sync').forEach(inp => {
-                inp.addEventListener('input', () => mobSyncToDesktop(card, idx));
+            const $row = $('#rm_row_' + rmCounter);
+            const $select = $row.find('.rm-select');
+
+            // Initialize Searchable Select2
+            $select.select2({
+                placeholder: '-- Search Raw Material --',
+                width: '100%'
             });
-            card.querySelectorAll('.mob-sync').forEach(sel => {
-                if (sel.tagName === 'SELECT') sel.addEventListener('change', () => mobSyncToDesktop(card, idx));
+
+            if (autoSelectId) {
+                $select.val(autoSelectId).trigger('change');
+            }
+
+            // On Change: Update Unit, Live Cost & Auto-Append next row
+            $select.on('change', function() {
+                updateRmUnit(this);
+                calculateLiveCosting();
+                checkAutoAppendRm($row);
             });
 
-            // Conv factor → auto piece wt + stock + prices on mobile
-            const convInp = card.querySelector('.mob-conv-inp');
-            if (convInp) {
-                convInp.addEventListener('input', () => {
-                    let f = parseFloat(convInp.value);
-                    if (isNaN(f)) f = 0;
-                    
-                    const pieceWt = card.querySelector('.mob-piecewt');
-                    const stockAutoInp = card.querySelector('.mob-stock-auto');
-                    const saleInp2 = card.querySelector('[data-field="variant_sale_price[]"]');
-                    const purchInp2 = card.querySelector('[data-field="variant_purchase_price[]"]');
-                    const wsInp2 = card.querySelector('[data-field="variant_wholesale_price[]"]');
+            // On Enter Key in Inputs: Auto-append next row
+            $row.find('.rm-qty, .rm-notes').on('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    checkAutoAppendRm($row, true);
+                }
+            });
+        }
 
-                    if (f > 0) {
-                        if (pieceWt) pieceWt.value = (f * 1000).toFixed(0);
+        function checkAutoAppendRm($row, forceNext = false) {
+            if (isLoadingExisting) return;
+            const isLast = $row.is(':last-child');
+            if (isLast) {
+                addRawMaterialRow();
+            }
+            if (forceNext) {
+                const $nextRow = $row.next('.rm-row');
+                if ($nextRow.length) {
+                    $nextRow.find('.rm-select').select2('open');
+                }
+            }
+        }
 
-                        // Auto stock from base row
-                        const baseRow = variantsBody.querySelector('tr');
-                        const baseStockInp = baseRow?.querySelector('[name="variant_stock[]"]');
-                        const baseStock = parseFloat(baseStockInp?.value || 0);
-                        if (stockAutoInp && baseStock > 0) stockAutoInp.value = Math.round(baseStock / f);
+        function removeRmRow(id) {
+            $('#rm_row_' + id).remove();
+            if ($('.rm-row').length === 0) {
+                $('#no_rm_message').show();
+            }
+            calculateLiveCosting();
+        }
 
-                        // Auto prices from base row
-                        const baseSale = parseFloat(baseRow?.querySelector('.base-sale-input')?.value || 0);
-                        const basePurch = parseFloat(baseRow?.querySelector('.base-purch-input')?.value || 0);
-                        const baseWs = parseFloat(baseRow?.querySelector('[name="variant_wholesale_price[]"]')?.value || 0);
-                        if (saleInp2) saleInp2.value = (baseSale * f).toFixed(2);
-                        if (purchInp2) purchInp2.value = (basePurch * f).toFixed(2);
-                        if (wsInp2) wsInp2.value = (baseWs * f).toFixed(2);
-                    } else {
-                        if (pieceWt) pieceWt.value = '';
-                        if (stockAutoInp) stockAutoInp.value = '';
+        function updateRmUnit(selectEl) {
+            const selectedOpt = $(selectEl).find('option:selected');
+            const unitName = selectedOpt.data('unit') || 'Unit';
+            const unitId = selectedOpt.data('unit-id') || '';
+            const $row = $(selectEl).closest('.comp-item-row');
+            $row.find('.rm-unit-label').val(unitName);
+            $row.find('.rm-unit-id-val').val(unitId);
+        }
+
+        // Generate Options HTML for Packaging Material Selects
+        function getPmOptionsHtml() {
+            let optionsHtml = '<option value="">-- Search & Choose Packaging Item --</option>';
+            packagingMaterialsData.forEach(pm => {
+                optionsHtml += `<option value="${pm.id}" data-unit="${pm.unit}" data-price="${pm.price}">${pm.name} (${pm.code})</option>`;
+            });
+            return optionsHtml;
+        }
+
+        // Add Packaging Material Row with Searchable Select2 & Auto-Next Row
+        function addPackagingRow(autoSelectId = null, initialQty = null, initialNotes = null) {
+            pmCounter++;
+            const optionsHtml = getPmOptionsHtml();
+
+            const defaultQty = initialQty !== null ? initialQty : ($('#batch_size').val() || 100);
+            const defaultNotes = initialNotes ? initialNotes : '';
+
+            const html = `
+                <div class="comp-item-row pm-row" id="pm_row_${pmCounter}" data-counter="${pmCounter}">
+                    <div class="row g-2 align-items-center">
+                        <div class="col-md-5">
+                            <label class="form-label-pro" style="font-size: 0.68rem;">Packaging Material Item</label>
+                            <select name="packaging_material_id[]" class="form-select-pro pm-select select2-pm">
+                                ${optionsHtml}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label-pro" style="font-size: 0.68rem;">Batch Qty Needed</label>
+                            <input type="number" step="0.01" name="pm_quantity[]" class="form-control-pro font-weight-bold pm-qty" placeholder="100" value="${defaultQty}" oninput="calculateLiveCosting()">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label-pro" style="font-size: 0.68rem;">Notes</label>
+                            <input type="text" name="pm_notes[]" class="form-control-pro pm-notes" placeholder="Press Enter for next row..." value="${defaultNotes}">
+                        </div>
+                        <div class="col-md-1 text-end pt-3">
+                            <button type="button" class="btn btn-outline-danger btn-sm p-1" style="border-radius: 6px;" onclick="removePmRow(${pmCounter})">
+                                <i class="fa fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            $('#packaging_materials_container').append(html);
+            $('#no_pm_message').hide();
+
+            const $row = $('#pm_row_' + pmCounter);
+            const $select = $row.find('.pm-select');
+
+            // Initialize Searchable Select2
+            $select.select2({
+                placeholder: '-- Search Packaging Item --',
+                width: '100%'
+            });
+
+            if (autoSelectId) {
+                $select.val(autoSelectId).trigger('change');
+            }
+
+            // On Change: Auto-Append next row if last
+            $select.on('change', function() {
+                calculateLiveCosting();
+                checkAutoAppendPm($row);
+            });
+
+            // On Enter Key: Auto-append next row
+            $row.find('.pm-qty, .pm-notes').on('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    checkAutoAppendPm($row, true);
+                }
+            });
+        }
+
+        function checkAutoAppendPm($row, forceNext = false) {
+            if (isLoadingExisting) return;
+            const isLast = $row.is(':last-child');
+            if (isLast) {
+                addPackagingRow();
+            }
+            if (forceNext) {
+                const $nextRow = $row.next('.pm-row');
+                if ($nextRow.length) {
+                    $nextRow.find('.pm-select').select2('open');
+                }
+            }
+        }
+
+        function removePmRow(id) {
+            $('#pm_row_' + id).remove();
+            if ($('.pm-row').length === 0) {
+                $('#no_pm_message').show();
+            }
+            calculateLiveCosting();
+        }
+
+        // --- QUICK CREATE RAW MATERIAL (AJAX ZERO-REFRESH) ---
+        $('#saveQuickRmBtn').on('click', function() {
+            const name = $('#q_rm_name').val().trim();
+            const code = $('#q_rm_code').val().trim();
+            if (!name || !code) {
+                Swal.fire('Required Fields', 'Please fill Raw Material Name and Code.', 'warning');
+                return;
+            }
+
+            const btn = $(this);
+            btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin me-1"></i> Saving...');
+
+            $.ajax({
+                url: "{{ route('raw_materials.store') }}",
+                type: 'POST',
+                data: $('#quickRmForm').serialize(),
+                success: function(res) {
+                    btn.prop('disabled', false).html('<i class="fa fa-check-circle me-1"></i> Save & Auto Select');
+                    if (res.errors) {
+                        let errMsg = Object.values(res.errors).flat().join('<br>');
+                        Swal.fire('Error', errMsg, 'error');
+                        return;
                     }
-                    mobSyncToDesktop(card, idx);
-                });
-            }
 
-            // Live update card title from name input
-            const nameInp = card.querySelector('[data-field="variant_name[]"]');
-            if (nameInp) {
-                nameInp.addEventListener('input', () => {
-                    const lbl = card.querySelector('.mob-card-label');
-                    if (lbl) lbl.textContent = nameInp.value || (isBase ? 'Base Variant' : 'Variant ' + (idx + 1));
-                });
-            }
+                    if (res.data) {
+                        const newItem = {
+                            id: res.data.id,
+                            name: res.data.name,
+                            code: res.data.code,
+                            unit: res.data.unit ? res.data.unit.name : 'Unit',
+                            price: parseFloat(res.data.price || 0)
+                        };
+                        rawMaterialsData.push(newItem);
 
-            return card;
-        }
+                        // Update options across all existing raw material selects
+                        const newOption = new Option(`${newItem.name} (${newItem.code})`, newItem.id, false, false);
+                        $(newOption).attr('data-unit', newItem.unit).attr('data-price', newItem.price);
 
-        // ---- Sync mobile card fields → desktop table row ----
-        function mobSyncToDesktop(card, idx) {
-            const tr = variantsBody.children[idx];
-            if (!tr) return;
-            card.querySelectorAll('.mob-sync').forEach(inp => {
-                const field = inp.dataset.field;
-                if (!field) return;
-                const desktopEl = tr.querySelector(`[name="${field}"]`);
-                if (desktopEl) desktopEl.value = inp.value;
+                        $('.rm-select').each(function() {
+                            const val = $(this).val();
+                            $(this).append($(newOption).clone()).val(val).trigger('change.select2');
+                        });
+
+                        // Close Modal
+                        $('#quickCreateRmModal').modal('hide');
+                        $('#quickRmForm')[0].reset();
+                        $('#q_rm_code').val('RM-' + Math.floor(1000 + Math.random() * 9000));
+
+                        // Select in current empty row or add new row
+                        let $targetRow = $('.rm-row:last');
+                        if (!$targetRow.length || $targetRow.find('.rm-select').val()) {
+                            addRawMaterialRow(newItem.id);
+                        } else {
+                            $targetRow.find('.rm-select').val(newItem.id).trigger('change');
+                        }
+
+                        Swal.fire({
+                            toast: true,
+                            position: 'top-end',
+                            icon: 'success',
+                            title: `Raw Material "${newItem.name}" Created & Selected!`,
+                            showConfirmButton: false,
+                            timer: 2500
+                        });
+                    }
+                },
+                error: function(xhr) {
+                    btn.prop('disabled', false).html('<i class="fa fa-check-circle me-1"></i> Save & Auto Select');
+                    Swal.fire('Error', 'Failed to create Raw Material.', 'error');
+                }
             });
-            // trigger desktop recalc
-            if (typeof updateVariantStocksFromBase === 'function') {
-                updateVariantStocksFromBase();
-            }
-        }
-
-        // ---- Toggle accordion (one open at a time) ----
-        function mobToggleCard(headerEl) {
-            const card = headerEl.closest('.mob-variant-card');
-            const isOpen = card.classList.contains('is-open');
-            // Close all
-            document.querySelectorAll('.mob-variant-card.is-open').forEach(c => c.classList.remove('is-open'));
-            // Toggle this
-            if (!isOpen) card.classList.add('is-open');
-        }
-
-        // ---- Delete card + corresponding desktop row ----
-        function mobDeleteCard(btn) {
-            const card = btn.closest('.mob-variant-card');
-            const idx = parseInt(card.dataset.mobIdx);
-            const tr = variantsBody.children[idx];
-            if (tr) {
-                if (variantsBody.children.length <= 1) return;
-                tr.remove();
-            }
-            card.remove();
-            // Re-index remaining cards
-            document.querySelectorAll('.mob-variant-card').forEach((c, i) => {
-                c.dataset.mobIdx = i;
-            });
-        }
-
-        // ---- Add a new variant (mobile) ----
-        function mobileAddVariant() {
-            // Trigger desktop add (reuse logic)
-            if (typeof addVariantRow === 'function') {
-                addVariantRow();
-            }
-            // Rebuild mobile cards from updated desktop rows
-            rebuildMobileCards();
-            // Open last card
-            const cards = document.querySelectorAll('.mob-variant-card');
-            document.querySelectorAll('.mob-variant-card.is-open').forEach(c => c.classList.remove('is-open'));
-            if (cards.length) cards[cards.length - 1].classList.add('is-open');
-        }
-
-        // ---- Rebuild all mobile cards from desktop rows ----
-        function rebuildMobileCards() {
-            const body = document.getElementById('mobileVariantsBody');
-            if (!body) return;
-            body.innerHTML = '';
-            Array.from(variantsBody.children).forEach((tr, idx) => {
-                const isBase = !!tr.querySelector('.base-name-input');
-                const card = buildMobCard(tr, idx, isBase);
-                body.appendChild(card);
-            });
-        }
-
-        // ---- Initial render of mobile cards (after desktop rows exist) ----
-        // Observe desktop table for row additions
-        const desktopObserver = new MutationObserver(() => {
-            if (isMobile()) rebuildMobileCards();
-        });
-        const variantsBodyEl = document.getElementById('variantsBody');
-        if (variantsBodyEl) {
-            desktopObserver.observe(variantsBodyEl, { childList: true });
-        }
-
-        // Also rebuild when window resizes to mobile
-        window.addEventListener('resize', () => {
-            if (isMobile()) rebuildMobileCards();
         });
 
-        // Make functions global
-        window.mobileAddVariant = mobileAddVariant;
-        window.mobToggleCard = mobToggleCard;
-        window.mobDeleteCard = mobDeleteCard;
+        // --- QUICK CREATE PACKAGING MATERIAL (AJAX ZERO-REFRESH) ---
+        $('#saveQuickPmBtn').on('click', function() {
+            const name = $('#q_pm_name').val().trim();
+            const code = $('#q_pm_code').val().trim();
+            if (!name || !code) {
+                Swal.fire('Required Fields', 'Please fill Packaging Item Name and Code.', 'warning');
+                return;
+            }
+
+            const btn = $(this);
+            btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin me-1"></i> Saving...');
+
+            $.ajax({
+                url: "{{ route('packaging_materials.store') }}",
+                type: 'POST',
+                data: $('#quickPmForm').serialize(),
+                success: function(res) {
+                    btn.prop('disabled', false).html('<i class="fa fa-check-circle me-1"></i> Save & Auto Select');
+                    if (res.errors) {
+                        let errMsg = Object.values(res.errors).flat().join('<br>');
+                        Swal.fire('Error', errMsg, 'error');
+                        return;
+                    }
+
+                    if (res.data) {
+                        const newItem = {
+                            id: res.data.id,
+                            name: res.data.name,
+                            code: res.data.code,
+                            unit: res.data.unit ? res.data.unit.name : 'Pcs',
+                            price: 0
+                        };
+                        packagingMaterialsData.push(newItem);
+
+                        // Update options across all existing packaging selects
+                        const newOption = new Option(`${newItem.name} (${newItem.code})`, newItem.id, false, false);
+                        $(newOption).attr('data-unit', newItem.unit).attr('data-price', 0);
+
+                        $('.pm-select').each(function() {
+                            const val = $(this).val();
+                            $(this).append($(newOption).clone()).val(val).trigger('change.select2');
+                        });
+
+                        // Close Modal
+                        $('#quickCreatePmModal').modal('hide');
+                        $('#quickPmForm')[0].reset();
+                        $('#q_pm_code').val('PM-' + Math.floor(1000 + Math.random() * 9000));
+
+                        // Select in current empty row or add new row
+                        let $targetRow = $('.pm-row:last');
+                        if (!$targetRow.length || $targetRow.find('.pm-select').val()) {
+                            addPackagingRow(newItem.id);
+                        } else {
+                            $targetRow.find('.pm-select').val(newItem.id).trigger('change');
+                        }
+
+                        Swal.fire({
+                            toast: true,
+                            position: 'top-end',
+                            icon: 'success',
+                            title: `Packaging Item "${newItem.name}" Created & Selected!`,
+                            showConfirmButton: false,
+                            timer: 2500
+                        });
+                    }
+                },
+                error: function(xhr) {
+                    btn.prop('disabled', false).html('<i class="fa fa-check-circle me-1"></i> Save & Auto Select');
+                    Swal.fire('Error', 'Failed to create Packaging Material.', 'error');
+                }
+            });
+        });
+
+        // Build Review Summary in Step 3
+        function buildReviewSummary() {
+            calculateLiveCosting();
+            
+            const batchSize = parseFloat($('#batch_size').val()) || 1;
+            const unitText = $('#product_unit option:selected').text() || 'Units';
+            
+            $('#rev_product_name').text($('#product_name').val() || '-');
+            $('#rev_unit').text(unitText);
+            $('#rev_category').text($('#category_id option:selected').text() || '-');
+            $('#rev_batch_size').text(batchSize + ' ' + unitText);
+
+            const salePriceVal = parseFloat($('#sale_price_per_box').val());
+            $('#rev_sale_price').text(salePriceVal ? 'Rs. ' + salePriceVal.toLocaleString('en-US', { minimumFractionDigits: 2 }) : 'Optional (Not set)');
+            
+            $('#rev_alert_qty').text(($('input[name="alert_quantity"]').val() || '10') + ' Units');
+
+            const totalBatchCostText = $('#live_total_batch_cost_display').text();
+            const perUnitCostText = $('#live_per_unit_cost_display').text();
+
+            $('#rev_total_batch_cost').text(totalBatchCostText);
+            $('#rev_per_unit_cost').text(perUnitCostText);
+
+            let tbodyHtml = '';
+
+            // Raw Materials
+            $('.rm-row').each(function() {
+                const $opt = $(this).find('.rm-select option:selected');
+                const name = $opt.text();
+                const qty = parseFloat($(this).find('.rm-qty').val()) || 0;
+                const unit = $(this).find('.rm-unit-label').val();
+                const price = parseFloat($opt.data('price')) || 0;
+                const rowCost = qty * price;
+
+                if (name && qty && $(this).find('.rm-select').val()) {
+                    tbodyHtml += `
+                        <tr>
+                            <td class="py-2 px-3"><span class="badge bg-success-subtle text-success border border-success">Raw Material</span></td>
+                            <td class="py-2 px-3 font-weight-bold text-dark">${name}</td>
+                            <td class="py-2 px-3 text-end font-weight-bold text-primary">${qty}</td>
+                            <td class="py-2 px-3">${unit}</td>
+                            <td class="py-2 px-3 text-end font-weight-bold text-dark">Rs. ${rowCost.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+                        </tr>
+                    `;
+                }
+            });
+
+            // Packaging Materials
+            $('.pm-row').each(function() {
+                const $opt = $(this).find('.pm-select option:selected');
+                const name = $opt.text();
+                const qty = parseFloat($(this).find('.pm-qty').val()) || 0;
+                const price = parseFloat($opt.data('price')) || 0;
+                const rowCost = qty * price;
+
+                if (name && qty && $(this).find('.pm-select').val()) {
+                    tbodyHtml += `
+                        <tr>
+                            <td class="py-2 px-3"><span class="badge bg-warning-subtle text-warning-emphasis border border-warning">Packaging</span></td>
+                            <td class="py-2 px-3 font-weight-bold text-dark">${name}</td>
+                            <td class="py-2 px-3 text-end font-weight-bold text-primary">${qty}</td>
+                            <td class="py-2 px-3">Pcs</td>
+                            <td class="py-2 px-3 text-end font-weight-bold text-dark">Rs. ${rowCost.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+                        </tr>
+                    `;
+                }
+            });
+
+            if (!tbodyHtml) {
+                tbodyHtml = '<tr><td colspan="5" class="text-center text-muted py-3">No composition items added to this product.</td></tr>';
+            }
+
+            $('#rev_composition_body').html(tbodyHtml);
+        }
+
+        // Image Preview
+        function previewProductImage(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    $('#imagePreview').attr('src', e.target.result).show();
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        // Subcategory Dependent Dropdown
+        function fetchSubcategories(categoryId, preselectedId = null) {
+            const subCategorySelect = $('#sub_category_id');
+            const currentSubId = preselectedId || subCategorySelect.val();
+
+            if (categoryId) {
+                $.ajax({
+                    url: "{{ url('/get-subcategories') }}/" + categoryId,
+                    type: 'GET',
+                    dataType: 'json',
+                    success: function(data) {
+                        subCategorySelect.empty();
+                        subCategorySelect.append('<option value="">-- Select Subcategory --</option>');
+                        if (Array.isArray(data) && data.length > 0) {
+                            data.forEach(sub => {
+                                const isSel = (currentSubId && currentSubId == sub.id) ? 'selected' : '';
+                                subCategorySelect.append(`<option value="${sub.id}" ${isSel}>${sub.name}</option>`);
+                            });
+                        } else {
+                            subCategorySelect.html('<option value="">-- No Subcategories Available --</option>');
+                        }
+                        if ($.fn.select2 && subCategorySelect.hasClass('select2-hidden-accessible')) {
+                            subCategorySelect.trigger('change.select2');
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Failed to fetch subcategories:', error);
+                    }
+                });
+            } else {
+                subCategorySelect.html('<option value="">-- Select Subcategory --</option>');
+                if ($.fn.select2 && subCategorySelect.hasClass('select2-hidden-accessible')) {
+                    subCategorySelect.trigger('change.select2');
+                }
+            }
+        }
+
+        // Global Event Delegation for Category Change
+        $(document).on('change select2:select', '#category_id', function() {
+            const catId = $(this).val();
+            fetchSubcategories(catId);
+        });
+
+        $(document).ready(function() {
+            $('.form-select-pro').select2({
+                width: '100%',
+                placeholder: "-- Select --",
+                allowClear: false
+            });
+
+            toggleProductType();
+            updateBatchUnitLabel();
+
+            $('#addRmBtn').on('click', () => addRawMaterialRow());
+            $('#addPmBtn').on('click', () => addPackagingRow());
+
+            // Set initial auto-generated codes for quick modals
+            $('#q_rm_code').val('RM-' + Math.floor(1000 + Math.random() * 9000));
+            $('#q_pm_code').val('PM-' + Math.floor(1000 + Math.random() * 9000));
+
+            // Pre-populate existing raw materials
+            if (existingRawMaterials && existingRawMaterials.length > 0) {
+                existingRawMaterials.forEach(rm => {
+                    addRawMaterialRow(rm.raw_material_id, rm.quantity, rm.notes);
+                });
+            } else {
+                addRawMaterialRow();
+            }
+
+            // Pre-populate existing packaging materials
+            if (existingPackagingMaterials && existingPackagingMaterials.length > 0) {
+                existingPackagingMaterials.forEach(pm => {
+                    addPackagingRow(pm.packaging_material_id, pm.quantity, pm.notes);
+                });
+            } else {
+                addPackagingRow();
+            }
+
+            isLoadingExisting = false;
+            calculateLiveCosting();
+
+            // Fast AJAX Zero-Refresh Form Submission with Instant Visual Feedback
+            $('#productWizardForm').on('submit', function(e) {
+                e.preventDefault();
+
+                // 1. Remove blank rows
+                $('.rm-row').each(function() {
+                    if (!$(this).find('.rm-select').val()) $(this).remove();
+                });
+                $('.pm-row').each(function() {
+                    if (!$(this).find('.pm-select').val()) $(this).remove();
+                });
+
+                // 2. Instant visual UI feedback
+                const submitBtn = $('#btn_submit_final');
+                submitBtn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin me-2"></i> Updating Product Profile...');
+
+                const formData = new FormData(this);
+
+                $.ajax({
+                    url: $(this).attr('action'),
+                    type: 'POST',
+                    data: formData,
+                    contentType: false,
+                    processData: false,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    success: function(res) {
+                        if (res.status === 'error') {
+                            submitBtn.prop('disabled', false).html('<i class="fa fa-save me-1"></i> Update Product Profile');
+                            let errMsg = res.errors ? Object.values(res.errors).flat().join('<br>') : (res.message || 'Validation failed');
+                            showAlert('Validation Error', errMsg, 'error');
+                            return;
+                        }
+
+                        if (typeof Swal !== 'undefined' && typeof Swal.fire === 'function') {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Product Updated Successfully!',
+                                text: 'Product specifications and composition recipe changes saved in database.',
+                                showCancelButton: true,
+                                confirmButtonText: 'Back to Products List',
+                                cancelButtonText: 'Continue Editing',
+                                confirmButtonColor: '#10b981',
+                                cancelButtonColor: '#3b82f6'
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    window.location.href = "{{ route('product') }}";
+                                } else {
+                                    window.location.reload();
+                                }
+                            });
+                        } else {
+                            alert('Product Updated Successfully!');
+                            window.location.href = "{{ route('product') }}";
+                        }
+                    },
+                    error: function(xhr) {
+                        submitBtn.prop('disabled', false).html('<i class="fa fa-save me-1"></i> Update Product Profile');
+                        let errMsg = 'Failed to update product profile. Please check inputs.';
+                        if (xhr.responseJSON && xhr.responseJSON.errors) {
+                            errMsg = Object.values(xhr.responseJSON.errors).flat().join('<br>');
+                        } else if (xhr.responseJSON && xhr.responseJSON.message) {
+                            errMsg = xhr.responseJSON.message;
+                        }
+                        showAlert('Update Error', errMsg, 'error');
+                    }
+                });
+            });
+        });
     </script>
 @endsection

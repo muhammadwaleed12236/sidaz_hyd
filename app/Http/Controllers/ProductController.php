@@ -899,7 +899,7 @@ class ProductController extends Controller
     {
         $userId = auth()->id();
 
-        if ($request->wantsJson()) {
+        if ($request->wantsJson() || $request->ajax()) {
             $validation = $this->validateProductRequest($request);
             if ($validation->fails()) {
                 return response()->json(['status' => 'error', 'errors' => $validation->errors()], 422);
@@ -907,7 +907,9 @@ class ProductController extends Controller
             $validated = $validation->validated();
         } else {
             $validation = $this->validateProductRequest($request);
-            $validation->validate();
+            if ($validation->fails()) {
+                return redirect()->back()->withErrors($validation)->withInput();
+            }
         }
 
         $mode = $request->size_mode;
@@ -1103,7 +1105,7 @@ class ProductController extends Controller
                 'item_code' => $request->item_code ?? Product::where('id', $id)->value('item_code'),
                 'item_name' => $request->product_name,
                 'product_type' => $request->product_type,
-                'barcode_path' => $request->barcode_path ?? rand(100000000000, 999999999999),
+                'barcode_path' => $request->barcode_path ?: (Product::where('id', $id)->value('barcode_path') ?: rand(100000000000, 999999999999)),
                 'unit_id' => $unitVal,
                 'brand_id' => $request->brand_id,
                 'model' => $request->model,
@@ -1120,10 +1122,6 @@ class ProductController extends Controller
                 'width' => $width,
                 'pieces_per_box' => $piecesPerBox,
                 'pieces_per_m2' => $piecesPerM2,
-                // 'boxes_quantity' => $boxesQuantity,
-                // 'loose_pieces' => $loosePieces,
-                // 'piece_quantity' => $pieceQuantity,
-                // 'total_stock_qty' => $totalStockQty,
 
                 'total_m2' => $totalM2,
 
@@ -1138,16 +1136,77 @@ class ProductController extends Controller
                 'purchase_price_per_piece' => $purchasePricePerPiece,
                 'purchase_price_per_box' => $purchasePricePerBox,
 
-                // 'total_price' => $totalPrice, // Removed: Not in DB
-                // 'total_purchase_price' => $totalPurchasePrice, // Removed: Not in DB
-
                 'is_part' => 0,
                 'is_assembled' => 0,
                 'updated_at' => now(),
             ]);
 
-            // BOM re-save logic removed as table does not exist
-            // DB::table('product_boms')->where('product_id', $id)->delete();
+            // Create or update Formulation / Composition profile if raw materials or packaging materials provided
+            $hasRm = $request->has('raw_material_id') && is_array($request->raw_material_id) && count(array_filter($request->raw_material_id)) > 0;
+            $hasPm = $request->has('packaging_material_id') && is_array($request->packaging_material_id) && count(array_filter($request->packaging_material_id)) > 0;
+
+            if ($hasRm || $hasPm) {
+                $formulation = Formulation::where('product_id', $id)->latest()->first();
+                if (!$formulation) {
+                    $formulationCode = 'FORM-' . str_pad($id, 4, '0', STR_PAD_LEFT);
+                    $formulation = Formulation::create([
+                        'formulation_code' => $formulationCode,
+                        'product_id' => $id,
+                        'department_id' => $request->department_id ?? null,
+                        'batch_size' => $request->batch_size ?? 1,
+                        'batch_unit_id' => $unitVal,
+                        'version' => '1.0',
+                        'effective_date' => date('Y-m-d'),
+                        'status' => 'active',
+                        'notes' => 'Composition profile created via Product Wizard',
+                    ]);
+                } else {
+                    $formulation->update([
+                        'department_id' => $request->department_id ?? $formulation->department_id,
+                        'batch_size' => $request->batch_size ?? $formulation->batch_size,
+                        'batch_unit_id' => $unitVal ?? $formulation->batch_unit_id,
+                        'updated_at' => now(),
+                    ]);
+                    $formulation->rawMaterials()->delete();
+                    $formulation->packagingMaterials()->delete();
+                }
+
+                if ($hasRm) {
+                    $rmIds = array_filter($request->raw_material_id);
+                    $rawMats = \App\Models\RawMaterial::whereIn('id', $rmIds)->get()->keyBy('id');
+                    for ($i = 0; $i < count($request->raw_material_id); $i++) {
+                        $rmId = $request->raw_material_id[$i] ?? null;
+                        if (!empty($rmId)) {
+                            $rmUnitId = $request->rm_unit_id[$i] ?? null;
+                            if (empty($rmUnitId) || !is_numeric($rmUnitId)) {
+                                $rmUnitId = isset($rawMats[$rmId]) ? $rawMats[$rmId]->unit_id : null;
+                            }
+                            FormulationRawMaterial::create([
+                                'formulation_id' => $formulation->id,
+                                'raw_material_id' => $rmId,
+                                'unit_id' => $rmUnitId,
+                                'quantity' => $request->rm_quantity[$i] ?? 0,
+                                'waste_percent' => $request->rm_waste_percent[$i] ?? 0,
+                                'notes' => $request->rm_notes[$i] ?? null,
+                            ]);
+                        }
+                    }
+                }
+
+                if ($hasPm) {
+                    for ($i = 0; $i < count($request->packaging_material_id); $i++) {
+                        $pmId = $request->packaging_material_id[$i] ?? null;
+                        if (!empty($pmId)) {
+                            FormulationPackagingMaterial::create([
+                                'formulation_id' => $formulation->id,
+                                'packaging_material_id' => $pmId,
+                                'quantity' => $request->pm_quantity[$i] ?? 0,
+                                'notes' => $request->pm_notes[$i] ?? null,
+                            ]);
+                        }
+                    }
+                }
+            }
 
             // ✅ Update WarehouseStock box quantity based on new pieces_per_box (preserve total_pieces)
             $warehouseStock = \App\Models\WarehouseStock::where('product_id', $id)->first();
@@ -1176,11 +1235,11 @@ class ProductController extends Controller
             }
         });
 
-        if ($request->wantsJson()) {
+        if ($request->wantsJson() || $request->ajax()) {
             return response()->json(['status' => 'success', 'message' => 'Product updated successfully']);
         }
 
-        return redirect()->back()->with('success', 'Product updated successfully');
+        return redirect()->route('product')->with('success', 'Product updated successfully');
     }
 
     public function bulkUpdate(Request $request)
@@ -1289,11 +1348,54 @@ class ProductController extends Controller
     // ===== Edit view =====
     public function edit($id)
     {
-        $product = Product::with('category_relation', 'sub_category_relation', 'unit', 'brand', 'warehouseStocks')
+        $product = Product::with(['category_relation', 'sub_category_relation', 'unit', 'brand', 'warehouseStocks'])
             ->findOrFail($id);
-        $categories = Category::all();
-        $subcategories = SubCategory::all();
-        $brands = Brand::all();
+        $categories = Category::select('id', 'name')->orderBy('name')->get();
+        $subcategories = $product->category_id ? Subcategory::where('category_id', $product->category_id)->orderBy('name')->get() : Subcategory::orderBy('name')->get();
+        $units = Unit::select('id', 'name')->orderBy('name')->get();
+        $brands = Brand::select('id', 'name')->orderBy('name')->get();
+        $departments = Department::select('id', 'name')->orderBy('name')->get();
+
+        $rawMaterials = RawMaterial::with('unit')->where(function($q) {
+            $q->where('status', 'active')->orWhere('status', 1)->orWhereNull('status');
+        })->orderBy('name')->get();
+
+        $packagingMaterials = PackagingMaterial::with('unit')->where(function($q) {
+            $q->where('status', 'active')->orWhere('status', 1)->orWhereNull('status');
+        })->orderBy('name')->get();
+
+        $formulation = Formulation::with(['rawMaterials.rawMaterial.unit', 'packagingMaterials.packagingMaterial.unit', 'department'])
+            ->where('product_id', $product->id)
+            ->latest()
+            ->first();
+
+        $existingRawMaterials = [];
+        if ($formulation && $formulation->rawMaterials) {
+            foreach ($formulation->rawMaterials as $frm) {
+                $rm = $frm->rawMaterial;
+                $existingRawMaterials[] = [
+                    'raw_material_id' => $frm->raw_material_id,
+                    'quantity' => (float) $frm->quantity,
+                    'unit_id' => $frm->unit_id ?? ($rm->unit_id ?? null),
+                    'unit_name' => $frm->unit->name ?? ($rm->unit->name ?? 'Unit'),
+                    'notes' => $frm->notes ?? '',
+                    'price' => (float) ($rm->price ?? 0),
+                ];
+            }
+        }
+
+        $existingPackagingMaterials = [];
+        if ($formulation && $formulation->packagingMaterials) {
+            foreach ($formulation->packagingMaterials as $fpm) {
+                $pm = $fpm->packagingMaterial;
+                $existingPackagingMaterials[] = [
+                    'packaging_material_id' => $fpm->packaging_material_id,
+                    'quantity' => (float) $fpm->quantity,
+                    'notes' => $fpm->notes ?? '',
+                    'price' => (float) ($pm->price ?? 0),
+                ];
+            }
+        }
 
         // Calculate current stock from WarehouseStock (the real source of truth)
         $totalPieces = $product->warehouseStocks->sum('total_pieces');
@@ -1302,13 +1404,25 @@ class ProductController extends Controller
         if ($product->size_mode === 'by_cartons' || $product->size_mode === 'by_size') {
             $product->boxes_quantity = (int) floor($totalPieces / $ppb);
             $product->loose_pieces   = (int) ($totalPieces % $ppb);
-        } elseif ($product->size_mode === 'by_pieces') {
+        } else {
             $product->piece_quantity  = (int) $totalPieces;
             $product->boxes_quantity  = 0;
             $product->loose_pieces    = 0;
         }
 
-        return view('admin_panel.product.edit', compact('product', 'categories', 'subcategories', 'brands'));
+        return view('admin_panel.product.edit', compact(
+            'product',
+            'categories',
+            'subcategories',
+            'units',
+            'brands',
+            'rawMaterials',
+            'packagingMaterials',
+            'departments',
+            'formulation',
+            'existingRawMaterials',
+            'existingPackagingMaterials'
+        ));
     }
 
     // ===== Barcode view =====
