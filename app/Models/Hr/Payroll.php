@@ -116,7 +116,7 @@ class Payroll extends Model
 
     public function canMarkPaid()
     {
-        return in_array($this->status, ['generated', 'reviewed']);
+        return in_array($this->status, ['generated', 'reviewed', 'paid']);
     }
 
     public function isMonthly()

@@ -990,9 +990,56 @@ class PayrollController extends Controller
     }
 
     /**
-     * Mark payroll as paid with detailed payment options & account selection
+     * Safely reverse any account deductions and loan payments previously applied for this payroll.
      */
-    public function markPaid(Request $request, $id)
+    private function reversePaymentEffects(Payroll $payroll)
+    {
+        // 1. Reverse Account Deduction if an account was previously charged
+        if ($payroll->account_id && floatval($payroll->net_salary) > 0) {
+            $prevAccount = \App\Models\Account::find($payroll->account_id);
+            if ($prevAccount) {
+                if (\Schema::hasColumn('accounts', 'current_balance')) {
+                    $prevAccount->increment('current_balance', floatval($payroll->net_salary));
+                }
+            }
+
+            if (class_exists('\App\Models\AccountHistory')) {
+                \App\Models\AccountHistory::where('account_id', $payroll->account_id)
+                    ->where(function ($q) use ($payroll) {
+                        $q->where('note', 'like', "%(Payroll #{$payroll->id})%")
+                          ->orWhere('note', 'like', "%{$payroll->employee->full_name}%{$payroll->month}%");
+                    })
+                    ->delete();
+            }
+        }
+
+        // 2. Reverse Loan Deductions if any were recorded for this payroll
+        $loanPayments = \App\Models\Hr\LoanPayment::where('notes', 'like', "%(Payroll #{$payroll->id})%")->get();
+        foreach ($loanPayments as $lp) {
+            $loan = \App\Models\Hr\Loan::find($lp->loan_id);
+            if ($loan) {
+                $newPaid = max(0, $loan->paid_amount - $lp->amount);
+                $loan->update([
+                    'paid_amount' => $newPaid,
+                    'status' => 'approved',
+                ]);
+            }
+            $lp->delete();
+        }
+
+        // 3. Revert Scheduled Deductions for this month back to 'pending'
+        \App\Models\Hr\LoanScheduledDeduction::where('deduction_month', $payroll->month)
+            ->whereHas('loan', function ($q) use ($payroll) {
+                $q->where('employee_id', $payroll->employee_id);
+            })
+            ->where('status', 'deducted')
+            ->update(['status' => 'pending']);
+    }
+
+    /**
+     * Revert a paid payroll back to outstanding / generated status.
+     */
+    public function unpay($id)
     {
         if (! auth()->user()->can('hr.payroll.edit')) {
             return response()->json(['error' => 'Unauthorized action.'], 403);
@@ -1000,15 +1047,62 @@ class PayrollController extends Controller
 
         $payroll = Payroll::with('employee')->findOrFail($id);
 
-        if (! $payroll->canMarkPaid()) {
+        if ($payroll->status !== 'paid') {
+            return response()->json(['error' => 'Payroll is not in paid status.'], 422);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $this->reversePaymentEffects($payroll);
+
+            $payroll->update([
+                'status' => 'generated',
+                'payment_date' => null,
+                'account_id' => null,
+                'payment_method' => null,
+                'payment_reference' => null,
+            ]);
+
+            DB::commit();
+
             return response()->json([
-                'error' => 'Payroll cannot be marked as paid.',
+                'success' => "Payroll for {$payroll->employee->full_name} reverted to Outstanding (Unpaid) successfully.",
+                'reload' => true,
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Mark payroll as paid with detailed payment options & account selection
+     * Also supports re-editing paid payrolls or setting pay to 0 to revert to Outstanding.
+     */
+    public function markPaid(Request $request, $id)
+    {
+        if (! auth()->user()->can('hr.payroll.edit')) {
+            return response()->json(['error' => 'Unauthorized action.'], 403);
+        }
+
+        $payroll = Payroll::with(['employee', 'details'])->findOrFail($id);
+
+        if (! in_array($payroll->status, ['generated', 'reviewed', 'paid'])) {
+            return response()->json([
+                'error' => 'Payroll cannot be modified in its current status.',
             ], 403);
         }
 
         $validator = Validator::make($request->all(), [
-            'payment_date' => 'nullable|date',
-            'account_id' => 'nullable|exists:accounts,id',
+            'payment_date' => 'required|date',
+            'account_id' => [
+                \Illuminate\Validation\Rule::requiredIf(function () use ($request) {
+                    return floatval($request->input('net_salary', 1)) > 0;
+                }),
+                'nullable',
+                'exists:accounts,id',
+            ],
             'payment_method' => 'nullable|string',
             'payment_reference' => 'nullable|string',
             'notes' => 'nullable|string',
@@ -1018,130 +1112,202 @@ class PayrollController extends Controller
             'manual_allowances' => 'nullable|numeric|min:0',
             'overtime' => 'nullable|numeric|min:0',
             'net_salary' => 'nullable|numeric|min:0',
+        ], [
+            'payment_date.required' => 'Payment date is required.',
+            'account_id.required' => 'Please select the paying account (Bank / Cash).',
+            'account_id.exists' => 'The selected paying account does not exist.',
         ]);
 
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $paymentDate = $request->input('payment_date', now()->format('Y-m-d'));
-        $accountId = $request->input('account_id');
-        $paymentMethod = $request->input('payment_method', 'cash');
-        $paymentReference = $request->input('payment_reference');
-        $notes = $request->input('notes');
+        try {
+            DB::beginTransaction();
 
-        // Get attendance breakdown to fetch overtime earnings
-        $attendanceBreakdown = $this->getAttendanceBreakdown($payroll);
-        $overtimeEarnings = $request->has('overtime')
-            ? floatval($request->input('overtime'))
-            : floatval($attendanceBreakdown['overtime_earnings'] ?? 0);
+            $paymentDate = $request->input('payment_date', now()->format('Y-m-d'));
+            $accountId = $request->filled('account_id') ? $request->input('account_id') : null;
+            $paymentMethod = $request->input('payment_method', 'cash');
+            $paymentReference = $request->input('payment_reference');
+            $notes = $request->input('notes');
 
-        // Check if customized deductions were passed from payment modal
-        $attendanceDeductions = $request->has('attendance_deductions')
-            ? floatval($request->input('attendance_deductions'))
-            : $payroll->attendance_deductions;
+            // 1. If previously paid, safely reverse previous account deductions and loan logs first
+            if ($payroll->status === 'paid') {
+                $this->reversePaymentEffects($payroll);
+            }
 
-        $manualDeductions = $request->has('manual_deductions')
-            ? floatval($request->input('manual_deductions'))
-            : $payroll->manual_deductions;
+            // Get attendance breakdown to fetch overtime earnings
+            $attendanceBreakdown = $this->getAttendanceBreakdown($payroll);
+            $overtimeEarnings = $request->has('overtime')
+                ? floatval($request->input('overtime'))
+                : floatval($attendanceBreakdown['overtime_earnings'] ?? 0);
 
-        $loanDeduction = $request->has('loan_deduction')
-            ? floatval($request->input('loan_deduction'))
-            : ($payroll->loan_deduction ?? 0);
+            // Deductions and Allowances from form or existing
+            $attendanceDeductions = $request->has('attendance_deductions')
+                ? floatval($request->input('attendance_deductions'))
+                : $payroll->attendance_deductions;
 
-        $manualAllowances = $request->has('manual_allowances')
-            ? floatval($request->input('manual_allowances'))
-            : $payroll->manual_allowances;
+            $manualDeductions = $request->has('manual_deductions')
+                ? floatval($request->input('manual_deductions'))
+                : $payroll->manual_deductions;
 
-        $grossSalary = $payroll->basic_salary + $payroll->allowances + $manualAllowances + $overtimeEarnings;
-        $totalDeductions = $attendanceDeductions + $manualDeductions + $loanDeduction + $payroll->deductions + $payroll->carried_forward_deduction;
+            $loanDeduction = $request->has('loan_deduction')
+                ? floatval($request->input('loan_deduction'))
+                : ($payroll->loan_deduction ?? 0);
 
-        $netSalary = $request->has('net_salary')
-            ? floatval($request->input('net_salary'))
-            : max(0, $grossSalary - $totalDeductions);
+            $manualAllowances = $request->has('manual_allowances')
+                ? floatval($request->input('manual_allowances'))
+                : $payroll->manual_allowances;
 
-        $payroll->update([
-            'status' => 'paid',
-            'gross_salary' => $grossSalary,
-            'attendance_deductions' => $attendanceDeductions,
-            'manual_deductions' => $manualDeductions,
-            'loan_deduction' => $loanDeduction,
-            'manual_allowances' => $manualAllowances,
-            'net_salary' => $netSalary,
-            'payment_date' => $paymentDate,
-            'account_id' => $accountId,
-            'payment_method' => $paymentMethod,
-            'payment_reference' => $paymentReference,
-            'notes' => $notes ?: $payroll->notes,
-        ]);
+            $grossSalary = $payroll->basic_salary + $payroll->allowances + $manualAllowances + $overtimeEarnings;
+            $totalDeductions = $attendanceDeductions + $manualDeductions + $loanDeduction + $payroll->deductions + $payroll->carried_forward_deduction;
 
-        // Automatically update active Employee Loans and record LoanPayment logs if loan deduction was taken
-        if ($loanDeduction > 0) {
-            $remainingDeduction = $loanDeduction;
-            $activeLoans = \App\Models\Hr\Loan::where('employee_id', $payroll->employee_id)
-                ->active()
-                ->orderBy('id', 'asc')
-                ->get();
+            // Sync hr_payroll_details for Overtime so manual adjustments persist
+            if ($overtimeEarnings > 0) {
+                \App\Models\Hr\PayrollDetail::updateOrCreate(
+                    [
+                        'payroll_id' => $payroll->id,
+                        'type' => 'allowance',
+                        'name' => 'Overtime',
+                    ],
+                    [
+                        'amount' => $overtimeEarnings,
+                        'description' => 'Overtime Allowance',
+                    ]
+                );
+            } else {
+                \App\Models\Hr\PayrollDetail::where('payroll_id', $payroll->id)
+                    ->where('type', 'allowance')
+                    ->where(function ($q) {
+                        $q->where('name', 'Overtime')->orWhere('name', 'like', '%Overtime%');
+                    })
+                    ->delete();
+            }
 
-            foreach ($activeLoans as $loan) {
-                if ($remainingDeduction <= 0) {
-                    break;
-                }
+            $netSalary = $request->has('net_salary')
+                ? floatval($request->input('net_salary'))
+                : max(0, $grossSalary - $totalDeductions);
 
-                $dueOnLoan = $loan->amount - $loan->paid_amount;
-                $payAmountForLoan = min($remainingDeduction, $dueOnLoan);
+            // 2. If user enters Net Pay 0, revert status to generated (Outstanding)
+            if ($netSalary <= 0) {
+                $payroll->update([
+                    'status' => 'generated',
+                    'gross_salary' => $grossSalary,
+                    'attendance_deductions' => $attendanceDeductions,
+                    'manual_deductions' => $manualDeductions,
+                    'loan_deduction' => 0, // No loan deducted if not paid
+                    'manual_allowances' => $manualAllowances,
+                    'net_salary' => max(0, $grossSalary - ($attendanceDeductions + $manualDeductions + $payroll->deductions + $payroll->carried_forward_deduction)),
+                    'payment_date' => null,
+                    'account_id' => null,
+                    'payment_method' => null,
+                    'payment_reference' => null,
+                    'notes' => $notes ?: $payroll->notes,
+                ]);
 
-                if ($payAmountForLoan > 0) {
-                    $newPaid = $loan->paid_amount + $payAmountForLoan;
-                    $newStatus = ($newPaid >= $loan->amount) ? 'completed' : 'approved';
+                DB::commit();
 
-                    $loan->update([
-                        'paid_amount' => $newPaid,
-                        'status' => $newStatus,
-                    ]);
+                return response()->json([
+                    'success' => "Payment amount is Rs. 0. Payroll for {$payroll->employee->full_name} is now Outstanding (Unpaid).",
+                    'reload' => true,
+                ]);
+            }
 
-                    \App\Models\Hr\LoanPayment::create([
-                        'loan_id' => $loan->id,
-                        'amount' => $payAmountForLoan,
-                        'payment_date' => $paymentDate,
-                        'type' => 'salary_deduction',
-                        'notes' => "Salary Loan Cut for {$payroll->month} (Payroll #{$payroll->id})",
-                    ]);
+            // 3. User confirmed payment (netSalary > 0)
+            $payroll->update([
+                'status' => 'paid',
+                'gross_salary' => $grossSalary,
+                'attendance_deductions' => $attendanceDeductions,
+                'manual_deductions' => $manualDeductions,
+                'loan_deduction' => $loanDeduction,
+                'manual_allowances' => $manualAllowances,
+                'net_salary' => $netSalary,
+                'payment_date' => $paymentDate,
+                'account_id' => $accountId,
+                'payment_method' => $paymentMethod,
+                'payment_reference' => $paymentReference,
+                'notes' => $notes ?: $payroll->notes,
+            ]);
 
-                    // Mark any pending scheduled deduction for this month as deducted
-                    \App\Models\Hr\LoanScheduledDeduction::where('loan_id', $loan->id)
-                        ->where('deduction_month', $payroll->month)
-                        ->where('status', 'pending')
-                        ->update(['status' => 'deducted']);
+            // Automatically apply active Employee Loans and record LoanPayment logs if loan deduction was taken
+            if ($loanDeduction > 0) {
+                $remainingDeduction = $loanDeduction;
+                $activeLoans = \App\Models\Hr\Loan::where('employee_id', $payroll->employee_id)
+                    ->active()
+                    ->orderBy('id', 'asc')
+                    ->get();
 
-                    $remainingDeduction -= $payAmountForLoan;
+                foreach ($activeLoans as $loan) {
+                    if ($remainingDeduction <= 0) {
+                        break;
+                    }
+
+                    $dueOnLoan = $loan->amount - $loan->paid_amount;
+                    $payAmountForLoan = min($remainingDeduction, $dueOnLoan);
+
+                    if ($payAmountForLoan > 0) {
+                        $newPaid = $loan->paid_amount + $payAmountForLoan;
+                        $newStatus = ($newPaid >= $loan->amount) ? 'completed' : 'approved';
+
+                        $loan->update([
+                            'paid_amount' => $newPaid,
+                            'status' => $newStatus,
+                        ]);
+
+                        \App\Models\Hr\LoanPayment::create([
+                            'loan_id' => $loan->id,
+                            'amount' => $payAmountForLoan,
+                            'payment_date' => $paymentDate,
+                            'type' => 'salary_deduction',
+                            'notes' => "Salary Loan Cut for {$payroll->month} (Payroll #{$payroll->id})",
+                        ]);
+
+                        // Mark any pending scheduled deduction for this month as deducted
+                        \App\Models\Hr\LoanScheduledDeduction::where('loan_id', $loan->id)
+                            ->where('deduction_month', $payroll->month)
+                            ->where('status', 'pending')
+                            ->update(['status' => 'deducted']);
+
+                        $remainingDeduction -= $payAmountForLoan;
+                    }
                 }
             }
-        }
 
-        // If an account is selected, record account history / deduct balance
-        if ($accountId) {
-            $account = \App\Models\Account::find($accountId);
-            if ($account) {
-                if (class_exists('\App\Models\AccountHistory')) {
-                    \App\Models\AccountHistory::create([
-                        'account_id' => $account->id,
-                        'amount' => $payroll->net_salary,
-                        'type' => 'Debit',
-                        'description' => "Salary Payment for {$payroll->employee->full_name} ({$payroll->month})",
-                        'reference_no' => $paymentReference ?: "PAYROLL-{$payroll->id}",
-                        'date' => $paymentDate,
-                    ]);
-                }
-                if (\Schema::hasColumn('accounts', 'current_balance')) {
-                    $account->decrement('current_balance', $payroll->net_salary);
+            // If an account is selected, record account history / deduct balance
+            if ($accountId) {
+                $account = \App\Models\Account::find($accountId);
+                if ($account) {
+                    $oldBal = floatval($account->current_balance);
+                    $newBal = $oldBal - floatval($payroll->net_salary);
+
+                    if (class_exists('\App\Models\AccountHistory')) {
+                        $user = auth()->user();
+                        \App\Models\AccountHistory::create([
+                            'account_id' => $account->id,
+                            'old_balance' => $oldBal,
+                            'new_balance' => $newBal,
+                            'user_id' => $user ? $user->id : null,
+                            'user_name' => $user ? $user->name : 'System',
+                            'note' => "Salary Payment: Rs. " . number_format($payroll->net_salary, 2) . " for {$payroll->employee->full_name} ({$payroll->month}) (Payroll #{$payroll->id})",
+                        ]);
+                    }
+
+                    if (\Schema::hasColumn('accounts', 'current_balance')) {
+                        $account->decrement('current_balance', $payroll->net_salary);
+                    }
                 }
             }
-        }
 
-        return response()->json([
-            'success' => 'Payroll marked as Paid successfully and loan deductions updated.',
-        ]);
+            DB::commit();
+
+            return response()->json([
+                'success' => 'Payroll payment updated successfully.',
+                'reload' => true,
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['errors' => ['general' => [$e->getMessage()]]], 422);
+        }
     }
 
     /**

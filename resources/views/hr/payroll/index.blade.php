@@ -867,13 +867,20 @@
 
 
 
-                                                @if ($payroll->canMarkPaid())
-                                                    @can('hr.payroll.edit')
+                                                @can('hr.payroll.edit')
+                                                    @if ($payroll->status === 'paid')
+                                                        <button class="btn btn-sm btn-outline-success mark-paid-btn px-2 py-1" title="Edit Payment / Adjust Deductions" data-id="{{ $payroll->id }}">
+                                                            <i class="fa fa-edit me-1"></i> Edit Pay
+                                                        </button>
+                                                        <button class="btn btn-sm btn-outline-danger unpay-payroll-btn px-2 py-1" title="Revert to Unpaid (Outstanding)" data-id="{{ $payroll->id }}">
+                                                            <i class="fa fa-undo me-1"></i> Unpay
+                                                        </button>
+                                                    @elseif ($payroll->canMarkPaid())
                                                         <button class="btn btn-sm btn-success mark-paid-btn px-2 py-1" title="Mark Paid" data-id="{{ $payroll->id }}">
                                                             <i class="fa fa-hand-holding-usd me-1"></i> Pay
                                                         </button>
-                                                    @endcan
-                                                @endif
+                                                    @endif
+                                                @endcan
 
                                                 @can('hr.payroll.delete')
                                                     @if ($payroll->status !== 'paid')
@@ -1165,9 +1172,9 @@
                             </h6>
                             <div class="row g-3">
                                 <div class="col-md-6">
-                                    <label class="form-label text-dark fw-bold small">Paying Account (Bank / Cash)</label>
-                                    <select name="account_id" class="form-select shadow-sm">
-                                        <option value="">-- Select Payment Account (Optional) --</option>
+                                    <label class="form-label text-dark fw-bold small">Paying Account (Bank / Cash) <span class="text-danger">*</span></label>
+                                    <select name="account_id" class="form-select shadow-sm" required>
+                                        <option value="">-- Select Payment Account --</option>
                                         @if(isset($accounts) && count($accounts) > 0)
                                             @foreach($accounts as $acc)
                                                 <option value="{{ $acc->id }}">
@@ -1190,10 +1197,15 @@
                             </div>
                         </div>
                     </div>
-                    <div class="modal-footer bg-light px-4 py-3 border-top d-flex justify-content-between">
-                        <button type="button" class="btn btn-secondary px-4 fw-semibold" data-bs-dismiss="modal" data-dismiss="modal">
-                            <i class="fa fa-times me-1"></i> Dismiss
-                        </button>
+                    <div class="modal-footer bg-light px-4 py-3 border-top d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center gap-2">
+                            <button type="button" class="btn btn-secondary px-3 fw-semibold" data-bs-dismiss="modal" data-dismiss="modal">
+                                <i class="fa fa-times me-1"></i> Dismiss
+                            </button>
+                            <button type="button" class="btn btn-outline-danger px-3 fw-semibold unpay-modal-btn" id="modalUnpayBtn" style="display: none;">
+                                <i class="fa fa-undo me-1"></i> Revert to Unpaid (Make Outstanding)
+                            </button>
+                        </div>
                         <button type="submit" class="btn btn-success px-4 py-2 fw-bold text-white shadow-sm" id="paySubmitBtn">
                             <i class="fa fa-check-circle me-1"></i> Confirm & Pay Salary
                         </button>
@@ -1733,6 +1745,7 @@
                         var breakdownHtml = `
                             ${header}
                             ${loanAlertHtml}
+                            <input type="hidden" id="baseEarningsHidden" value="${basicSalary + allowances}">
                             <input type="hidden" id="grossEarningsHidden" value="${grossEarnings}">
                             <input type="hidden" id="overtimeHidden" name="overtime" value="${overtime}">
                             <input type="hidden" id="attendanceDeductionsHidden" name="attendance_deductions" value="${lateDeduction + absentDeduction}">
@@ -1744,7 +1757,8 @@
                                 <div class="col-md-6">
                                     <div class="p-3 bg-white rounded-3 border h-100">
                                         <div class="text-success fw-bold border-bottom pb-2 mb-2 small text-uppercase d-flex justify-content-between align-items-center">
-                                            <span>Earnings</span><span>Amount</span>
+                                            <span>Earnings</span>
+                                            <span class="badge bg-light text-secondary border fw-normal" style="font-size: 0.7rem;">Editable (Rs.)</span>
                                         </div>
                                         <div class="d-flex justify-content-between py-1 small">
                                             <span class="text-muted">Basic Salary</span>
@@ -1754,13 +1768,16 @@
                                             <span class="text-muted">Allowances</span>
                                             <span class="fw-semibold">Rs. ${formatCurrency(allowances)}</span>
                                         </div>
-                                        <div class="d-flex justify-content-between py-1 small">
+                                        <div class="d-flex justify-content-between align-items-center py-1 small mb-1">
                                             <span class="text-muted">Overtime <i class="fa fa-info-circle text-primary ms-1 view-date-details-btn" data-type="overtime" title="View Overtime Date Breakdown" style="cursor:pointer;"></i></span>
-                                            <span class="fw-semibold">Rs. ${formatCurrency(overtime)}</span>
+                                            <div class="input-group input-group-sm" style="width: 125px;">
+                                                <span class="input-group-text bg-light text-muted px-2">Rs.</span>
+                                                <input type="number" step="1" min="0" name="overtime_input" class="form-control text-success fw-bold text-end earning-calc-input px-2 shadow-none" value="${Math.round(overtime)}">
+                                            </div>
                                         </div>
                                         <div class="d-flex justify-content-between py-2 mt-2 border-top fw-bold text-success">
                                             <span>Gross Earnings</span>
-                                            <span>Rs. ${formatCurrency(grossEarnings)}</span>
+                                            <span id="grossEarningsSpan">Rs. ${formatCurrency(grossEarnings)}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -1808,16 +1825,53 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="net-payable py-2 px-3 mt-3 d-flex align-items-center justify-content-between rounded-3" style="background: linear-gradient(135deg, #10b981, #059669); color: white;">
+                            <div class="net-payable py-2 px-3 mt-3 d-flex flex-wrap align-items-center justify-content-between rounded-3" style="background: linear-gradient(135deg, #10b981, #059669); color: white;">
                                 <div>
                                     <div class="small text-white-50 fw-bold" style="letter-spacing: 1px;">TOTAL NET PAYABLE</div>
-                                    <div class="small text-white-50">${fullName}'s Salary</div>
+                                    <div class="small text-white-50">${fullName}'s Salary &bull; <span class="badge bg-light text-dark fw-normal" style="font-size:0.68rem;">Enter 0 to make Outstanding</span></div>
                                 </div>
-                                <div id="netSalaryDisplay" style="font-size: 1.6rem; font-weight: 800; color: white;">Rs. ${formatCurrency(netSalary)}</div>
+                                <div class="d-flex align-items-center gap-2 mt-2 mt-sm-0">
+                                    <span class="fs-5 fw-bold text-white">Rs.</span>
+                                    <input type="number" step="0.01" min="0" id="netSalaryInput" class="form-control form-control-lg text-end fw-bold shadow-sm" style="width: 170px; font-size: 1.4rem; color: #065f46; background: #ecfdf5; border: 2px solid #a7f3d0;" value="${Math.round(netSalary)}">
+                                </div>
+                            </div>
+                            <div id="zeroPayNotice" class="p-2 mt-2 rounded bg-warning text-dark small fw-bold text-center" style="${Math.round(netSalary) <= 0 ? '' : 'display: none;'}">
+                                <i class="fa fa-info-circle me-1"></i> Net Payable is Rs. 0 &mdash; Saving will mark this payroll as <strong>Outstanding (Unpaid)</strong> and reverse any account/loan deductions.
                             </div>
                         `;
 
                         $('#payBreakdownContent').html(breakdownHtml);
+
+                        var isPaid = (response.payroll && response.payroll.status === 'paid');
+                        if (isPaid) {
+                            $('#payPayrollModalLabel').html('<i class="fa fa-edit me-2"></i> Edit Salary Payment & Deductions (Paid)');
+                            $('#paySubmitBtn').html('<i class="fa fa-save me-1"></i> Update Payment');
+                            $('#modalUnpayBtn').data('id', id).show();
+                            
+                            // Pre-fill payment fields
+                            if (response.payroll.account_id) {
+                                $('select[name="account_id"]').val(response.payroll.account_id);
+                            } else {
+                                $('select[name="account_id"]').val('');
+                            }
+                            if (response.payroll.payment_date) {
+                                $('input[name="payment_date"]').val(response.payroll.payment_date);
+                            }
+                            if (response.payroll.notes) {
+                                $('input[name="notes"]').val(response.payroll.notes);
+                            }
+                        } else {
+                            $('#payPayrollModalLabel').html('<i class="fa fa-hand-holding-usd me-2"></i> Complete Salary Payment');
+                            $('#paySubmitBtn').html('<i class="fa fa-check-circle me-1"></i> Confirm & Pay Salary');
+                            $('#modalUnpayBtn').hide();
+                            $('select[name="account_id"]').val('');
+                        }
+
+                        if (netSalary <= 0) {
+                            $('select[name="account_id"]').prop('required', false);
+                        } else {
+                            $('select[name="account_id"]').prop('required', true);
+                        }
                     },
                     error: function() {
                         $('#payBreakdownContent').html('<div class="alert alert-warning p-3 mb-0">Salary breakdown could not be loaded, but you can still proceed with payment below.</div>');
@@ -1825,8 +1879,16 @@
                 });
             });
 
-            // Live deduction recalculation listener inside payment modal
-            $(document).on('input change', '.deduction-calc-input', function() {
+            // Live earnings & deductions recalculation listener inside payment modal
+            $(document).on('input change', '.deduction-calc-input, .earning-calc-input', function() {
+                var base = parseFloat($('#baseEarningsHidden').val()) || 0;
+                var ot = parseFloat($('input[name="overtime_input"]').val()) || 0;
+                var gross = base + ot;
+
+                $('#overtimeHidden').val(ot);
+                $('#grossEarningsHidden').val(gross);
+                $('#grossEarningsSpan').text('Rs. ' + formatCurrency(gross));
+
                 var late = parseFloat($('input[name="late_deduction_input"]').val()) || 0;
                 var absent = parseFloat($('input[name="absent_deduction_input"]').val()) || 0;
                 var loan = parseFloat($('input[name="loan_deduction_input"]').val()) || 0;
@@ -1841,11 +1903,71 @@
 
                 $('#totalDeductionSpan').text('Rs. ' + formatCurrency(totalDeduction));
 
-                var gross = parseFloat($('#grossEarningsHidden').val()) || 0;
                 var net = Math.max(0, gross - totalDeduction);
 
                 $('#netSalaryHidden').val(net);
-                $('#netSalaryDisplay').text('Rs. ' + formatCurrency(net));
+                $('#netSalaryInput').val(Math.round(net));
+
+                if (net <= 0) {
+                    $('#zeroPayNotice').slideDown(150);
+                    $('select[name="account_id"]').prop('required', false);
+                } else {
+                    $('#zeroPayNotice').slideUp(150);
+                    $('select[name="account_id"]').prop('required', true);
+                }
+            });
+
+            // Direct input on #netSalaryInput
+            $(document).on('input change', '#netSalaryInput', function() {
+                var net = parseFloat($(this).val()) || 0;
+                $('#netSalaryHidden').val(net);
+                if (net <= 0) {
+                    $('#zeroPayNotice').slideDown(150);
+                    $('select[name="account_id"]').prop('required', false);
+                } else {
+                    $('#zeroPayNotice').slideUp(150);
+                    $('select[name="account_id"]').prop('required', true);
+                }
+            });
+
+            // Revert to Unpaid (Unpay action)
+            $(document).on('click', '.unpay-payroll-btn, .unpay-modal-btn', function(e) {
+                e.preventDefault();
+                var id = $(this).data('id');
+                if (!id) return;
+
+                Swal.fire({
+                    title: 'Revert to Unpaid?',
+                    text: 'This will reset the payroll status to Outstanding (Generated) and safely reverse account deductions and loan payments.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#ef4444',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Yes, Revert to Unpaid'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.ajax({
+                            url: '/hr/payroll/' + id + '/unpay',
+                            type: 'PATCH',
+                            data: {
+                                _token: '{{ csrf_token() }}'
+                            },
+                            success: function(response) {
+                                safeHideModal('#payPayrollModal');
+                                Swal.fire({
+                                    title: 'Reverted!',
+                                    text: response.success || 'Payroll reverted to outstanding.',
+                                    icon: 'success',
+                                    confirmButtonColor: '#10b981'
+                                }).then(() => location.reload());
+                            },
+                            error: function(xhr) {
+                                let err = xhr.responseJSON?.error || 'Failed to revert payroll.';
+                                Swal.fire('Error', err, 'error');
+                            }
+                        });
+                    }
+                });
             });
 
             // Form Submit for payPayrollForm
