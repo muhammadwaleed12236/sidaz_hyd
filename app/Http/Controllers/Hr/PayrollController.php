@@ -394,7 +394,7 @@ class PayrollController extends Controller
             $daysLeave = $attendances->filter(fn($att) => strtolower($att->status) === 'leave')->count();
 
             $shift = $employee->shift ?? \App\Models\Hr\Shift::where('is_default', true)->first();
-            $shiftStartStr = ($shift ? $shift->start_time : '08:30:00');
+            $shiftStartStr = $employee->custom_start_time ?: ($shift ? $shift->start_time : '08:30:00');
             $graceMins = $shift ? ($shift->grace_minutes ?? 5) : 5;
             $lateThreshold = \Carbon\Carbon::parse($shiftStartStr)->addMinutes($graceMins)->format('H:i:s');
 
@@ -1444,33 +1444,64 @@ class PayrollController extends Controller
         $employee = $payroll->employee;
         $hrPolicy = \App\Models\Hr\HrPolicy::getEffectivePolicyForEmployee($employee->id);
 
+        if ($hrPolicy && isset($hrPolicy->overtime_enabled) && !$hrPolicy->overtime_enabled) {
+            return ['hours' => 0, 'earnings' => 0, 'records' => []];
+        }
+
         $shift = $employee->shift ?? \App\Models\Hr\Shift::where('is_default', true)->first();
+        $shiftStartStr = $employee->custom_start_time ?: ($shift ? $shift->start_time : '08:30:00');
         $shiftEndStr = $employee->custom_end_time ?: ($shift ? $shift->end_time : '18:00:00');
-        $standardShiftHours = ($shift && floatval($shift->total_hours) > 0) ? floatval($shift->total_hours) : 8;
+
+        // Calculate standard shift hours dynamically from start and end time (default to 9.5 for 08:30 to 18:00)
+        $standardShiftHours = 9.5;
+        if ($shift && floatval($shift->total_hours) > 0) {
+            $standardShiftHours = floatval($shift->total_hours);
+        } elseif ($shiftStartStr && $shiftEndStr) {
+            try {
+                $startC = \Carbon\Carbon::parse($shiftStartStr);
+                $endC = \Carbon\Carbon::parse($shiftEndStr);
+                $diff = round($endC->diffInMinutes($startC) / 60, 2);
+                if ($diff > 0) {
+                    $standardShiftHours = $diff;
+                }
+            } catch (\Exception $e) {
+                $standardShiftHours = 9.5;
+            }
+        }
 
         $perDayRate = ($payroll->basic_salary > 0) ? ($payroll->basic_salary / 30) : 0;
         $hourlySalary = ($standardShiftHours > 0) ? ($perDayRate / $standardShiftHours) : 0;
 
+        // Minimum threshold in minutes after shift end before OT starts (from policy, default 60 min)
+        $minOtMinutes = ($hrPolicy && isset($hrPolicy->overtime_min_minutes) && $hrPolicy->overtime_min_minutes > 0)
+            ? intval($hrPolicy->overtime_min_minutes)
+            : 60;
+
         $overtimeHoursTotal = 0;
         $overtimeRecords = [];
         foreach ($attendances as $att) {
-            $hoursWorked = floatval($att->total_hours ?? 0);
+            $timeIn = $att->check_in_time ?: $att->clock_in;
+            $timeOut = $att->check_out_time ?: $att->clock_out;
             $dailyOt = 0;
 
-            if ($hoursWorked > $standardShiftHours) {
-                $dailyOt = $hoursWorked - $standardShiftHours;
-            }
-
-            if ($dailyOt <= 0 && $att->check_out_time) {
+            if ($timeOut) {
                 $dateYmd = \Carbon\Carbon::parse($att->date)->format('Y-m-d');
                 $shiftEndHis = \Carbon\Carbon::parse($shiftEndStr)->format('H:i:s');
-                $checkOutHis = \Carbon\Carbon::parse($att->check_out_time)->format('H:i:s');
+                $checkOutHis = \Carbon\Carbon::parse($timeOut)->format('H:i:s');
 
                 $shiftEndDt = \Carbon\Carbon::parse($dateYmd . ' ' . $shiftEndHis);
                 $checkOutDt = \Carbon\Carbon::parse($dateYmd . ' ' . $checkOutHis);
+
+                // Overtime only begins after duty off time (shift end) and must meet minOtMinutes threshold
                 if ($checkOutDt->gt($shiftEndDt)) {
-                    $dailyOt = round($checkOutDt->diffInMinutes($shiftEndDt) / 60, 2);
+                    $extraMinutes = $checkOutDt->diffInMinutes($shiftEndDt);
+                    if ($extraMinutes >= $minOtMinutes) {
+                        $dailyOt = round($extraMinutes / 60, 2);
+                    }
                 }
+            } elseif (floatval($att->total_hours ?? 0) > ($standardShiftHours + ($minOtMinutes / 60))) {
+                // Fallback for records where only total_hours was captured
+                $dailyOt = round(floatval($att->total_hours) - $standardShiftHours, 2);
             }
 
             if ($dailyOt > 0) {
@@ -1482,9 +1513,6 @@ class PayrollController extends Controller
                     $multiplier = ($hrPolicy && $hrPolicy->overtime_multiplier > 0) ? $hrPolicy->overtime_multiplier : 1.5;
                     $dailyEarning = round($dailyOt * $hourlySalary * $multiplier, 2);
                 }
-
-                $timeIn = $att->check_in_time ?: $att->clock_in;
-                $timeOut = $att->check_out_time ?: $att->clock_out;
 
                 $overtimeRecords[] = [
                     'date' => \Carbon\Carbon::parse($att->date)->format('d/m/Y'),
@@ -1503,7 +1531,7 @@ class PayrollController extends Controller
             $detailOt = $payroll->details->where('type', 'allowance')
                 ->filter(fn($d) => stripos($d->name, 'overtime') !== false || stripos($d->name, 'ot') !== false)
                 ->sum('amount');
-            if ($detailOt > 0) {
+            if ($detailOt > 0 && $overtimeHoursTotal > 0) {
                 return ['hours' => $overtimeHoursTotal, 'earnings' => round($detailOt, 2), 'records' => $overtimeRecords];
             }
         }
