@@ -21,9 +21,9 @@ class DatabaseSeeder extends Seeder
             ProductSeeder::class,
             WarehouseSeeder::class,
             // PermissionRoleUserSeeder::class, // REMOVED: Using new AllModulesPermissionsSeeder
-            ModulesTableSeeder::class, 
+            ModulesTableSeeder::class,
             AllModulesPermissionsSeeder::class, // NEW: All module permissions (module.view, module.create, etc.)
-            SuperadminSeeder::class, 
+            SuperadminSeeder::class,
         ]);
     }
 }
