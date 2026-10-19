@@ -239,6 +239,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/production/create', [App\Http\Controllers\ProductionController::class, 'create'])->name('production.create');
     Route::post('/production/store', [App\Http\Controllers\ProductionController::class, 'store'])->name('production.store');
     Route::post('/production/{id}/dispatch', [App\Http\Controllers\ProductionController::class, 'dispatch'])->name('production.dispatch');
+    Route::post('/production/{id}/generate-invoice', [App\Http\Controllers\ProductionController::class, 'generateInvoiceFromBatch'])->name('production.generate-invoice');
 
     // Warehouse Routes
     // ///

@@ -178,35 +178,156 @@
                     <i class="fas fa-boxes text-success"></i> 1. Product & Demand Selection
                 </div>
 
+                <!-- Production Destination / Customer Mode Selection -->
+                <div class="mb-3 p-2 bg-light rounded border">
+                    <label class="form-label-compact d-block mb-2 font-weight-bold">
+                        <i class="fa fa-bullseye text-primary me-1"></i> Production Destination / Customer Order Mode:
+                    </label>
+                    <div class="d-flex align-items-center flex-wrap gap-3">
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="customer_mode" id="mode_none" value="none" {{ empty($selectedSaleId) ? 'checked' : '' }} onchange="onCustomerModeChange()">
+                            <label class="form-check-label small font-weight-bold" for="mode_none">
+                                <i class="fa fa-warehouse text-secondary me-1"></i> General Warehouse Stock (No Customer)
+                            </label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="customer_mode" id="mode_direct" value="direct_customer" onchange="onCustomerModeChange()">
+                            <label class="form-check-label small font-weight-bold text-success" for="mode_direct">
+                                <i class="fa fa-user-plus me-1"></i> Direct Customer / Instant Invoice
+                            </label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="customer_mode" id="mode_existing" value="existing_order" {{ !empty($selectedSaleId) ? 'checked' : '' }} onchange="onCustomerModeChange()">
+                            <label class="form-check-label small font-weight-bold text-primary" for="mode_existing">
+                                <i class="fa fa-receipt me-1"></i> Link Existing Booked Order
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="row g-3 mb-3">
-                    <div class="col-md-4">
+                    <div class="col-md-5">
                         <label class="form-label-compact">Select Product to Produce <span class="text-danger">*</span></label>
                         <select name="product_id" id="product_id" class="form-control select2" required onchange="onProductChange()">
                             <option value="">-- Select Finished Product --</option>
                             @foreach($products as $p)
-                                <option value="{{ $p->id }}" {{ $selectedProductId == $p->id ? 'selected' : '' }}>
+                                @php
+                                    $pPrice = (float)($p->sale_price_per_piece ?: ($p->retail_price ?: ($p->wholesale_price ?: 0)));
+                                @endphp
+                                <option value="{{ $p->id }}" data-price="{{ $pPrice }}" data-code="{{ $p->item_code }}" {{ $selectedProductId == $p->id ? 'selected' : '' }}>
                                     {{ $p->item_name }} ({{ $p->item_code }})
                                 </option>
                             @endforeach
                         </select>
                     </div>
 
-                    <div class="col-md-5">
-                        <label class="form-label-compact">Customer Order / Demand (Optional)</label>
-                        <select name="sale_id" id="sale_id" class="form-control select2" onchange="onSaleChange()">
-                            <option value="">-- No Customer Order (General Warehouse Production) --</option>
-                            @foreach($sales as $s)
-                                <option value="{{ $s->id }}" {{ $selectedSaleId == $s->id ? 'selected' : '' }}>
-                                    Order #{{ $s->invoice_no }} — {{ $s->customer_relation->customer_name ?? $s->walkin_name ?? 'Walk-in' }} (Total: {{ $s->total_items }} Pcs)
-                                </option>
-                            @endforeach
-                        </select>
-                        <small class="text-muted d-block mt-1" style="font-size: 0.72rem;">If linked to customer order, batch status will automatically mark <strong>"Ready for Delivery"</strong> upon completion.</small>
+                    <div class="col-md-4">
+                        <label class="form-label-compact">Quantity to Produce (Pcs) <span class="text-danger">*</span></label>
+                        <input type="number" step="0.0001" name="quantity" id="quantity" class="form-control form-control-compact font-weight-bold text-success" placeholder="e.g. 100" required value="100" oninput="onQuantityInput()">
                     </div>
 
                     <div class="col-md-3">
-                        <label class="form-label-compact">Quantity to Produce (Pcs) <span class="text-danger">*</span></label>
-                        <input type="number" step="0.0001" name="quantity" id="quantity" class="form-control form-control-compact font-weight-bold text-success" placeholder="e.g. 100" required value="100" oninput="updateRecipeAudit()">
+                        <label class="form-label-compact">Target Warehouse</label>
+                        <select name="warehouse_id" class="form-control form-control-compact">
+                            <option value="1">Main Warehouse (Store)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- CONTAINER A: EXISTING SALE ORDER SELECTION -->
+                <div id="existingOrderContainer" class="mb-3 p-3 border rounded bg-white shadow-sm" style="{{ empty($selectedSaleId) ? 'display: none;' : '' }}">
+                    <div class="row g-3 align-items-center">
+                        <div class="col-md-8">
+                            <label class="form-label-compact text-primary font-weight-bold">Select Active Booked Sale Order</label>
+                            <select name="sale_id" id="sale_id" class="form-control select2" onchange="onSaleChange()">
+                                <option value="">-- Select Booked Customer Order --</option>
+                                @foreach($sales as $s)
+                                    <option value="{{ $s->id }}" {{ $selectedSaleId == $s->id ? 'selected' : '' }}>
+                                        Order #{{ $s->invoice_no }} — {{ $s->customer_relation->customer_name ?? $s->walkin_name ?? 'Walk-in' }} (Total: {{ $s->total_items }} Pcs)
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <small class="text-muted d-block mt-3" style="font-size: 0.75rem;">
+                                <i class="fa fa-info-circle text-primary me-1"></i> Producing for an existing order marks it <strong>"Ready for Delivery"</strong>.
+                            </small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CONTAINER B: DIRECT CUSTOMER & INVOICE -->
+                <div id="directCustomerContainer" class="mb-3 p-3 border rounded shadow-sm" style="background: #f0fdf4; border-color: #86efac !important; display: none;">
+                    <div class="d-flex align-items-center justify-content-between pb-2 mb-2 border-bottom">
+                        <span class="font-weight-bold text-success small">
+                            <i class="fa fa-user-check me-1"></i> Direct Customer & Auto-Invoice Settings
+                        </span>
+                        <span class="badge bg-success text-white">Direct Customer Mode</span>
+                    </div>
+
+                    <div class="row g-3">
+                        <!-- Customer Type Toggle -->
+                        <div class="col-md-12">
+                            <label class="form-label-compact font-weight-bold">Customer Type:</label>
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="customer_type" id="create_cust_reg" value="registered" checked onchange="toggleDirectCustType('registered')">
+                                    <label class="form-check-label small font-weight-bold" for="create_cust_reg">Registered Customer</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="customer_type" id="create_cust_walkin" value="walkin" onchange="toggleDirectCustType('walkin')">
+                                    <label class="form-check-label small font-weight-bold" for="create_cust_walkin">Walk-in Customer</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Registered Customer Selector -->
+                        <div class="col-md-5" id="directRegCustBox">
+                            <label class="form-label-compact">Choose Customer <span class="text-danger">*</span></label>
+                            <select name="customer_id" id="direct_customer_id" class="form-control select2">
+                                <option value="">-- Select Customer --</option>
+                                @foreach($customers as $c)
+                                    <option value="{{ $c->id }}">{{ $c->customer_name }} ({{ $c->mobile ?? 'No Mobile' }})</option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <!-- Walk-in Customer Input -->
+                        <div class="col-md-5" id="directWalkinCustBox" style="display: none;">
+                            <label class="form-label-compact">Walk-in Customer Name <span class="text-danger">*</span></label>
+                            <input type="text" name="walkin_name" id="direct_walkin_name" class="form-control form-control-compact" placeholder="Enter customer name e.g. Dr. Salman / Al-Shifa Pharmacy">
+                        </div>
+
+                        <!-- Unit Price -->
+                        <div class="col-md-3">
+                            <label class="form-label-compact">Unit Sale Price (Rs.)</label>
+                            <input type="number" step="0.01" min="0" name="unit_price" id="direct_unit_price" class="form-control form-control-compact font-weight-bold" value="0" oninput="calcDirectNet()">
+                        </div>
+
+                        <!-- Total Net Estimate -->
+                        <div class="col-md-4">
+                            <label class="form-label-compact">Total Invoice Value</label>
+                            <div class="form-control form-control-compact font-weight-bold text-success bg-white" id="direct_net_preview">Rs. 0.00</div>
+                        </div>
+
+                        <!-- Direct Options (Auto-invoice & paid) -->
+                        <div class="col-md-12 pt-1">
+                            <div class="d-flex align-items-center flex-wrap gap-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="auto_dispatch_invoice" id="auto_dispatch_invoice" value="1" checked>
+                                    <label class="form-check-label small font-weight-bold text-dark" for="auto_dispatch_invoice">
+                                        <i class="fa fa-truck text-success me-1"></i> Auto-Generate Sale Invoice & Stock Out Immediately to Customer
+                                    </label>
+                                    <small class="d-block text-muted" style="font-size: 0.72rem;">Batch bante hi foran official sale invoice ban jayegi, stock out hoga aur customer ledger update ho jayega.</small>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="paid_now" id="create_paid_now" value="1">
+                                    <label class="form-check-label small font-weight-bold text-secondary" for="create_paid_now">
+                                        Payment Received in Cash (Paid Now)
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -292,13 +413,70 @@
         
         // Auto-select product and quantity if sale_id is pre-selected in URL
         if ($('#sale_id').val()) {
+            $('#mode_existing').prop('checked', true);
+            onCustomerModeChange();
             onSaleChange(false);
         }
         
+        syncDirectPrice();
         updateRecipeAudit();
     });
 
+    function onCustomerModeChange() {
+        const mode = $('input[name="customer_mode"]:checked').val();
+        if (mode === 'none') {
+            $('#existingOrderContainer').slideUp(150);
+            $('#directCustomerContainer').slideUp(150);
+            $('#sale_id').val('').trigger('change.select2');
+            $('#saleOrderDemandBanner').slideUp(150).html('');
+        } else if (mode === 'existing_order') {
+            $('#existingOrderContainer').slideDown(150);
+            $('#directCustomerContainer').slideUp(150);
+            onSaleChange(false);
+        } else if (mode === 'direct_customer') {
+            $('#existingOrderContainer').slideUp(150);
+            $('#directCustomerContainer').slideDown(150);
+            $('#sale_id').val('').trigger('change.select2');
+            $('#saleOrderDemandBanner').slideUp(150).html('');
+            syncDirectPrice();
+        }
+    }
+
+    function toggleDirectCustType(type) {
+        if (type === 'walkin') {
+            $('#directRegCustBox').hide();
+            $('#directWalkinCustBox').show();
+            $('#direct_customer_id').val('').trigger('change.select2');
+        } else {
+            $('#directRegCustBox').show();
+            $('#directWalkinCustBox').hide();
+            $('#direct_walkin_name').val('');
+        }
+    }
+
+    function syncDirectPrice() {
+        const $selectedOpt = $('#product_id').find(':selected');
+        const price = parseFloat($selectedOpt.data('price') || 0);
+        if (price > 0 && parseFloat($('#direct_unit_price').val() || 0) === 0) {
+            $('#direct_unit_price').val(price);
+        }
+        calcDirectNet();
+    }
+
+    function calcDirectNet() {
+        const qty = parseFloat($('#quantity').val()) || 0;
+        const price = parseFloat($('#direct_unit_price').val()) || 0;
+        const total = qty * price;
+        $('#direct_net_preview').text('Rs. ' + total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+    }
+
+    function onQuantityInput() {
+        updateRecipeAudit();
+        calcDirectNet();
+    }
+
     function onProductChange() {
+        syncDirectPrice();
         updateRecipeAudit();
     }
 

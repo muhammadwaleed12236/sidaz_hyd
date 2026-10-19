@@ -941,17 +941,41 @@
             $('#pullAttendanceBtn').click(function() {
                 let btn = $(this);
                 btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin me-1"></i> Pulling...');
-                $.post("{{ route('hr.attendance.pull') }}", {
-                        _token: "{{ csrf_token() }}"
-                    })
-                    .done(function(res) {
-                        Swal.fire('Success', res.message, 'success').then(() => location.reload());
-                    })
-                    .fail(function(xhr) {
-                        Swal.fire('Error', xhr.responseJSON?.error || 'Failed to pull.', 'error');
-                        btn.prop('disabled', false).html(
-                            '<i class="fa fa-sync me-1"></i> Pull Attendance');
-                    });
+
+                // Show a loading toast so user knows it's working
+                Swal.fire({
+                    title: 'Pulling Attendance...',
+                    html: 'Connecting to biometric device(s).<br><small class="text-muted">This may take up to 2 minutes.</small>',
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    didOpen: () => { Swal.showLoading(); }
+                });
+
+                $.ajax({
+                    url: "{{ route('hr.attendance.pull') }}",
+                    type: 'POST',
+                    data: { _token: "{{ csrf_token() }}" },
+                    timeout: 120000, // 2 minutes
+                    headers: { 'X-CSRF-TOKEN': "{{ csrf_token() }}" },
+                    success: function(res) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Pull Complete',
+                            html: '<pre style="text-align:left;font-size:13px;white-space:pre-wrap;">' + res.message + '</pre>',
+                            confirmButtonText: 'OK',
+                        }).then(() => location.reload());
+                    },
+                    error: function(xhr) {
+                        let errMsg = 'Failed to pull attendance.';
+                        if (xhr.status === 0 || xhr.statusText === 'timeout') {
+                            errMsg = 'Request timed out. The device may be slow or unreachable. Check device connection and try again.';
+                        } else if (xhr.responseJSON) {
+                            errMsg = xhr.responseJSON.error || xhr.responseJSON.message || errMsg;
+                        }
+                        Swal.fire('Pull Failed', errMsg, 'error');
+                        btn.prop('disabled', false).html('<i class="fa fa-sync me-1"></i> Pull Attendance');
+                    }
+                });
             });
 
             // Mark Absent Button

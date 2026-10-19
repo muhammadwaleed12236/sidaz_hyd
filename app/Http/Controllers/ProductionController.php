@@ -11,6 +11,7 @@ use App\Models\ProductionBatch;
 use App\Models\ProductionBatchItem;
 use App\Models\RawMaterial;
 use App\Models\Sale;
+use App\Models\SaleItem;
 use App\Models\StockMovement;
 use App\Models\SystemNotification;
 use App\Models\WarehouseStock;
@@ -29,8 +30,9 @@ class ProductionController extends Controller
         }
 
         $batches = $query->paginate(15);
+        $customers = \App\Models\Customer::where('status', 'active')->orWhereNull('status')->orderBy('customer_name')->get();
 
-        return view('admin_panel.production.index', compact('batches'));
+        return view('admin_panel.production.index', compact('batches', 'customers'));
     }
 
     public function create(Request $request)
@@ -67,7 +69,9 @@ class ProductionController extends Controller
             ->get()
             ->groupBy('product_id');
 
-        return view('admin_panel.production.create', compact('products', 'sales', 'nextBatchNo', 'selectedSaleId', 'selectedProductId', 'formulations'));
+        $customers = \App\Models\Customer::where('status', 'active')->orWhereNull('status')->orderBy('customer_name')->get();
+
+        return view('admin_panel.production.create', compact('products', 'sales', 'customers', 'nextBatchNo', 'selectedSaleId', 'selectedProductId', 'formulations'));
     }
 
     public function store(Request $request)
@@ -78,6 +82,10 @@ class ProductionController extends Controller
             'batch_no' => 'required|string|unique:production_batches,batch_no',
             'mfg_date' => 'required|date',
             'exp_date' => 'required|date|after_or_equal:mfg_date',
+            'customer_mode' => 'nullable|in:none,existing_order,direct_customer',
+            'customer_id' => 'nullable|exists:customers,id',
+            'walkin_name' => 'nullable|string|max:255',
+            'unit_price' => 'nullable|numeric|min:0',
         ]);
 
         try {
@@ -85,7 +93,63 @@ class ProductionController extends Controller
 
             $product = Product::findOrFail($request->product_id);
             $qtyToProduce = (float) $request->quantity;
-            $saleId = $request->sale_id ?: null;
+            $customerMode = $request->input('customer_mode', 'none');
+            $saleId = null;
+            $createdDirectSale = null;
+            $autoDispatchDirect = false;
+
+            if ($customerMode === 'existing_order') {
+                $saleId = $request->sale_id ?: null;
+            } elseif ($customerMode === 'direct_customer') {
+                $isWalkin = $request->input('customer_type') === 'walkin';
+                $directCustomerId = $isWalkin ? null : ($request->input('customer_id') ?: null);
+                $walkinName = $isWalkin ? $request->input('walkin_name') : null;
+                $unitPrice = (float) $request->input('unit_price', 0);
+                if ($unitPrice <= 0) {
+                    $unitPrice = (float) ($product->sale_price_per_piece ?: ($product->retail_price ?: 0));
+                }
+                $autoDispatchDirect = $request->boolean('auto_dispatch_invoice');
+                $paidNow = $request->boolean('paid_now');
+                $totalBill = round($qtyToProduce * $unitPrice, 2);
+
+                $createdDirectSale = Sale::create([
+                    'invoice_no' => Sale::generateInvoiceNo(),
+                    'customer_id' => $directCustomerId,
+                    'walkin_name' => $walkinName,
+                    'total_bill_amount' => $totalBill,
+                    'total_extradiscount' => 0,
+                    'total_net' => $totalBill,
+                    'cash' => $paidNow ? $totalBill : 0,
+                    'change' => 0,
+                    'total_items' => $qtyToProduce,
+                    'sale_status' => $autoDispatchDirect ? 'delivered' : 'booked',
+                    'discount_type' => 'pkr',
+                ]);
+
+                $ppb = ($product->pieces_per_box > 0) ? $product->pieces_per_box : 1;
+
+                SaleItem::create([
+                    'sale_id' => $createdDirectSale->id,
+                    'product_id' => $product->id,
+                    'warehouse_id' => $request->warehouse_id ?? 1,
+                    'brand_id' => is_numeric($product->brand_id) ? (int)$product->brand_id : null,
+                    'category_id' => is_numeric($product->category_id) ? (int)$product->category_id : null,
+                    'sub_category_id' => is_numeric($product->sub_category_id) ? (int)$product->sub_category_id : null,
+                    'unit_id' => is_numeric($product->unit_id) ? (int)$product->unit_id : null,
+                    'qty' => $ppb > 0 ? ($qtyToProduce / $ppb) : $qtyToProduce,
+                    'total_pieces' => $qtyToProduce,
+                    'loose_pieces' => 0,
+                    'price' => $unitPrice,
+                    'price_per_piece' => $unitPrice,
+                    'total' => $totalBill,
+                    'discount_amount' => 0,
+                    'discount_percent' => 0,
+                ]);
+
+                $saleId = $createdDirectSale->id;
+            } elseif ($request->filled('sale_id')) {
+                $saleId = $request->sale_id;
+            }
 
             // 1. Fetch formulation for finished product
             $formulation = Formulation::where('product_id', $product->id)
@@ -152,8 +216,14 @@ class ProductionController extends Controller
                 ];
             }
 
-            // Determine status: If customer sale order linked -> ready_for_delivery, else -> produced
-            $status = $saleId ? 'ready_for_delivery' : 'produced';
+            // Determine status: If auto-dispatched -> dispatched, if customer order linked -> ready_for_delivery, else -> produced
+            if ($autoDispatchDirect) {
+                $status = 'dispatched';
+            } elseif ($saleId) {
+                $status = 'ready_for_delivery';
+            } else {
+                $status = 'produced';
+            }
 
             // 3. Create Production Batch Header
             $batch = ProductionBatch::create([
@@ -232,7 +302,7 @@ class ProductionController extends Controller
             $whStock->increment('total_pieces', $qtyToProduce);
             $whStock->update(['quantity' => $whStock->total_pieces / $ppb]);
 
-            // Add finished product stock movement
+            // Add finished product stock movement (IN)
             StockMovement::create([
                 'product_id' => $product->id,
                 'type' => 'in',
@@ -242,10 +312,48 @@ class ProductionController extends Controller
                 'note' => "Produced Batch #{$batch->batch_no} ({$qtyToProduce} pcs)"
             ]);
 
-            // 6. Update linked Requisition and Customer Sale Order status (Partial vs Full completion)
             $successMsg = "Batch #{$batch->batch_no} produced successfully! Finished product stock added to warehouse.";
 
-            if ($saleId) {
+            // 5.5 If Direct Customer Invoice & Stock Out was selected -> Deliver immediately!
+            if ($autoDispatchDirect && $createdDirectSale) {
+                $whStock->decrement('total_pieces', $qtyToProduce);
+                $whStock->update(['quantity' => $whStock->total_pieces / $ppb]);
+
+                StockMovement::create([
+                    'product_id' => $product->id,
+                    'type' => 'out',
+                    'qty' => -$qtyToProduce,
+                    'ref_type' => 'PRODUCTION_DISPATCH',
+                    'ref_id' => $batch->id,
+                    'note' => "Dispatched Batch #{$batch->batch_no} ({$qtyToProduce} pcs) for Invoice #{$createdDirectSale->invoice_no}"
+                ]);
+
+                if ($createdDirectSale->customer_id) {
+                    app(\App\Http\Controllers\SaleController::class)->updateLedger($createdDirectSale);
+                    $balanceService = app(\App\Services\BalanceService::class);
+                    $custForVoucher = $createdDirectSale->customer_relation ?? \App\Models\Customer::find($createdDirectSale->customer_id);
+                    if ($custForVoucher) {
+                        $balanceService->createSaleVoucher(
+                            $custForVoucher,
+                            $createdDirectSale->total_net,
+                            $createdDirectSale->invoice_no,
+                            date('Y-m-d')
+                        );
+                    }
+                    if ($createdDirectSale->cash > 0) {
+                        app(\App\Services\TransactionService::class)->createReceiptFromSale($createdDirectSale);
+                    }
+                }
+
+                $custDisplayName = $createdDirectSale->customer_relation ? $createdDirectSale->customer_relation->customer_name : ($createdDirectSale->walkin_name ?: 'Walk-in Customer');
+                $successMsg = "Batch #{$batch->batch_no} produced & Sale Invoice #{$createdDirectSale->invoice_no} generated and dispatched to {$custDisplayName} ({$qtyToProduce} pcs)!";
+            } elseif ($createdDirectSale) {
+                $custDisplayName = $createdDirectSale->customer_relation ? $createdDirectSale->customer_relation->customer_name : ($createdDirectSale->walkin_name ?: 'Walk-in Customer');
+                $successMsg = "Batch #{$batch->batch_no} produced & Order #{$createdDirectSale->invoice_no} booked for {$custDisplayName}. Ready for delivery!";
+            }
+
+            // 6. Update linked Requisition and Customer Sale Order status (for existing orders)
+            if ($saleId && !$createdDirectSale) {
                 $sale = Sale::with('items.product')->find($saleId);
                 if ($sale) {
                     $allSaleProductsCompleted = true;
@@ -314,7 +422,14 @@ class ProductionController extends Controller
 
             DB::commit();
 
-            return redirect()->route('production.index')->with('success', $successMsg);
+            $redirect = redirect()->route('production.index')->with('success', $successMsg);
+            if ($createdDirectSale) {
+                $redirect->with([
+                    'last_generated_invoice_id' => $createdDirectSale->id,
+                    'last_generated_invoice_no' => $createdDirectSale->invoice_no,
+                ]);
+            }
+            return $redirect;
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -414,6 +529,144 @@ class ProductionController extends Controller
             DB::rollBack();
             \Log::error('Batch Dispatch Error: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
             return redirect()->back()->with('error', 'Failed to dispatch batch: ' . $e->getMessage());
+        }
+    }
+
+    public function generateInvoiceFromBatch(Request $request, $id)
+    {
+        $request->validate([
+            'quantity' => 'required|numeric|min:0.0001',
+            'unit_price' => 'required|numeric|min:0',
+            'customer_type' => 'required|in:registered,walkin',
+            'customer_id' => 'required_if:customer_type,registered|nullable|exists:customers,id',
+            'walkin_name' => 'required_if:customer_type,walkin|nullable|string|max:255',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            $batch = ProductionBatch::with(['product', 'warehouse'])->findOrFail($id);
+
+            if ($batch->status === 'dispatched') {
+                throw new \Exception("Batch #{$batch->batch_no} is already marked as Dispatched/Completed.");
+            }
+
+            $product = $batch->product;
+            $qtyToSell = (float) $request->quantity;
+
+            if ($qtyToSell > (float)$batch->quantity) {
+                throw new \Exception("Invoice quantity ({$qtyToSell} Pcs) exceeds available batch quantity ({$batch->quantity} Pcs).");
+            }
+
+            $whId = $batch->warehouse_id ?: 1;
+            $whStock = WarehouseStock::where('product_id', $batch->product_id)
+                ->where('warehouse_id', $whId)
+                ->lockForUpdate()
+                ->first();
+
+            if (!$whStock || $whStock->total_pieces < $qtyToSell) {
+                $avail = $whStock ? $whStock->total_pieces : 0;
+                throw new \Exception("Insufficient warehouse stock for {$product->item_name}. Available: {$avail} Pcs, Requested: {$qtyToSell} Pcs.");
+            }
+
+            $isWalkin = $request->customer_type === 'walkin';
+            $customerId = $isWalkin ? null : ($request->customer_id ?: null);
+            $walkinName = $isWalkin ? $request->walkin_name : null;
+            $unitPrice = (float) $request->unit_price;
+            $discount = (float) ($request->discount ?? 0);
+            $totalBill = round($qtyToSell * $unitPrice, 2);
+            $totalNet = max(0, $totalBill - $discount);
+            $paidNow = $request->boolean('paid_now');
+
+            // Create Sale Invoice
+            $sale = Sale::create([
+                'invoice_no' => Sale::generateInvoiceNo(),
+                'customer_id' => $customerId,
+                'walkin_name' => $walkinName,
+                'total_bill_amount' => $totalBill,
+                'total_extradiscount' => $discount,
+                'total_net' => $totalNet,
+                'cash' => $paidNow ? $totalNet : 0,
+                'change' => 0,
+                'total_items' => $qtyToSell,
+                'sale_status' => 'delivered',
+                'discount_type' => 'pkr',
+            ]);
+
+            $ppb = ($product && $product->pieces_per_box > 0) ? $product->pieces_per_box : 1;
+
+            SaleItem::create([
+                'sale_id' => $sale->id,
+                'product_id' => $product->id,
+                'warehouse_id' => $whId,
+                'brand_id' => is_numeric($product->brand_id) ? (int)$product->brand_id : null,
+                'category_id' => is_numeric($product->category_id) ? (int)$product->category_id : null,
+                'sub_category_id' => is_numeric($product->sub_category_id) ? (int)$product->sub_category_id : null,
+                'unit_id' => is_numeric($product->unit_id) ? (int)$product->unit_id : null,
+                'qty' => $ppb > 0 ? ($qtyToSell / $ppb) : $qtyToSell,
+                'total_pieces' => $qtyToSell,
+                'loose_pieces' => 0,
+                'price' => $unitPrice,
+                'price_per_piece' => $unitPrice,
+                'total' => $totalBill,
+                'discount_amount' => $discount,
+                'discount_percent' => $totalBill > 0 ? round(($discount / $totalBill) * 100, 2) : 0,
+            ]);
+
+            // Deduct warehouse stock
+            $whStock->decrement('total_pieces', $qtyToSell);
+            $whStock->update(['quantity' => $whStock->total_pieces / $ppb]);
+
+            // Add stock movement (OUT)
+            StockMovement::create([
+                'product_id' => $product->id,
+                'type' => 'out',
+                'qty' => -$qtyToSell,
+                'ref_type' => 'PRODUCTION_DISPATCH',
+                'ref_id' => $batch->id,
+                'note' => "Dispatched Batch #{$batch->batch_no} ({$qtyToSell} pcs) for Invoice #{$sale->invoice_no}"
+            ]);
+
+            // Post ledger and journal entry
+            if ($customerId) {
+                app(\App\Http\Controllers\SaleController::class)->updateLedger($sale);
+                $balanceService = app(\App\Services\BalanceService::class);
+                $custForVoucher = $sale->customer_relation ?? \App\Models\Customer::find($customerId);
+                if ($custForVoucher) {
+                    $balanceService->createSaleVoucher($custForVoucher, $sale->total_net, $sale->invoice_no, date('Y-m-d'));
+                }
+                if ($sale->cash > 0) {
+                    app(\App\Services\TransactionService::class)->createReceiptFromSale($sale);
+                }
+            }
+
+            // Update batch status and quantity
+            if ($qtyToSell >= (float)$batch->quantity) {
+                $batch->update([
+                    'sale_id' => $sale->id,
+                    'status' => 'dispatched',
+                ]);
+            } else {
+                $remainingBatchQty = (float)$batch->quantity - $qtyToSell;
+                $batch->update([
+                    'quantity' => $remainingBatchQty,
+                    'notes' => trim(($batch->notes ?? '') . " | Invoiced {$qtyToSell} Pcs on #{$sale->invoice_no}"),
+                ]);
+            }
+
+            DB::commit();
+
+            $custName = $isWalkin ? ($walkinName ?: 'Walk-in Customer') : ($sale->customer_relation->customer_name ?? 'Customer');
+
+            return redirect()->route('production.index')->with([
+                'success' => "Invoice #{$sale->invoice_no} generated and stock dispatched successfully for {$custName} ({$qtyToSell} Pcs)!",
+                'last_generated_invoice_id' => $sale->id,
+                'last_generated_invoice_no' => $sale->invoice_no,
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->withInput()->with('error', 'Failed to generate invoice: ' . $e->getMessage());
         }
     }
 }

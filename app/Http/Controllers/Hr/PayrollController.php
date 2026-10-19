@@ -394,7 +394,7 @@ class PayrollController extends Controller
             $daysLeave = $attendances->filter(fn($att) => strtolower($att->status) === 'leave')->count();
 
             $shift = $employee->shift ?? \App\Models\Hr\Shift::where('is_default', true)->first();
-            $shiftStartStr = $employee->custom_start_time ?: ($shift ? $shift->start_time : '08:30:00');
+            $shiftStartStr = $employee->custom_start_time ?: ($shift ? \Carbon\Carbon::parse($shift->start_time)->format('H:i:s') : '08:30:00');
             $graceMins = $shift ? ($shift->grace_minutes ?? 5) : 5;
             $lateThreshold = \Carbon\Carbon::parse($shiftStartStr)->addMinutes($graceMins)->format('H:i:s');
 
@@ -1449,8 +1449,11 @@ class PayrollController extends Controller
         }
 
         $shift = $employee->shift ?? \App\Models\Hr\Shift::where('is_default', true)->first();
-        $shiftStartStr = $employee->custom_start_time ?: ($shift ? $shift->start_time : '08:30:00');
-        $shiftEndStr = $employee->custom_end_time ?: ($shift ? $shift->end_time : '18:00:00');
+        // Shift model casts start_time/end_time as datetime Carbon objects — extract only time part
+        $shiftStartStr = $employee->custom_start_time
+            ?: ($shift ? \Carbon\Carbon::parse($shift->start_time)->format('H:i:s') : '08:30:00');
+        $shiftEndStr = $employee->custom_end_time
+            ?: ($shift ? \Carbon\Carbon::parse($shift->end_time)->format('H:i:s') : '18:00:00');
 
         // Calculate standard shift hours dynamically from start and end time (default to 9.5 for 08:30 to 18:00)
         $standardShiftHours = 9.5;

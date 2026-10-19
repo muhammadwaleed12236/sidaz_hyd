@@ -944,30 +944,59 @@ class AttendanceController extends Controller
             return response()->json(['error' => 'Unauthorized action.'], 403);
         }
 
+        // Increase execution time for biometric pull (can take 30-120 seconds)
+        set_time_limit(180);
+        ini_set('max_execution_time', 180);
+
         try {
             $devices = \App\Models\BiometricDevice::where('is_active', true)->get();
+
+            if ($devices->isEmpty()) {
+                return response()->json([
+                    'success' => false,
+                    'error'   => 'No active biometric devices found. Please add/activate a device in Biometric Settings.',
+                ], 422);
+            }
+
             $syncService = app(\App\Services\BiometricSyncService::class);
 
             $results = [
-                'created' => 0,
+                'created'    => 0,
                 'duplicates' => 0,
-                'failed' => 0,
+                'failed'     => 0,
             ];
+            $deviceMessages = [];
 
             foreach ($devices as $device) {
-                $result = $syncService->pullAttendanceFromDevice($device);
-                $results['created'] += $result['created'];
-                $results['duplicates'] += $result['duplicates'];
-                $results['failed'] += $result['failed'];
+                try {
+                    $result = $syncService->pullAttendanceFromDevice($device);
+                    $results['created']    += $result['created']    ?? 0;
+                    $results['duplicates'] += $result['duplicates'] ?? 0;
+                    $results['failed']     += $result['failed']     ?? 0;
+                    $deviceMessages[] = "{$device->name}: " . ($result['message'] ?? 'Done');
+                } catch (\Exception $deviceEx) {
+                    $results['failed']++;
+                    $deviceMessages[] = "{$device->name}: FAILED — " . $deviceEx->getMessage();
+                    \Log::error("Pull failed for device {$device->name}: " . $deviceEx->getMessage());
+                }
+            }
+
+            $summary = "Synced: {$results['created']}, Duplicates: {$results['duplicates']}, Failed: {$results['failed']}.";
+            if (count($deviceMessages) > 1) {
+                $summary .= "\n" . implode("\n", $deviceMessages);
             }
 
             return response()->json([
                 'success' => true,
-                'message' => "Pulled logs from {$devices->count()} devices. Created: {$results['created']}, Duplicates: {$results['duplicates']}.",
+                'message' => $summary,
+                'created' => $results['created'],
+                'duplicates' => $results['duplicates'],
+                'failed' => $results['failed'],
             ]);
 
         } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
+            \Log::error('Pull attendance critical error: ' . $e->getMessage());
+            return response()->json(['error' => 'Pull failed: ' . $e->getMessage()], 500);
         }
     }
 

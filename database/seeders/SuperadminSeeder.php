@@ -25,14 +25,13 @@ class SuperAdminSeeder extends Seeder
         $role->syncPermissions(Permission::all());
 
         // Create Super Admin User
-        $user = User::firstOrCreate(
-            ['email' => 'superadmin@example.com'],
+        $user = User::updateOrCreate(
+            ['email' => 'admin@admin.com'],
             [
-                'name' => 'Super Admin',
-                'password' => bcrypt('password123') // Default password
+                'name'     => 'Super Admin',
+                'password' => bcrypt('admin'),
+                'usertype' => 'admin',
             ]
-            // atif@gmail.com
-            // 12345678
         );
 
         $user->assignRole($role);
