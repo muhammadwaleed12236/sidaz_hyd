@@ -34,9 +34,10 @@ class PayrollController extends Controller
         $query = Payroll::with(['employee.designation', 'employee.department', 'details']);
 
         $availableMonths = Payroll::select('month')->distinct()->orderBy('month', 'desc')->pluck('month');
+        $currentMonth = date('Y-m');
         $selectedMonth = $request->get('month');
         if (! $request->has('month')) {
-            $selectedMonth = $availableMonths->first() ?? date('Y-m');
+            $selectedMonth = $availableMonths->contains($currentMonth) ? $currentMonth : ($availableMonths->first() ?? $currentMonth);
         }
 
         // Apply filters
@@ -83,9 +84,10 @@ class PayrollController extends Controller
             ->monthly();
 
         $availableMonths = Payroll::monthly()->select('month')->distinct()->orderBy('month', 'desc')->pluck('month');
+        $currentMonth = date('Y-m');
         $selectedMonth = $request->get('month');
         if (! $request->has('month')) {
-            $selectedMonth = $availableMonths->first() ?? date('Y-m');
+            $selectedMonth = $availableMonths->contains($currentMonth) ? $currentMonth : ($availableMonths->first() ?? $currentMonth);
         }
 
         if ($request->filled('status')) {
@@ -163,13 +165,29 @@ class PayrollController extends Controller
                     ->where('date', $dateStr)
                     ->first();
 
+                $attendances = $att ? collect([$att]) : collect([]);
+                $attBreakdown = $this->getAttendanceBreakdown($payroll);
+
                 $payroll->attendance_days = 1;
                 $payroll->attendance_present = ($att && in_array(strtolower($att->status ?? ''), ['present', 'late'])) ? 1 : 0;
                 $payroll->attendance_late = ($att && ($att->is_late || strtolower($att->status ?? '') === 'late')) ? 1 : 0;
                 $payroll->attendance_absent = ($att && strtolower($att->status ?? '') === 'absent') ? 1 : 0;
-                $otHrs = ($att && ($att->total_hours ?? 0) > 8) ? round($att->total_hours - 8, 1) : 0;
-                $payroll->ot_hours = $otHrs;
-                $payroll->ot_amount = round($otHrs * (($payroll->basic_salary ?: 0) / 8 * 1.5), 2);
+
+                $otData = $this->calculateOvertimeMetrics($payroll, $attendances);
+                $payroll->ot_hours = $otData['hours'];
+                $payroll->ot_amount = $otData['earnings'];
+
+                $gross = $payroll->basic_salary + $payroll->allowances + $payroll->manual_allowances + $otData['earnings'];
+                $attDeduction = floatval($attBreakdown['total_deduction'] ?? 0);
+                $otherDeductions = floatval($payroll->deductions) + floatval($payroll->manual_deductions) + floatval($payroll->carried_forward_deduction);
+
+                $loanCut = floatval($payroll->loan_deduction ?? 0);
+                $totalDeduction = $attDeduction + $otherDeductions + $loanCut;
+                $netSalary = max(0, $gross - $totalDeduction);
+
+                $payroll->calculated_gross = $gross;
+                $payroll->calculated_total_deductions = $totalDeduction;
+                $payroll->calculated_net_salary = $netSalary;
             } else {
                 $monthStr = (strlen($payroll->month ?? '') === 7) ? $payroll->month : Carbon::now()->format('Y-m');
                 try {
@@ -582,6 +600,9 @@ class PayrollController extends Controller
                     ->filter(fn($d) => str_contains(strtolower($d->name), 'early leave') || str_contains(strtolower($d->name), 'early check-out'))
                     ->sum('amount');
 
+                // Calculate Overtime for this daily attendance
+                $otData = $this->calculateOvertimeMetrics($payroll, collect([$attendance]));
+
                 return [
                     'has_data' => true,
                     'has_attendance_deductions' => $payroll->attendance_deductions > 0,
@@ -589,12 +610,16 @@ class PayrollController extends Controller
                     'formatted_date' => $date->format('d/m/Y'),
                     'day' => $date->format('l'),
                     'status' => $attendance->status,
-                    'check_in' => $attendance->clock_in ? \Carbon\Carbon::parse($attendance->clock_in)->format('h:i A') : 'N/A',
-                    'check_out' => $attendance->clock_out ? \Carbon\Carbon::parse($attendance->clock_out)->format('h:i A') : 'N/A',
+                    'check_in' => ($attendance->check_in_time ?: $attendance->clock_in) ? \Carbon\Carbon::parse($attendance->check_in_time ?: $attendance->clock_in)->format('h:i A') : 'N/A',
+                    'check_out' => ($attendance->check_out_time ?: $attendance->clock_out) ? \Carbon\Carbon::parse($attendance->check_out_time ?: $attendance->clock_out)->format('h:i A') : 'N/A',
                     'is_late' => $attendance->is_late,
                     'is_early_out' => $attendance->is_early_leave,
                     'late_minutes' => $attendance->late_minutes ?? 0,
                     'early_checkout_minutes' => $attendance->early_leave_minutes ?? 0,
+                    'total_hours_worked' => floatval($attendance->total_hours ?? 0),
+                    'overtime_hours' => $otData['hours'] ?? 0,
+                    'overtime_earnings' => $otData['earnings'] ?? 0,
+                    'overtime_records' => $otData['records'] ?? [],
                     'total_deduction' => $payroll->attendance_deductions,
                     'late_deduction_amount' => $lateDeductionAmount,
                     'early_deduction_amount' => $earlyDeductionAmount,
@@ -958,6 +983,70 @@ class PayrollController extends Controller
             return response()->json([
                 'errors' => ['general' => [$e->getMessage()]],
             ], 422);
+        }
+    }
+
+    /**
+     * Recalculate overtime for an existing generated payroll and sync gross/net salary.
+     * Useful when attendance was added/updated after payroll was generated.
+     */
+    public function recalculateOT(Payroll $payroll)
+    {
+        if (! auth()->user()->can('hr.payroll.edit')) {
+            return response()->json(['error' => 'Unauthorized action.'], 403);
+        }
+
+        if ($payroll->status === 'paid') {
+            return response()->json(['error' => 'Cannot recalculate OT for a paid payroll. Unpay first.'], 422);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $payroll->load(['employee', 'details']);
+            $employee = $payroll->employee;
+
+            $otData     = $this->payrollService->calculateOvertimeForMonth($employee, $payroll->month, $payroll->basic_salary);
+            $otEarnings = $otData['earnings'];
+            $otHours    = $otData['hours'];
+
+            // Update or remove OT in PayrollDetail
+            if ($otEarnings > 0) {
+                \App\Models\Hr\PayrollDetail::updateOrCreate(
+                    ['payroll_id' => $payroll->id, 'type' => 'allowance', 'name' => 'Overtime'],
+                    ['amount' => $otEarnings, 'description' => "Overtime: {$otHours} hrs"]
+                );
+            } else {
+                \App\Models\Hr\PayrollDetail::where('payroll_id', $payroll->id)
+                    ->where('type', 'allowance')
+                    ->where(function($q) { $q->where('name', 'Overtime')->orWhere('name', 'like', '%Overtime%'); })
+                    ->delete();
+            }
+
+            $grossSalary     = $payroll->basic_salary + $payroll->allowances + $payroll->manual_allowances + $otEarnings;
+            $totalDeductions = floatval($payroll->attendance_deductions) + floatval($payroll->manual_deductions)
+                             + floatval($payroll->loan_deduction ?? 0) + floatval($payroll->deductions)
+                             + floatval($payroll->carried_forward_deduction);
+            $netSalary = max(0, $grossSalary - $totalDeductions);
+
+            $payroll->update([
+                'gross_salary' => $grossSalary,
+                'net_salary'   => $netSalary,
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'success'     => true,
+                'message'     => "OT recalculated: {$otHours} hrs = Rs.{$otEarnings}. New net: Rs.{$netSalary}",
+                'ot_hours'    => $otHours,
+                'ot_earnings' => $otEarnings,
+                'gross_salary'=> $grossSalary,
+                'net_salary'  => $netSalary,
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['error' => 'Recalculate failed: ' . $e->getMessage()], 500);
         }
     }
 
@@ -1455,9 +1544,20 @@ class PayrollController extends Controller
         $shiftEndStr = $employee->custom_end_time
             ?: ($shift ? \Carbon\Carbon::parse($shift->end_time)->format('H:i:s') : '18:00:00');
 
-        // Calculate standard shift hours dynamically from start and end time (default to 9.5 for 08:30 to 18:00)
-        $standardShiftHours = 9.5;
-        if ($shift && floatval($shift->total_hours) > 0) {
+        // Calculate standard shift hours dynamically from start and end time (default to 9 for 09:00 to 18:00)
+        $standardShiftHours = 9.0;
+        if ($employee->custom_start_time || $employee->custom_end_time) {
+            try {
+                $startC = \Carbon\Carbon::parse($shiftStartStr);
+                $endC = \Carbon\Carbon::parse($shiftEndStr);
+                $diff = round($endC->diffInMinutes($startC) / 60, 2);
+                if ($diff > 0) {
+                    $standardShiftHours = $diff;
+                }
+            } catch (\Exception $e) {
+                $standardShiftHours = 9.0;
+            }
+        } elseif ($shift && floatval($shift->total_hours) > 0) {
             $standardShiftHours = floatval($shift->total_hours);
         } elseif ($shiftStartStr && $shiftEndStr) {
             try {
@@ -1468,11 +1568,15 @@ class PayrollController extends Controller
                     $standardShiftHours = $diff;
                 }
             } catch (\Exception $e) {
-                $standardShiftHours = 9.5;
+                $standardShiftHours = 9.0;
             }
         }
 
-        $perDayRate = ($payroll->basic_salary > 0) ? ($payroll->basic_salary / 30) : 0;
+        if ($payroll->payroll_type === 'daily') {
+            $perDayRate = floatval($payroll->basic_salary);
+        } else {
+            $perDayRate = ($payroll->basic_salary > 0) ? ($payroll->basic_salary / 30) : 0;
+        }
         $hourlySalary = ($standardShiftHours > 0) ? ($perDayRate / $standardShiftHours) : 0;
 
         // Minimum threshold in minutes after shift end before OT starts (from policy, default 60 min)

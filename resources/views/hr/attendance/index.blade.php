@@ -580,6 +580,19 @@
                                             value="{{ $attendance && $attendance->check_out_time ? \Carbon\Carbon::parse($attendance->check_out_time)->format('H:i') : '' }}">
 
                                         @if ($attendance && $attendance->check_out_time)
+                                            @php
+                                                $shiftEndStr = $emp->custom_end_time ?: ($emp->shift && $emp->shift->end_time ? \Carbon\Carbon::parse($emp->shift->end_time)->format('H:i:s') : '18:00:00');
+                                                $cardOtMins = 0;
+                                                if ($shiftEndStr) {
+                                                    $cOutHis = \Carbon\Carbon::parse($attendance->check_out_time)->format('H:i:s');
+                                                    $cOutDt = \Carbon\Carbon::parse($selectedDate . ' ' . $cOutHis);
+                                                    $sEndDt = \Carbon\Carbon::parse($selectedDate . ' ' . $shiftEndStr);
+                                                    if ($cOutDt->gt($sEndDt)) {
+                                                        $cardOtMins = $cOutDt->diffInMinutes($sEndDt);
+                                                    }
+                                                }
+                                            @endphp
+
                                             @if ($attendance->is_early_leave)
                                                 @php
                                                     $earlyText = format_minutes($attendance->early_leave_minutes);
@@ -587,6 +600,10 @@
                                                 <small class="text-info d-block mt-1"><i
                                                         class="fa fa-person-walking-arrow-right"></i>
                                                     Early Leave {{ $earlyText }}</small>
+                                            @elseif ($cardOtMins > 0)
+                                                <small class="text-success fw-bold d-block mt-1" title="Overtime after duty off time ({{ \Carbon\Carbon::parse($shiftEndStr)->format('h:i A') }})">
+                                                    <i class="fa fa-business-time me-1"></i>Overtime {{ format_minutes($cardOtMins) }}
+                                                </small>
                                             @endif
                                             @if ($attendance->check_out_location)
                                                 <div class="location-badge mt-1"
@@ -726,7 +743,24 @@
                                                 value="{{ $att && $att->check_out_time ? \Carbon\Carbon::parse($att->check_out_time)->format('H:i') : '' }}">
                                         </td>
                                         <td class="fw-semibold">
+                                            @php
+                                                $shiftEndStr = $emp->custom_end_time ?: ($emp->shift && $emp->shift->end_time ? \Carbon\Carbon::parse($emp->shift->end_time)->format('H:i:s') : '18:00:00');
+                                                $listOtMins = 0;
+                                                if ($att && $att->check_out_time && $shiftEndStr) {
+                                                    $cOutHis = \Carbon\Carbon::parse($att->check_out_time)->format('H:i:s');
+                                                    $cOutDt = \Carbon\Carbon::parse($selectedDate . ' ' . $cOutHis);
+                                                    $sEndDt = \Carbon\Carbon::parse($selectedDate . ' ' . $shiftEndStr);
+                                                    if ($cOutDt->gt($sEndDt)) {
+                                                        $listOtMins = $cOutDt->diffInMinutes($sEndDt);
+                                                    }
+                                                }
+                                            @endphp
                                             {{ $att && $att->total_hours > 0 ? number_format($att->total_hours, 2) . ' hrs' : '-' }}
+                                            @if ($listOtMins > 0)
+                                                <span class="badge bg-success d-block mt-1" style="font-size: 0.72rem;">
+                                                    <i class="fa fa-business-time me-1"></i>OT {{ format_minutes($listOtMins) }}
+                                                </span>
+                                            @endif
                                         </td>
                                         <td>
                                             @if($att && $att->is_late)

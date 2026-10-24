@@ -398,7 +398,24 @@
                                             @endif
                                         </td>
                                         <td class="fw-bold text-dark">
+                                            @php
+                                                $ledgerShiftEnd = $emp ? ($emp->custom_end_time ?: ($emp->shift && $emp->shift->end_time ? \Carbon\Carbon::parse($emp->shift->end_time)->format('H:i:s') : '18:00:00')) : '18:00:00';
+                                                $ledgerOtMins = 0;
+                                                if ($att->check_out_time && $ledgerShiftEnd) {
+                                                    $cOutHis = \Carbon\Carbon::parse($att->check_out_time)->format('H:i:s');
+                                                    $cOutDt = \Carbon\Carbon::parse($att->date . ' ' . $cOutHis);
+                                                    $sEndDt = \Carbon\Carbon::parse($att->date . ' ' . $ledgerShiftEnd);
+                                                    if ($cOutDt->gt($sEndDt)) {
+                                                        $ledgerOtMins = $cOutDt->diffInMinutes($sEndDt);
+                                                    }
+                                                }
+                                            @endphp
                                             {{ $att->total_hours > 0 ? number_format($att->total_hours, 2) . ' hrs' : '-' }}
+                                            @if ($ledgerOtMins > 0)
+                                                <span class="badge bg-success d-block mt-1" style="font-size: 0.72rem;">
+                                                    <i class="fa fa-business-time me-1"></i>OT {{ formatMinsToHours($ledgerOtMins) }}
+                                                </span>
+                                            @endif
                                         </td>
                                         <td>
                                             @if($isLate && $att->late_minutes > 0)

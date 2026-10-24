@@ -370,8 +370,28 @@ class PayrollCalculationService
         // Add attendance deduction details to deduction details
         $allDeductionDetails = array_merge($fixedDeductionDetails, $attendanceDeductionData['details']);
 
-        // Calculate gross salary
-        $grossSalary = $baseSalary + $activeAllowances;
+        // Calculate Overtime earnings from attendance
+        $otEarnings = 0;
+        $otHours    = 0;
+        $otAllowanceDetail = [];
+        try {
+            $otData  = $this->calculateOvertimeForMonth($employee, $month, $baseSalary);
+            $otEarnings = $otData['earnings'];
+            $otHours    = $otData['hours'];
+            if ($otEarnings > 0) {
+                $otAllowanceDetail = [[
+                    'name'        => 'Overtime',
+                    'amount'      => $otEarnings,
+                    'type'        => 'fixed',
+                    'description' => "Overtime: {$otHours} hrs",
+                ]];
+            }
+        } catch (\Exception $e) {
+            // OT calc failure should not block payroll generation
+        }
+
+        // Calculate gross salary (includes OT)
+        $grossSalary = $baseSalary + $activeAllowances + $otEarnings;
 
         // Calculate total deductions
         $totalDeductions = $activeFixedDeductions + $attendanceDeductions;
@@ -380,23 +400,23 @@ class PayrollCalculationService
         $netSalary = max(0, $grossSalary - $totalDeductions);
 
         return [
-            'payroll_type' => 'monthly',
-            'month' => $month,
-            'basic_salary' => $baseSalary,
-            'gross_salary' => $grossSalary,
-            'allowances' => $activeAllowances,
-            'deductions' => $activeFixedDeductions,
-            'attendance_deductions' => $attendanceDeductions,
-            'manual_deductions' => 0,
-            'manual_allowances' => 0,
-            'carried_forward_deduction' => 0,
-            'bonuses' => 0,
-            'net_salary' => $netSalary,
-            'auto_generated' => true,
-            'status' => 'generated',
-            'allowance_details' => $allowanceDetails,
-            'deduction_details' => $allDeductionDetails,
-            'attendance_breakdown' => $attendanceBreakdown,
+            'payroll_type'             => 'monthly',
+            'month'                    => $month,
+            'basic_salary'             => $baseSalary,
+            'gross_salary'             => $grossSalary,
+            'allowances'               => $activeAllowances,
+            'deductions'               => $activeFixedDeductions,
+            'attendance_deductions'    => $attendanceDeductions,
+            'manual_deductions'        => 0,
+            'manual_allowances'        => 0,
+            'carried_forward_deduction'=> 0,
+            'bonuses'                  => 0,
+            'net_salary'               => $netSalary,
+            'auto_generated'           => true,
+            'status'                   => 'generated',
+            'allowance_details'        => array_merge($allowanceDetails, $otAllowanceDetail),
+            'deduction_details'        => $allDeductionDetails,
+            'attendance_breakdown'     => $attendanceBreakdown,
         ];
     }
 
@@ -612,5 +632,93 @@ class PayrollCalculationService
         $employee->update([
             'pending_deductions' => $newPendingDeductions,
         ]);
+    }
+
+    /**
+     * Calculate overtime earnings for a monthly payroll period.
+     * Mirrors the same logic as PayrollController::calculateOvertimeMetrics()
+     * so generate and pay always agree.
+     */
+    public function calculateOvertimeForMonth(Employee $employee, string $month, float $basicSalary): array
+    {
+        $hrPolicy = \App\Models\Hr\HrPolicy::getEffectivePolicyForEmployee($employee->id);
+
+        // Respect policy-level disable
+        if ($hrPolicy && isset($hrPolicy->overtime_enabled) && !$hrPolicy->overtime_enabled) {
+            return ['hours' => 0, 'earnings' => 0];
+        }
+
+        $shift = $employee->shift ?? \App\Models\Hr\Shift::where('is_default', true)->first();
+
+        $shiftStartStr = $employee->custom_start_time
+            ?: ($shift ? Carbon::parse($shift->start_time)->format('H:i:s') : '08:30:00');
+        $shiftEndStr   = $employee->custom_end_time
+            ?: ($shift ? Carbon::parse($shift->end_time)->format('H:i:s') : '18:00:00');
+
+        // Standard shift hours
+        $standardShiftHours = 9.0;
+        if ($employee->custom_start_time || $employee->custom_end_time) {
+            try {
+                $s = Carbon::parse($shiftStartStr);
+                $e = Carbon::parse($shiftEndStr);
+                $diff = round($e->diffInMinutes($s) / 60, 2);
+                if ($diff > 0) $standardShiftHours = $diff;
+            } catch (\Exception $ex) {
+                $standardShiftHours = 9.0;
+            }
+        } elseif ($shift && floatval($shift->total_hours) > 0) {
+            $standardShiftHours = floatval($shift->total_hours);
+        } else {
+            try {
+                $s = Carbon::parse($shiftStartStr);
+                $e = Carbon::parse($shiftEndStr);
+                $diff = round($e->diffInMinutes($s) / 60, 2);
+                if ($diff > 0) $standardShiftHours = $diff;
+            } catch (\Exception $ex) {
+                $standardShiftHours = 9.0;
+            }
+        }
+
+        $perDayRate   = ($basicSalary > 0) ? ($basicSalary / 30) : 0;
+        $hourlySalary = ($standardShiftHours > 0) ? ($perDayRate / $standardShiftHours) : 0;
+        $minOtMinutes = ($hrPolicy && isset($hrPolicy->overtime_min_minutes) && $hrPolicy->overtime_min_minutes > 0)
+            ? intval($hrPolicy->overtime_min_minutes)
+            : 60;
+
+        $startDate   = Carbon::parse($month . '-01')->startOfMonth();
+        $endDate     = $startDate->copy()->endOfMonth();
+
+        $attendances = Attendance::where('employee_id', $employee->id)
+            ->whereBetween('date', [$startDate->format('Y-m-d'), $endDate->format('Y-m-d')])
+            ->get();
+
+        $overtimeHoursTotal = 0;
+
+        foreach ($attendances as $att) {
+            $timeOut = $att->check_out_time ?: $att->clock_out;
+            if (!$timeOut) continue;
+
+            $dateYmd     = Carbon::parse($att->date)->format('Y-m-d');
+            $shiftEndDt  = Carbon::parse($dateYmd . ' ' . $shiftEndStr);
+            $checkOutDt  = Carbon::parse($dateYmd . ' ' . Carbon::parse($timeOut)->format('H:i:s'));
+
+            if ($checkOutDt->gt($shiftEndDt)) {
+                $extraMinutes = $checkOutDt->diffInMinutes($shiftEndDt);
+                if ($extraMinutes >= $minOtMinutes) {
+                    $overtimeHoursTotal += round($extraMinutes / 60, 2);
+                }
+            }
+        }
+
+        $overtimeHoursTotal = round($overtimeHoursTotal, 2);
+
+        if ($hrPolicy && $hrPolicy->overtime_rate_type === 'fixed' && $hrPolicy->overtime_fixed_rate > 0) {
+            $overtimeEarnings = round($overtimeHoursTotal * $hrPolicy->overtime_fixed_rate, 2);
+        } else {
+            $multiplier = ($hrPolicy && $hrPolicy->overtime_multiplier > 0) ? $hrPolicy->overtime_multiplier : 1.5;
+            $overtimeEarnings = round($overtimeHoursTotal * $hourlySalary * $multiplier, 2);
+        }
+
+        return ['hours' => $overtimeHoursTotal, 'earnings' => $overtimeEarnings];
     }
 }
