@@ -53,6 +53,14 @@
         return parseFloat(str) || 0;
     }
 
+    function getReceiptsTotal() {
+        let sum = 0;
+        $('.rv-amount').each(function() {
+            sum += toNum($(this).val());
+        });
+        return sum;
+    }
+
     /* =========================================
        PRODUCT SELECT2
        ========================================= */
@@ -460,13 +468,15 @@
         if (isWalkin) {
             orderDisc = toNum($('#walkinDiscountRs').val());
             $('#discountPercent').val(0); // clear percent
-        } else {
+        } else if ($('#discountPercent').length > 0) {
             const orderPct = toNum($('#discountPercent').val());
             orderDisc = (tNet * orderPct) / 100;
+        } else if ($('#walkinDiscountRs').length > 0) {
+            orderDisc = toNum($('#walkinDiscountRs').val());
         }
 
         const prev = toNum($('#previousBalance').val());
-        const receipts = toNum($('#receiptsTotal').text());
+        const receipts = getReceiptsTotal();
         const payable = Math.max(0, tNet - orderDisc + prev - receipts);
         const currentInvoiceTotal = Math.max(0, tNet - orderDisc);
 
@@ -481,6 +491,7 @@
         $('#walkinNetTotal').text(tNet.toFixed(2));
         $('#bottomPaymentsTotal').text(receipts.toFixed(2));
         $('#receiptsTotalBadge').text(receipts.toFixed(2));
+        $('#receiptsTotal').text(receipts.toFixed(2));
         $('#itemsRowCount').text($('#salesTableBody tr').length);
 
         // Display current bill total after all discounts
@@ -943,7 +954,9 @@
             $('#totalsSection').removeClass('col-lg-5').addClass('col-lg-12');
             $('#totalsCustomerView').addClass('d-none').removeClass('d-flex');
             $('#totalsWalkinView').removeClass('d-none').addClass('d-flex');
-            $('#rvWrapper').appendTo('#walkinReceiptsContainer');
+            if ($('#walkinReceiptsContainer').length > 0) {
+                $('#rvWrapper').appendTo('#walkinReceiptsContainer');
+            }
         } else {
             $('#walkinNameInput').addClass('d-none');
             $('#customerSelect').removeClass('d-none').next('.select2-container').removeClass('d-none');
@@ -952,7 +965,9 @@
             $('#totalsSection').removeClass('col-lg-12').addClass('col-lg-5');
             $('#totalsWalkinView').addClass('d-none').removeClass('d-flex');
             $('#totalsCustomerView').removeClass('d-none').addClass('d-flex');
-            $('#rvWrapper').appendTo('#receiptVouchersSection .card-body');
+            if ($('#receiptVouchersSection .card-body').length > 0) {
+                $('#rvWrapper').appendTo('#receiptVouchersSection .card-body');
+            }
         }
         if (typeof updateGrandTotals === 'function') updateGrandTotals();
     });
@@ -966,14 +981,16 @@
         });
         
         // Ensure rvWrapper is in the right place on load
-        if ($('#walkinToggle').is(':checked')) {
-            $('#rvWrapper').appendTo('#walkinReceiptsContainer');
-            $('#totalsSection').removeClass('col-lg-5').addClass('col-lg-12');
-            $('#receiptVouchersSection').hide();
-            $('#totalsCustomerView').addClass('d-none').removeClass('d-flex');
-            $('#totalsWalkinView').removeClass('d-none').addClass('d-flex');
-        } else {
-            $('#totalsSection').removeClass('col-lg-12').addClass('col-lg-5');
+        if ($('#walkinReceiptsContainer').length > 0) {
+            if ($('#walkinToggle').is(':checked')) {
+                $('#rvWrapper').appendTo('#walkinReceiptsContainer');
+                $('#totalsSection').removeClass('col-lg-5').addClass('col-lg-12');
+                $('#receiptVouchersSection').hide();
+                $('#totalsCustomerView').addClass('d-none').removeClass('d-flex');
+                $('#totalsWalkinView').removeClass('d-none').addClass('d-flex');
+            } else {
+                $('#totalsSection').removeClass('col-lg-12').addClass('col-lg-5');
+            }
         }
 
         // Remove invalid classes on input
@@ -1280,7 +1297,7 @@
             // Walk-in 100% Payment Validation Check
             const isWalkin = $('#walkinToggle').is(':checked');
             const invoiceNet = toNum($('#totalBalance').val());
-            const paidNow = toNum($('#receiptsTotal').text());
+            const paidNow = getReceiptsTotal();
 
             if (isWalkin) {
                 // For walk-in, they must pay 100% upfront (with a small floating point tolerance)
@@ -1304,7 +1321,7 @@
                 // Invoice Net Amount (Subtotal - Extra Discount)
                 const invoiceNet = toNum($('#totalBalance').val());
                 // Amount Paid Now
-                const paidNow = toNum($('#receiptsTotal').text());
+                const paidNow = getReceiptsTotal();
 
                 // Projected Balance: Previous + New Debt - Payment
                 const projectedBalance = prevBal + invoiceNet - paidNow;
@@ -1330,18 +1347,18 @@
         });
 
         // Receipts Logic
-        $(document).on('input', '.rv-amount', function() {
+        $(document).on('input change keyup', '.rv-amount', function() {
             if (typeof window.recomputeReceipts === 'function') window.recomputeReceipts();
         });
 
         $('#btnAddRV').on('click', function() {
             const row = `
-              <div class="d-flex gap-2 align-items-center mb-2 rv-row">
-                <select class="form-select rv-account" name="receipt_account_id[]" style="max-width:320px">
+              <div class="d-flex gap-1 align-items-center mb-2 rv-row">
+                <select class="form-select form-select-sm rv-account bg-light fw-bold" name="receipt_account_id[]" style="font-size:0.75rem;">
                   <option value="">Select account</option>
                 </select>
-                <input type="text" class="form-control text-end rv-amount" name="receipt_amount[]" placeholder="0.00" style="max-width:160px">
-                <button type="button" class="btn btn-outline-danger btn-sm btnRemRV">&times;</button>
+                <input type="number" step="0.01" class="form-control form-control-sm text-end rv-amount fw-bold" name="receipt_amount[]" placeholder="0.00" style="width: 110px; font-size:0.75rem;">
+                <button type="button" class="btn btn-outline-danger btn-sm btnRemRV px-2 py-0">&times;</button>
               </div>`;
             $('#rvWrapper').append(row);
             loadAccountsInto($('#rvWrapper .rv-account:last'));
@@ -1374,11 +1391,6 @@
         }
 
         window.recomputeReceipts = function() {
-            let sum = 0;
-            $('.rv-amount').each(function() {
-                sum += toNum($(this).val());
-            });
-            $('#receiptsTotal').text(sum.toFixed(2));
             updateGrandTotals();
         }
 
@@ -1440,7 +1452,7 @@
         });
 
         // --- Save & Complete (F9) Handler ---
-        $('#btnSaveAndComplete, #btnHeaderSaveSale').on('click', function() {
+        $('#btnSaveAndComplete, #btnSaveAndComplete2, #btnHeaderSaveSale').on('click', function() {
             $('#btnPosted').trigger('click');
         });
 

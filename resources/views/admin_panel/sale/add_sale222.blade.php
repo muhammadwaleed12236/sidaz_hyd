@@ -629,6 +629,14 @@
                 <input type="hidden" id="tel" name="tel">
                 <input type="hidden" id="previousBalance" value="0">
                 <input type="hidden" id="rangeBalance" value="0">
+                <input type="hidden" name="subTotal1" id="subTotal1" value="0">
+                <input type="hidden" name="total_subtotal" id="subTotal2" value="0">
+                <input type="hidden" name="total_extra_cost" id="discountAmount" value="0">
+                <input type="hidden" name="total_net" id="totalBalance" value="0">
+                <input type="hidden" name="cash" value="0">
+                <input type="hidden" name="card" value="0">
+                <input type="hidden" name="change" id="backendChange" value="0">
+                <span class="d-none" id="receiptsTotal">0.00</span>
 
                 <!-- 2-COLUMN RESPONSIVE POS LAYOUT -->
                 <div class="row g-2 align-items-stretch">
@@ -768,7 +776,7 @@
                         <span class="text-muted fw-semibold" style="font-size:0.8rem;">Discount (Rs.)</span>
                         <div class="input-group input-group-sm" style="width: 130px;">
                             <input type="number" class="form-control text-end fw-bold text-danger" id="walkinDiscountRs" value="0" placeholder="0">
-                            <span class="input-group-text bg-light text-muted">%</span>
+                            <span class="input-group-text bg-light text-muted">Rs</span>
                         </div>
                     </div>
 
