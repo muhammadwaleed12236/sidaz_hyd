@@ -139,9 +139,19 @@
             border-collapse: collapse !important;
             margin-bottom: 0 !important;
             width: 100%;
-            min-width: 900px;
+            min-width: 1100px !important;
         }
 
+        
+        /* Suppress inner spin arrows in table number inputs */
+        .sales-table tbody input[type=number]::-webkit-inner-spin-button,
+        .sales-table tbody input[type=number]::-webkit-outer-spin-button {
+            -webkit-appearance: none !important;
+            margin: 0 !important;
+        }
+        .sales-table tbody input[type=number] {
+            -moz-appearance: textfield !important;
+        }
         .sales-table thead th {
             background-color: #e2e8f0 !important;
             color: #0f172a !important;
@@ -249,6 +259,7 @@
             gap: 0 !important;
             margin: 0 !important;
             padding: 0 !important;
+            overflow: hidden !important;
         }
 
         .sales-table tbody .discount-wrapper .discount-value {
@@ -298,18 +309,20 @@
             background-color: #f8fafc !important;
         }
 
-        /* Column Widths - Compact & Full Width */
-        .col-product { width: auto; min-width: 280px; }
-        .col-stock { width: 70px; min-width: 70px; }
-        .col-qty { width: 70px; min-width: 70px; }
-        .col-size { width: 75px; min-width: 75px; }
-        .col-color { width: 85px; min-width: 85px; }
-        .col-pieces { width: 70px; min-width: 70px; }
-        .col-price-p { width: 85px; min-width: 85px; }
-        .col-disc { width: 90px; min-width: 90px; }
-        .col-disc-amt { width: 80px; min-width: 80px; }
-        .col-amount { width: 95px; min-width: 95px; }
-        .col-action { width: 35px; min-width: 35px; text-align: center; }
+        /* Column Widths - Compact & Proportional */
+        .col-product { min-width: 190px !important; }
+        .col-stock { width: 65px !important; min-width: 65px !important; }
+        .col-qty-wrapper { width: 75px !important; min-width: 75px !important; }
+        .col-size { width: 55px !important; min-width: 55px !important; }
+        .col-batch { width: 90px !important; min-width: 90px !important; }
+        .col-mfg { width: 85px !important; min-width: 85px !important; }
+        .col-exp { width: 85px !important; min-width: 85px !important; }
+        .col-pieces { width: 60px !important; min-width: 60px !important; }
+        .col-price-p { width: 92px !important; min-width: 92px !important; }
+        .col-disc { width: 95px !important; min-width: 95px !important; }
+        .col-disc-amt { width: 80px !important; min-width: 80px !important; }
+        .col-amount { width: 90px !important; min-width: 90px !important; }
+        .col-action { width: 30px !important; min-width: 30px !important; text-align: center; }
 
         /* Invalid cells & inputs */
         .invalid-cell {
@@ -644,15 +657,17 @@
                                     <thead>
                                         <tr>
                                             <th style="width:25px;" class="text-center">#</th>
-                                            <th class="col-product" style="min-width: 180px;">PRODUCT</th>
-                                            <th class="col-stock" style="width: 70px;">STOCK</th>
+                                            <th class="col-product" style="min-width: 190px;">PRODUCT</th>
+                                            <th class="col-stock" style="width: 65px;">STOCK</th>
                                             <th class="col-qty" style="width: 75px;">QTY</th>
-                                            <th class="col-size" style="width: 65px;">SIZE</th>
-                                            <th class="col-color" style="width: 70px;">COLOR</th>
-                                            <th class="col-pieces" style="width: 65px;">PCS</th>
-                                            <th class="col-price-p" style="width: 85px;">PRICE</th>
-                                            <th class="col-disc" style="width: 85px;">DISCOUNT</th>
-                                            <th class="col-amount" style="width: 95px;">AMOUNT</th>
+                                            <th class="col-size" style="width: 55px;">SIZE</th>
+                                            <th class="col-batch" style="width: 90px;">BATCH #</th>
+                                            <th class="col-mfg" style="width: 85px;">MFG DATE</th>
+                                            <th class="col-exp" style="width: 85px;">EXP DATE</th>
+                                            <th class="col-pieces" style="width: 60px;">PCS</th>
+                                            <th class="col-price-p" style="width: 92px;">PRICE</th>
+                                            <th class="col-disc" style="width: 95px;">DISCOUNT</th>
+                                            <th class="col-amount" style="width: 90px;">AMOUNT</th>
                                             <th class="col-action" style="width: 30px;">×</th>
                                         </tr>
                                     </thead>
@@ -661,7 +676,7 @@
                                     </tbody>
                                     <tfoot>
                                         <tr>
-                                            <td colspan="9" class="text-end fw-bold text-uppercase text-secondary" style="font-size:0.78rem;">Grid Total:</td>
+                                            <td colspan="11" class="text-end fw-bold text-uppercase text-secondary" style="font-size:0.78rem;">Grid Total:</td>
                                             <td class="text-end fw-bold text-success fs-6"><span id="totalAmount">0.00</span></td>
                                             <td></td>
                                         </tr>

@@ -1258,6 +1258,9 @@ class SaleController extends Controller
                 $saleItem->sale_id = $sale->id;
                 $saleItem->product_id = $isManual ? null : $pid;
                 $saleItem->color = $request->color[$index] ?? null;
+                $saleItem->batch_no = $request->batch_no[$index] ?? null;
+                $saleItem->mfg_date = $request->mfg_date[$index] ?? null;
+                $saleItem->exp_date = $request->exp_date[$index] ?? null;
                 $saleItem->warehouse_id = !empty($warehouses[$index]) ? $warehouses[$index] : $defaultWhId;
                 $saleItem->product_name = $productName; // Store name snapshot
 

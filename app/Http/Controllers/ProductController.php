@@ -129,6 +129,11 @@ class ProductController extends Controller
                 $stockDisplay = $loose > 0 ? "$boxes.$loose" : $boxes;
             }
 
+            $batch = \App\Models\ProductionBatch::where('product_id', $p->id)->latest()->first();
+            $batchNo = $batch ? $batch->batch_no : '';
+            $mfgDate = $batch && $batch->mfg_date ? date('Y-m-d', strtotime($batch->mfg_date)) : '';
+            $expDate = $batch && $batch->exp_date ? date('Y-m-d', strtotime($batch->exp_date)) : '';
+
             $variants = [];
             if ($p->color) {
                 try {
@@ -291,7 +296,10 @@ class ProductController extends Controller
                         'purchase_price_per_piece' => $v['purch_price'] ?? $p->purchase_price_per_piece ?? 0,
                         'purchase_price_per_m2' => $p->purchase_price_per_m2 ?? 0,
                         'sale_discount_percent' => $p->sale_discount_percent ?? 0,
-                        'variant_data' => base64_encode($variantJson)
+                        'variant_data' => base64_encode($variantJson),
+                        'batch_no' => $batchNo,
+                        'mfg_date' => $mfgDate,
+                        'exp_date' => $expDate
                     ];
                 }
                 return $expanded;
@@ -315,7 +323,10 @@ class ProductController extends Controller
                 'purchase_price_per_piece' => $p->purchase_price_per_piece ?? 0,
                 'purchase_price_per_m2' => $p->purchase_price_per_m2 ?? 0,
                 'sale_discount_percent' => $p->sale_discount_percent ?? 0,
-                'variant_data' => ''
+                'variant_data' => '',
+                'batch_no' => $batchNo,
+                'mfg_date' => $mfgDate,
+                'exp_date' => $expDate
             ]];
         });
 

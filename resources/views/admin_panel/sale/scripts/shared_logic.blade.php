@@ -155,7 +155,7 @@
     </td>
 
     <!-- Qty cell with Sub-Unit toggle (Kg ↔ Gm / Ft ↔ In) -->
-    <td style="width:105px;min-width:105px;" class="col-qty-wrapper">
+    <td class="col-qty-wrapper">
       <div class="d-flex align-items-center gap-1">
         <input type="number" step="any" class="form-control carton-qty text-end" name="carton_qty[]" placeholder="Qty" min="0" value="" style="flex: 1; min-width: 0;">
         <button type="button" class="btn btn-sm btn-outline-primary qty-unit-toggle px-1 py-0 d-none" 
@@ -177,10 +177,21 @@
        <input type="hidden" class="pack-qty" name="pack_qty[]" value="1">
     </td>
 
-    <!-- Color (Display - readonly) -->
-    <td class="col-color">
-      <input type="text" class="form-control color-display text-center input-readonly" readonly tabindex="-1" placeholder="-">
+    <!-- Batch # -->
+    <td class="col-batch">
+      <input type="text" class="form-control batch-no text-center" name="batch_no[]" placeholder="Batch" style="font-size:0.75rem;">
     </td>
+
+    <!-- Mfg Date -->
+    <td class="col-mfg">
+      <input type="date" class="form-control mfg-date text-center" name="mfg_date[]" style="font-size:0.72rem; padding: 2px 2px;">
+    </td>
+
+    <!-- Exp Date -->
+    <td class="col-exp">
+      <input type="date" class="form-control exp-date text-center" name="exp_date[]" style="font-size:0.72rem; padding: 2px 2px;">
+    </td>
+
 
     <!-- Total Pieces (Calculated) -->
     <td class="col-pieces">
@@ -1001,6 +1012,9 @@
             // Set size and color display
             $row.find('.size-display').val(variantSize);
             $row.find('.color-display').val(variantColor);
+            $row.find('.batch-no').val(data.batch_no || '');
+            $row.find('.mfg-date').val(data.mfg_date || '');
+            $row.find('.exp-date').val(data.exp_date || '');
             
             // Store variant stock for later use (after warehouse loads)
             if (variantStock !== null) {
