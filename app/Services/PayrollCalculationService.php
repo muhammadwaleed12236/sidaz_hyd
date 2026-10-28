@@ -191,7 +191,23 @@ class PayrollCalculationService
             return !in_array($dayOfWeek, $weeklyOffDays);
         })->count();
         $totalDeductionDays = $daysAbsent + $daysLeave;
-        $lateCheckIns = $attendances->where('is_late', true)->count();
+        $shiftStart = $employee->getStartTime();
+        $shiftStartStr = Carbon::parse($shiftStart)->format('H:i:s');
+        $graceMinutes = $employee->getGraceMinutes();
+        if ($hrPolicy && isset($hrPolicy->late_grace_minutes) && $hrPolicy->late_grace_minutes > 0) {
+            $graceMinutes = $hrPolicy->late_grace_minutes;
+        }
+        $lateThreshold = Carbon::parse($shiftStartStr)->addMinutes($graceMinutes)->format('H:i:s');
+
+        $lateAttendancesList = $attendances->filter(function ($att) use ($lateThreshold) {
+            if ($att->check_in_time) {
+                $checkInTimeStr = Carbon::parse($att->check_in_time)->format('H:i:s');
+                return $checkInTimeStr > $lateThreshold;
+            }
+            return ($att->is_late || strtolower($att->status ?? '') === 'late');
+        })->values();
+
+        $lateCheckIns = $lateAttendancesList->count();
         $earlyCheckOuts = $attendances->where('is_early_leave', true)->count();
         $totalLateMinutes = $attendances->sum('late_minutes');
         $totalEarlyMinutes = $attendances->sum('early_leave_minutes');
@@ -233,64 +249,96 @@ class PayrollCalculationService
             ];
         }
 
-        // Late check-in penalty
+        // Late check-in penalty based on HR Policy or Structure
         if ($lateCheckIns > 0) {
-            $latePenalty = $policy['late_penalty_per_instance'] ?? 0;
-            if ($latePenalty > 0) {
-                $lateDeduction = $lateCheckIns * $latePenalty;
+            if ($hrPolicy && $hrPolicy->late_penalty_type === '3_lates_1_day') {
+                $lateDeductionDays = floor($lateCheckIns / 3);
+                $lateDeduction = round($lateDeductionDays * $effectivePerDayDeduction, 2);
+                if ($lateDeduction > 0) {
+                    $deductionDetails[] = [
+                        'name' => "Late Check-in Penalty ({$lateCheckIns} late arrivals, {$lateDeductionDays} day deduction)",
+                        'amount' => $lateDeduction,
+                        'description' => "Policy: Every 3 late check-ins = 1 day salary deduction. ({$lateCheckIns} lates = {$lateDeductionDays} day(s) × Rs. " . number_format($effectivePerDayDeduction, 2) . ")",
+                    ];
+                }
+            } elseif ($hrPolicy && $hrPolicy->late_penalty_type === 'fixed_per_instance' && floatval($hrPolicy->late_penalty_amount) > 0) {
+                $lateDeduction = round($lateCheckIns * floatval($hrPolicy->late_penalty_amount), 2);
+                if ($lateDeduction > 0) {
+                    $deductionDetails[] = [
+                        'name' => "Late Check-in Penalty ({$lateCheckIns} times)",
+                        'amount' => $lateDeduction,
+                        'description' => "{$lateCheckIns} late check-ins × Rs. " . number_format($hrPolicy->late_penalty_amount, 2),
+                    ];
+                }
+            } elseif (! empty($policy['late_penalty_per_instance'])) {
+                $latePenalty = floatval($policy['late_penalty_per_instance']);
+                $lateDeduction = round($lateCheckIns * $latePenalty, 2);
                 $deductionDetails[] = [
                     'name' => "Late Check-in Penalty ({$lateCheckIns} times)",
                     'amount' => $lateDeduction,
                     'description' => "{$lateCheckIns} late check-ins × Rs. {$latePenalty}",
                 ];
-            }
-
-            // Alternative: Use late rules if defined
-            if (empty($latePenalty) && ! empty($policy['late_rules'])) {
-                foreach ($attendances->where('is_late', true) as $att) {
+            } elseif (! empty($policy['late_rules'])) {
+                foreach ($lateAttendancesList as $att) {
                     $deduction = $this->calculateLateDeduction(
                         $att->late_minutes ?? 0,
                         $policy['late_rules'],
-                        $structure->base_salary / 30 // Per-day rate
+                        $effectivePerDayDeduction
                     );
                     $lateDeduction += $deduction;
                 }
                 if ($lateDeduction > 0) {
                     $deductionDetails[] = [
-                        'name' => "Late Check-in Penalties ({$lateCheckIns} times, {$totalLateMinutes} min)",
-                        'amount' => $lateDeduction,
+                        'name' => "Late Check-in Penalties ({$lateCheckIns} times)",
+                        'amount' => round($lateDeduction, 2),
                         'description' => 'Calculated based on late rules',
                     ];
                 }
             }
         }
 
-        // Early check-out penalty
+        // Early check-out penalty strictly based on HR Policy or Structure
         if ($earlyCheckOuts > 0) {
-            $earlyPenalty = $policy['early_penalty_per_instance'] ?? 0;
-            if ($earlyPenalty > 0) {
-                $earlyDeduction = $earlyCheckOuts * $earlyPenalty;
+            if ($hrPolicy && $hrPolicy->early_checkout_penalty_type === '3_earlies_1_day') {
+                $earlyDeductionDays = floor($earlyCheckOuts / 3);
+                $earlyDeduction = round($earlyDeductionDays * $effectivePerDayDeduction, 2);
+                if ($earlyDeduction > 0) {
+                    $deductionDetails[] = [
+                        'name' => "Early Check-out Penalty ({$earlyCheckOuts} early departures, {$earlyDeductionDays} day deduction)",
+                        'amount' => $earlyDeduction,
+                        'description' => "Policy: Every 3 early leaves = 1 day salary deduction. ({$earlyCheckOuts} earlies = {$earlyDeductionDays} day(s) × Rs. " . number_format($effectivePerDayDeduction, 2) . ")",
+                    ];
+                }
+            } elseif ($hrPolicy && $hrPolicy->early_checkout_penalty_type === 'fixed_per_instance' && floatval($hrPolicy->early_checkout_penalty_amount) > 0) {
+                $earlyDeduction = round($earlyCheckOuts * floatval($hrPolicy->early_checkout_penalty_amount), 2);
+                if ($earlyDeduction > 0) {
+                    $deductionDetails[] = [
+                        'name' => "Early Check-out Penalty ({$earlyCheckOuts} times)",
+                        'amount' => $earlyDeduction,
+                        'description' => "{$earlyCheckOuts} early check-outs × Rs. " . number_format($hrPolicy->early_checkout_penalty_amount, 2),
+                    ];
+                }
+            } elseif (! empty($policy['early_penalty_per_instance'])) {
+                $earlyPenalty = floatval($policy['early_penalty_per_instance']);
+                $earlyDeduction = round($earlyCheckOuts * $earlyPenalty, 2);
                 $deductionDetails[] = [
                     'name' => "Early Check-out Penalty ({$earlyCheckOuts} times)",
                     'amount' => $earlyDeduction,
                     'description' => "{$earlyCheckOuts} early check-outs × Rs. {$earlyPenalty}",
                 ];
-            }
-
-            // Alternative: Use early rules if defined
-            if (empty($earlyPenalty) && ! empty($policy['early_rules'])) {
-                foreach ($attendances->where('is_early_leave', true) as $att) { // Fixed: is_early_leave
+            } elseif (! empty($policy['early_rules'])) {
+                foreach ($attendances->where('is_early_leave', true) as $att) {
                     $deduction = $this->calculateEarlyDeduction(
-                        $att->early_leave_minutes ?? 0, // Fixed: early_leave_minutes
+                        $att->early_leave_minutes ?? 0,
                         $policy['early_rules'],
-                        $structure->base_salary / 30
+                        $effectivePerDayDeduction
                     );
                     $earlyDeduction += $deduction;
                 }
                 if ($earlyDeduction > 0) {
                     $deductionDetails[] = [
                         'name' => "Early Check-out Penalties ({$earlyCheckOuts} times, {$totalEarlyMinutes} min)",
-                        'amount' => $earlyDeduction,
+                        'amount' => round($earlyDeduction, 2),
                         'description' => 'Calculated based on early rules',
                     ];
                 }
@@ -441,6 +489,59 @@ class PayrollCalculationService
         $dayDeduction = 0;
         $deductionDetails = [];
 
+        // Calculate Overtime for daily attendance if policy allows
+        $dailyOtHours = 0;
+        $dailyOtEarnings = 0;
+        $otAllowanceDetails = [];
+        try {
+            $hrPolicy = \App\Models\Hr\HrPolicy::getEffectivePolicyForEmployee($employee->id);
+            if (!$hrPolicy || !isset($hrPolicy->overtime_enabled) || $hrPolicy->overtime_enabled) {
+                $shift = $employee->shift ?? \App\Models\Hr\Shift::where('is_default', true)->first();
+                $shiftEndStr = $employee->custom_end_time ?: ($shift ? Carbon::parse($shift->end_time)->format('H:i:s') : '18:00:00');
+                $standardShiftHours = 9.0;
+                if ($shift && floatval($shift->total_hours) > 0) {
+                    $standardShiftHours = floatval($shift->total_hours);
+                }
+                $hourlySalary = ($standardShiftHours > 0) ? ($dailyRate / $standardShiftHours) : 0;
+                $minOtMinutes = ($hrPolicy && isset($hrPolicy->overtime_min_minutes) && $hrPolicy->overtime_min_minutes > 0)
+                    ? intval($hrPolicy->overtime_min_minutes)
+                    : 60;
+
+                $timeOut = $attendance->check_out_time ?: $attendance->clock_out;
+                if ($timeOut) {
+                    $dateYmd = Carbon::parse($attendance->date)->format('Y-m-d');
+                    $shiftEndDt = Carbon::parse($dateYmd . ' ' . $shiftEndStr);
+                    $checkOutDt = Carbon::parse($dateYmd . ' ' . Carbon::parse($timeOut)->format('H:i:s'));
+                    if ($checkOutDt->gt($shiftEndDt)) {
+                        $extraMinutes = $checkOutDt->diffInMinutes($shiftEndDt);
+                        if ($extraMinutes >= $minOtMinutes) {
+                            $dailyOtHours = round($extraMinutes / 60, 2);
+                        }
+                    }
+                } elseif (floatval($attendance->total_hours ?? 0) > ($standardShiftHours + ($minOtMinutes / 60))) {
+                    $dailyOtHours = round(floatval($attendance->total_hours) - $standardShiftHours, 2);
+                }
+
+                if ($dailyOtHours > 0) {
+                    if ($hrPolicy && $hrPolicy->overtime_rate_type === 'fixed' && $hrPolicy->overtime_fixed_rate > 0) {
+                        $dailyOtEarnings = round($dailyOtHours * $hrPolicy->overtime_fixed_rate, 2);
+                    } else {
+                        $multiplier = ($hrPolicy && $hrPolicy->overtime_multiplier > 0) ? $hrPolicy->overtime_multiplier : 1.5;
+                        $dailyOtEarnings = round($dailyOtHours * $hourlySalary * $multiplier, 2);
+                    }
+
+                    $otAllowanceDetails[] = [
+                        'name' => 'Overtime',
+                        'amount' => $dailyOtEarnings,
+                        'type' => 'fixed',
+                        'description' => "Overtime: {$dailyOtHours} hrs",
+                    ];
+                }
+            }
+        } catch (\Exception $e) {}
+
+        $dayEarning = $dailyRate + $dailyOtEarnings;
+
         // Apply late check-in deductions
         if (($attendance->late_minutes ?? 0) > 0) {
             $lateDeduction = $this->calculateLateDeduction(
@@ -510,8 +611,8 @@ class PayrollCalculationService
             'payroll_type' => 'daily',
             'month' => Carbon::parse($attendance->date)->format('Y-m-d'), // Store full date for daily
             'basic_salary' => $dailyRate,
-            'gross_salary' => $dailyRate,
-            'allowances' => 0,
+            'gross_salary' => $dayEarning,
+            'allowances' => $dailyOtEarnings,
             'deductions' => 0, // Fixed deductions don't apply to daily
             'attendance_deductions' => $dayDeduction,
             'manual_deductions' => 0,
@@ -524,7 +625,7 @@ class PayrollCalculationService
             'carried_forward_to_next' => $newPendingDeductions,
             'new_pending_deductions' => $newPendingDeductions,
             'deduction_details' => $deductionDetails,
-            'allowance_details' => [],
+            'allowance_details' => $otAllowanceDetails,
             'attendance_breakdown' => [
                 'has_data' => true,
                 'date' => $attendance->date,
@@ -696,17 +797,19 @@ class PayrollCalculationService
 
         foreach ($attendances as $att) {
             $timeOut = $att->check_out_time ?: $att->clock_out;
-            if (!$timeOut) continue;
+            if ($timeOut) {
+                $dateYmd     = Carbon::parse($att->date)->format('Y-m-d');
+                $shiftEndDt  = Carbon::parse($dateYmd . ' ' . $shiftEndStr);
+                $checkOutDt  = Carbon::parse($dateYmd . ' ' . Carbon::parse($timeOut)->format('H:i:s'));
 
-            $dateYmd     = Carbon::parse($att->date)->format('Y-m-d');
-            $shiftEndDt  = Carbon::parse($dateYmd . ' ' . $shiftEndStr);
-            $checkOutDt  = Carbon::parse($dateYmd . ' ' . Carbon::parse($timeOut)->format('H:i:s'));
-
-            if ($checkOutDt->gt($shiftEndDt)) {
-                $extraMinutes = $checkOutDt->diffInMinutes($shiftEndDt);
-                if ($extraMinutes >= $minOtMinutes) {
-                    $overtimeHoursTotal += round($extraMinutes / 60, 2);
+                if ($checkOutDt->gt($shiftEndDt)) {
+                    $extraMinutes = $checkOutDt->diffInMinutes($shiftEndDt);
+                    if ($extraMinutes >= $minOtMinutes) {
+                        $overtimeHoursTotal += round($extraMinutes / 60, 2);
+                    }
                 }
+            } elseif (floatval($att->total_hours ?? 0) > ($standardShiftHours + ($minOtMinutes / 60))) {
+                $overtimeHoursTotal += round(floatval($att->total_hours) - $standardShiftHours, 2);
             }
         }
 

@@ -221,13 +221,18 @@ class Employee extends Model
      */
     public function getGraceMinutes()
     {
-        if ($this->shift) {
-            return $this->shift->grace_minutes;
+        $hrPolicy = HrPolicy::getEffectivePolicyForEmployee($this->id);
+        if ($hrPolicy && isset($hrPolicy->late_grace_minutes) && $hrPolicy->late_grace_minutes !== null) {
+            return (int) $hrPolicy->late_grace_minutes;
+        }
+
+        if ($this->shift && $this->shift->grace_minutes !== null) {
+            return (int) $this->shift->grace_minutes;
         }
 
         $defaultShift = Shift::getDefault();
-        if ($defaultShift) {
-            return $defaultShift->grace_minutes;
+        if ($defaultShift && $defaultShift->grace_minutes !== null) {
+            return (int) $defaultShift->grace_minutes;
         }
 
         return 15;

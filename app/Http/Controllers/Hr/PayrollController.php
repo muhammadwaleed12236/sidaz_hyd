@@ -185,9 +185,15 @@ class PayrollController extends Controller
                 $totalDeduction = $attDeduction + $otherDeductions + $loanCut;
                 $netSalary = max(0, $gross - $totalDeduction);
 
-                $payroll->calculated_gross = $gross;
-                $payroll->calculated_total_deductions = $totalDeduction;
-                $payroll->calculated_net_salary = $netSalary;
+                if ($payroll->status === 'paid') {
+                    $payroll->calculated_gross = $payroll->gross_salary;
+                    $payroll->calculated_total_deductions = $payroll->total_deductions;
+                    $payroll->calculated_net_salary = $payroll->net_salary;
+                } else {
+                    $payroll->calculated_gross = $gross;
+                    $payroll->calculated_total_deductions = $totalDeduction;
+                    $payroll->calculated_net_salary = $netSalary;
+                }
             } else {
                 $monthStr = (strlen($payroll->month ?? '') === 7) ? $payroll->month : Carbon::now()->format('Y-m');
                 try {
@@ -230,7 +236,14 @@ class PayrollController extends Controller
                     $activeLoans = \App\Models\Hr\Loan::where('employee_id', $payroll->employee_id)->active()->get();
                     foreach ($activeLoans as $l) {
                         $rem = max(0, $l->amount - $l->paid_amount);
-                        if ($l->installment_amount > 0) {
+                        $scheduled = \App\Models\Hr\LoanScheduledDeduction::where('loan_id', $l->id)
+                            ->where('deduction_month', $payroll->month)
+                            ->where('status', 'pending')
+                            ->first();
+
+                        if ($scheduled && $scheduled->amount > 0) {
+                            $loanCut += min($scheduled->amount, $rem);
+                        } elseif ($l->installment_amount > 0) {
                             $loanCut += min($l->installment_amount, $rem);
                         } else {
                             $loanCut += $rem;
@@ -241,9 +254,15 @@ class PayrollController extends Controller
                 $totalDeduction = $attDeduction + $otherDeductions + $loanCut;
                 $netSalary = max(0, $gross - $totalDeduction);
 
-                $payroll->calculated_gross = $gross;
-                $payroll->calculated_total_deductions = $totalDeduction;
-                $payroll->calculated_net_salary = $netSalary;
+                if ($payroll->status === 'paid') {
+                    $payroll->calculated_gross = $payroll->gross_salary;
+                    $payroll->calculated_total_deductions = $payroll->total_deductions;
+                    $payroll->calculated_net_salary = $payroll->net_salary;
+                } else {
+                    $payroll->calculated_gross = $gross;
+                    $payroll->calculated_total_deductions = $totalDeduction;
+                    $payroll->calculated_net_salary = $netSalary;
+                }
             }
         }
     }
@@ -487,8 +506,6 @@ class PayrollController extends Controller
                 ];
             })->values()->toArray();
 
-            $earlyPenalty = floatval($policy['early_penalty_per_instance'] ?? 0);
-            $earlyRules = $policy['early_rules'] ?? [];
             $lateDays = $lateAttendancesList->map(function ($att, $idx) use ($hrPolicy, $perDayRate, $shiftStartStr) {
                 $timeIn = $att->check_in_time ?: $att->clock_in;
                 $itemDeduction = 0;
@@ -527,12 +544,25 @@ class PayrollController extends Controller
                 $lateDeduction = $lateDeductionFromDays;
             }
 
+            // Calculate Early Check-out Deduction strictly from HR Policy
             $earlyDeduction = 0;
-            $earlyDays = $attendances->where('is_early_leave', true)->map(function ($att) use ($earlyPenalty, $earlyRules, $perDayRate) {
+            $earlyPenaltyRate = 0;
+            if ($hrPolicy && $hrPolicy->early_checkout_penalty_type === '3_earlies_1_day') {
+                $earlyDeductionDays = floor($earlyCheckOuts / 3);
+                $earlyDeduction = round($earlyDeductionDays * $perDayRate, 2);
+                $earlyPenaltyRate = round($perDayRate / 3, 2);
+            } elseif ($hrPolicy && $hrPolicy->early_checkout_penalty_type === 'fixed_per_instance' && floatval($hrPolicy->early_checkout_penalty_amount) > 0) {
+                $earlyDeduction = round($earlyCheckOuts * floatval($hrPolicy->early_checkout_penalty_amount), 2);
+                $earlyPenaltyRate = floatval($hrPolicy->early_checkout_penalty_amount);
+            }
+
+            $earlyDays = $attendances->where('is_early_leave', true)->values()->map(function ($att, $idx) use ($hrPolicy, $perDayRate) {
                 $timeOut = $att->check_out_time ?: $att->clock_out;
-                $itemDeduction = $earlyPenalty;
-                if ($itemDeduction <= 0 && !empty($earlyRules)) {
-                    $itemDeduction = $this->calculateEarlyRuleDeduction($att->early_leave_minutes ?? 0, $earlyRules, $perDayRate);
+                $itemDeduction = 0;
+                if ($hrPolicy && $hrPolicy->early_checkout_penalty_type === '3_earlies_1_day') {
+                    $itemDeduction = (($idx + 1) % 3 === 0) ? $perDayRate : 0;
+                } elseif ($hrPolicy && $hrPolicy->early_checkout_penalty_type === 'fixed_per_instance') {
+                    $itemDeduction = floatval($hrPolicy->early_checkout_penalty_amount);
                 }
                 return [
                     'date' => \Carbon\Carbon::parse($att->date)->format('d/m/Y'),
@@ -543,7 +573,10 @@ class PayrollController extends Controller
                 ];
             })->values()->toArray();
 
-            $earlyDeduction = array_sum(array_column($earlyDays, 'deduction'));
+            $earlyDeductionFromDays = array_sum(array_column($earlyDays, 'deduction'));
+            if ($earlyDeductionFromDays > 0) {
+                $earlyDeduction = $earlyDeductionFromDays;
+            }
             
             return [
                 'has_data' => $hasData,
@@ -1634,7 +1667,7 @@ class PayrollController extends Controller
 
         $overtimeHoursTotal = round($overtimeHoursTotal, 2);
 
-        if ($payroll->relationLoaded('details') && $payroll->details) {
+        if ($payroll->status === 'paid' && $payroll->relationLoaded('details') && $payroll->details) {
             $detailOt = $payroll->details->where('type', 'allowance')
                 ->filter(fn($d) => stripos($d->name, 'overtime') !== false || stripos($d->name, 'ot') !== false)
                 ->sum('amount');

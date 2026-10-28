@@ -398,13 +398,7 @@
                         </div>
                         <div class="d-flex align-items-center gap-1">
                             <button type="submit" class="btn btn-sm btn-primary"><i class="fa fa-filter me-1"></i> Apply</button>
-                            <a href="{{ route('hr.attendance.index') }}" class="btn btn-sm btn-light border"><i class="fa fa-sync"></i></a>
-                            
-                            <!-- View Switcher -->
-                            <div class="btn-group btn-group-sm ms-1" role="group" aria-label="View Switcher">
-                                <button type="button" class="btn btn-outline-secondary active" id="btnGridView" title="Cards View"><i class="fa fa-th-large me-1"></i> Cards</button>
-                                <button type="button" class="btn btn-outline-secondary" id="btnTableView" title="List View"><i class="fa fa-list me-1"></i> List</button>
-                            </div>
+                            <a href="{{ route('hr.attendance.index') }}" class="btn btn-sm btn-light border" title="Reset Filters"><i class="fa fa-sync"></i></a>
                         </div>
                     </form>
                 </div>
@@ -414,267 +408,14 @@
                     @csrf
                     <input type="hidden" name="date" value="{{ $selectedDate }}">
 
-                    <div class="hr-grid">
-                        @forelse ($employees as $emp)
-                            @php
-                                $attendance = $emp->attendances->first();
-                                $approvedLeave = $emp->leaves->first(); // Get approved leave for this date
-                                $status = $attendance->status ?? 'absent';
-
-                                // If employee has approved leave and no attendance record, set status to leave
-                                if ($approvedLeave && !$attendance) {
-                                    $status = 'leave';
-                                }
-
-                                // Override status if late but still showing present
-                                if ($attendance && $attendance->status == 'present' && $attendance->is_late) {
-                                    $status = 'late';
-                                }
-
-                                if (!$attendance && $isHoliday) {
-                                    $status = 'holiday';
-                                }
-
-                                // Determine Shift Display
-                                $isCustomShift = !empty($emp->custom_start_time) && !empty($emp->custom_end_time);
-
-                                if ($isCustomShift) {
-                                    $shiftName = 'Custom Timing';
-                                } elseif ($emp->shift) {
-                                    $shiftName = $emp->shift->name;
-                                } else {
-                                    $defaultShift = \App\Models\Hr\Shift::getDefault();
-                                    $shiftName = $defaultShift ? $defaultShift->name : 'Default';
-                                }
-                                $shiftTime =
-                                    \Carbon\Carbon::parse($emp->getStartTime())->format('h:i A') .
-                                    ' - ' .
-                                    \Carbon\Carbon::parse($emp->getEndTime())->format('h:i A');
-                            @endphp
-
-                            <div class="attendance-card {{ $status }}">
-                                <div class="d-flex align-items-center mb-3">
-                                    <div class="hr-avatar" style="background: linear-gradient(135deg, #667eea, #764ba2);">
-                                        {{ strtoupper(substr($emp->first_name, 0, 1) . substr($emp->last_name, 0, 1)) }}
-                                    </div>
-                                    <div class="hr-item-info ms-3">
-                                        <h4 class="hr-item-name">{{ $emp->full_name }}</h4>
-
-                                        {{-- Display Leave Info if exists --}}
-                                        @if ($approvedLeave)
-                                            <div class="mb-2">
-                                                <span class="badge bg-info" style="font-size: 0.75rem;">
-                                                    <i class="fa fa-umbrella-beach me-1"></i>
-                                                    {{ ucfirst($approvedLeave->leave_type) }} Leave
-                                                    ({{ \Carbon\Carbon::parse($approvedLeave->start_date)->format('D') }})
-                                                </span>
-                                            </div>
-                                        @endif
-
-                                        <div class="shift-info">
-                                            @if ($isCustomShift)
-                                                <span class="badge bg-warning text-dark me-1"
-                                                    style="font-size: 0.7rem;">CUSTOM</span>
-                                            @endif
-                                            <!-- Status Dropdown -->
-                                            <input type="hidden" name="attendance[{{ $emp->id }}][is_dirty]"
-                                                value="0" class="dirty-marker">
-
-                                            @php
-                                                $statusClass = match ($status) {
-                                                    'present' => 'status-present',
-                                                    'absent' => 'status-absent',
-                                                    'late' => 'status-late',
-                                                    'leave' => 'status-leave',
-                                                    default => 'status-absent',
-                                                };
-                                            @endphp
-
-                                            <select name="attendance[{{ $emp->id }}][status]"
-                                                class="form-select form-select-sm d-inline-block w-auto mt-1 status-select {{ $statusClass }}"
-                                                onchange="showSaveBar(this)" style="font-size: 0.8rem;">
-                                                <option value="present"
-                                                    {{ ($attendance && $attendance->status == 'present' && !$attendance->is_late) || (!$attendance && $status == 'present') ? 'selected' : '' }}>
-                                                    Present</option>
-                                                <option value="absent"
-                                                    {{ ($attendance && $attendance->status == 'absent') || (!$attendance && $status == 'absent') ? 'selected' : '' }}>
-                                                    Absent</option>
-                                                <option value="late"
-                                                    {{ ($attendance && ($attendance->status == 'late' || ($attendance->status == 'present' && $attendance->is_late))) || (!$attendance && $status == 'late') ? 'selected' : '' }}>
-                                                    Late</option>
-                                                <option value="leave"
-                                                    {{ ($attendance && $attendance->status == 'leave') || (!$attendance && $status == 'leave') ? 'selected' : '' }}>
-                                                    Leave</option>
-                                            </select>
-                                            <i class="fa fa-clock me-1"></i> {{ $shiftTime }}
-                                        </div>
-                                        <div class="small text-muted mt-1" style="font-size: 0.75rem;">
-                                            {{ $shiftName }}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="time-input-group">
-                                    <div>
-                                        <label class="time-label">Check In</label>
-                                        <input type="time" name="attendance[{{ $emp->id }}][clock_in]"
-                                            class="time-field" onchange="showSaveBar(this)"
-                                            {{ $status == 'absent' || $status == 'leave' ? 'disabled style=opacity:0.5;background-color:#f1f5f9' : '' }}
-                                            value="{{ $attendance && $attendance->check_in_time ? \Carbon\Carbon::parse($attendance->check_in_time)->format('H:i') : '' }}">
-
-                                        @if ($attendance && $attendance->check_in_time)
-                                            @if ($attendance->is_late)
-                                                @php
-                                                    $lateText = format_minutes($attendance->late_minutes);
-                                                @endphp
-                                                <small class="text-warning d-block mt-1"><i
-                                                        class="fa fa-exclamation-circle"></i> Late
-                                                    {{ $lateText }}</small>
-                                            @endif
-                                            @if ($attendance->is_early_in)
-                                                @php
-                                                    $earlyInText = format_minutes($attendance->early_in_minutes);
-                                                @endphp
-                                                <small class="text-success d-block mt-1"><i class="fa fa-clock"></i> Early
-                                                    In {{ $earlyInText }}</small>
-                                            @endif
-                                            @if ($attendance->check_in_location)
-                                                <div class="location-badge mt-1"
-                                                    title="Source: {{ $attendance->check_in_location }}">
-                                                    <i class="fa fa-map-marker-alt"></i>
-                                                    {{ $attendance->check_in_location }}
-                                                </div>
-                                            @endif
-
-                                            {{-- Punch Gap Timer --}}
-                                            @if (!$attendance->check_out_time)
-                                                @php
-                                                    $punchGap = \App\Models\Hr\HrSetting::getPunchGapMinutes();
-                                                    $checkInTime = \Carbon\Carbon::parse($attendance->check_in_time);
-                                                    $validCheckOutTime = $checkInTime->copy()->addMinutes($punchGap);
-                                                    $now = \Carbon\Carbon::now();
-                                                    $remainingSeconds = $now->lt($validCheckOutTime)
-                                                        ? $now->diffInSeconds($validCheckOutTime)
-                                                        : 0;
-                                                    $isReady = $remainingSeconds <= 0;
-                                                @endphp
-                                                <div class="punch-timer {{ $isReady ? 'ready' : 'waiting' }} mt-2">
-                                                    <div class="timer-label">
-                                                        <i class="fa fa-stopwatch me-1"></i>
-                                                        {{ $isReady ? 'Check-out Ready' : 'Check-out In' }}
-                                                    </div>
-                                                    <div class="timer-countdown {{ $isReady ? 'ready' : 'waiting' }}"
-                                                        data-remaining="{{ $remainingSeconds }}">
-                                                        {{ $isReady ? 'Ready' : gmdate('H:i:s', $remainingSeconds) }}
-                                                    </div>
-                                                </div>
-                                            @endif
-                                        @endif
-                                    </div>
-
-                                    <div>
-                                        <label class="time-label">Check Out</label>
-                                        <input type="time" name="attendance[{{ $emp->id }}][clock_out]"
-                                            class="time-field" onchange="showSaveBar(this)"
-                                            {{ $status == 'absent' || $status == 'leave' ? 'disabled style=opacity:0.5;background-color:#f1f5f9' : '' }}
-                                            value="{{ $attendance && $attendance->check_out_time ? \Carbon\Carbon::parse($attendance->check_out_time)->format('H:i') : '' }}">
-
-                                        @if ($attendance && $attendance->check_out_time)
-                                            @php
-                                                $shiftEndStr = $emp->custom_end_time ?: ($emp->shift && $emp->shift->end_time ? \Carbon\Carbon::parse($emp->shift->end_time)->format('H:i:s') : '18:00:00');
-                                                $cardOtMins = 0;
-                                                if ($shiftEndStr) {
-                                                    $cOutHis = \Carbon\Carbon::parse($attendance->check_out_time)->format('H:i:s');
-                                                    $cOutDt = \Carbon\Carbon::parse($selectedDate . ' ' . $cOutHis);
-                                                    $sEndDt = \Carbon\Carbon::parse($selectedDate . ' ' . $shiftEndStr);
-                                                    if ($cOutDt->gt($sEndDt)) {
-                                                        $cardOtMins = $cOutDt->diffInMinutes($sEndDt);
-                                                    }
-                                                }
-                                            @endphp
-
-                                            @if ($attendance->is_early_leave)
-                                                @php
-                                                    $earlyText = format_minutes($attendance->early_leave_minutes);
-                                                @endphp
-                                                <small class="text-info d-block mt-1"><i
-                                                        class="fa fa-person-walking-arrow-right"></i>
-                                                    Early Leave {{ $earlyText }}</small>
-                                            @elseif ($cardOtMins > 0)
-                                                <small class="text-success fw-bold d-block mt-1" title="Overtime after duty off time ({{ \Carbon\Carbon::parse($shiftEndStr)->format('h:i A') }})">
-                                                    <i class="fa fa-business-time me-1"></i>Overtime {{ format_minutes($cardOtMins) }}
-                                                </small>
-                                            @endif
-                                            @if ($attendance->check_out_location)
-                                                <div class="location-badge mt-1"
-                                                    title="Source: {{ $attendance->check_out_location }}">
-                                                    <i class="fa fa-map-marker-alt"></i>
-                                                    {{ $attendance->check_out_location }}
-                                                </div>
-                                            @endif
-                                            @if ($attendance->total_hours)
-                                                <small class="text-muted d-block mt-1">
-                                                    <i class="fa fa-hourglass-half"></i>
-                                                    {{ number_format($attendance->total_hours, 2) }}
-                                                    Hrs
-                                                </small>
-                                            @endif
-                                        @endif
-                                    </div>
-                                </div>
-
-                                <div class="mt-auto">
-                                    <label class="time-label">Status</label>
-                                    @if ($attendance)
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            @php
-                                                $displayStatus = $attendance->status;
-                                                $tagClass = 'warning';
-                                                if ($displayStatus == 'present') {
-                                                    if ($attendance->is_late) {
-                                                        $displayStatus = 'late';
-                                                        $tagClass = 'warning';
-                                                    } else {
-                                                        $tagClass = 'success';
-                                                    }
-                                                } elseif ($displayStatus == 'absent') {
-                                                    $tagClass = 'danger';
-                                                } elseif ($displayStatus == 'leave') {
-                                                    $tagClass = 'info';
-                                                }
-                                            @endphp
-                                            <span class="hr-tag {{ $tagClass }}">
-                                                {{ ucfirst($displayStatus) }}
-                                            </span>
-                                        </div>
-                                    @else
-                                        <select name="attendance[{{ $emp->id }}][status]" class="status-select"
-                                            onchange="showSaveBar(this)">
-                                            <option value="">-- Mark Status --</option>
-                                            <option value="present">Present</option>
-                                            <option value="absent">Absent</option>
-                                            <option value="late">Late</option>
-                                            <option value="leave">Leave</option>
-                                        </select>
-                                    @endif
-                                </div>
-                            </div>
-                        @empty
-                            <div class="col-12 py-5 text-center">
-                                <i class="fa fa-users fa-3x text-muted mb-3"></i>
-                                <p class="text-muted">No employees found matching the filters.</p>
-                            </div>
-                        @endforelse
-                    </div>
-
                     <!-- Attendance List / Table View -->
-                    <div class="table-responsive bg-white rounded-3 border shadow-sm mt-3 p-0" id="attendanceTableContainer" style="display: none;">
+                    <div class="table-responsive bg-white rounded-3 border shadow-sm mt-3 p-0" id="attendanceTableContainer">
                         <table class="table table-hover table-striped align-middle mb-0" style="font-size: 0.88rem;">
                             <thead class="table-dark">
                                 <tr>
                                     <th style="width: 50px;">#</th>
                                     <th>Employee</th>
-                                    <th>Department & Shift</th>
+                                    <th>Department & Shift Timing</th>
                                     <th style="width: 150px;">Status</th>
                                     <th style="width: 130px;">Check In</th>
                                     <th style="width: 130px;">Check Out</th>
@@ -714,9 +455,23 @@
                                                 </div>
                                             </div>
                                         </td>
+                                        @php
+                                            $shiftStartFormatted = \Carbon\Carbon::parse($emp->getStartTime())->format('h:i A');
+                                            $shiftEndFormatted = \Carbon\Carbon::parse($emp->getEndTime())->format('h:i A');
+                                            $isCustomShift = !empty($emp->custom_start_time) && !empty($emp->custom_end_time);
+                                        @endphp
                                         <td>
                                             <div class="small fw-semibold text-dark">{{ $emp->department->name ?? 'N/A' }}</div>
-                                            <div class="small text-muted"><i class="fa fa-clock me-1"></i>{{ $emp->shift->name ?? 'Default' }}</div>
+                                            <div class="small text-muted mt-1">
+                                                <i class="fa fa-clock text-primary me-1"></i><strong>{{ $shiftStartFormatted }} - {{ $shiftEndFormatted }}</strong>
+                                                @if ($isCustomShift)
+                                                    <span class="badge bg-warning text-dark ms-1" style="font-size: 0.65rem;">Custom</span>
+                                                @elseif ($emp->shift)
+                                                    <span class="badge bg-light text-secondary border ms-1" style="font-size: 0.65rem;">{{ $emp->shift->name }}</span>
+                                                @else
+                                                    <span class="badge bg-light text-secondary border ms-1" style="font-size: 0.65rem;">Default</span>
+                                                @endif
+                                            </div>
                                         </td>
                                         <td>
                                             <input type="hidden" name="attendance[{{ $emp->id }}][is_dirty]"
@@ -1042,27 +797,7 @@
                 });
             });
 
-            // View Mode Switcher (Grid Cards vs Table List)
-            $('#btnGridView').on('click', function() {
-                $(this).addClass('active');
-                $('#btnTableView').removeClass('active');
-                $('.hr-grid').show();
-                $('#attendanceTableContainer').hide();
-                localStorage.setItem('attendance_view_mode', 'grid');
-            });
-
-            $('#btnTableView').on('click', function() {
-                $(this).addClass('active');
-                $('#btnGridView').removeClass('active');
-                $('.hr-grid').hide();
-                $('#attendanceTableContainer').show();
-                localStorage.setItem('attendance_view_mode', 'table');
-            });
-
-            // Restore view preference
-            if (localStorage.getItem('attendance_view_mode') === 'table') {
-                $('#btnTableView').trigger('click');
-            }
+// Table view is the primary default view
         });
     </script>
 @endsection
