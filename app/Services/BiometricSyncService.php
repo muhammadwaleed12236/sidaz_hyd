@@ -124,11 +124,22 @@ class BiometricSyncService
      */
     public function pullAttendanceFromDevice(BiometricDevice $device): array
     {
-        $logs = $this->deviceService->getAttendanceLogs($device);
+        try {
+            $logs = $this->deviceService->getAttendanceLogs($device);
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => $e->getMessage(),
+                'created' => 0,
+                'skipped' => 0,
+                'duplicates' => 0,
+                'failed' => 1,
+            ];
+        }
 
         if (empty($logs)) {
             return [
-                'success' => false,
+                'success' => true,
                 'message' => 'No attendance logs found on device.',
                 'created' => 0,
                 'skipped' => 0,

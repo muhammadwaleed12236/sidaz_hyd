@@ -982,17 +982,19 @@ class AttendanceController extends Controller
             }
 
             $summary = "Synced: {$results['created']}, Duplicates: {$results['duplicates']}, Failed: {$results['failed']}.";
-            if (count($deviceMessages) > 1) {
+            if (count($deviceMessages) > 0) {
                 $summary .= "\n" . implode("\n", $deviceMessages);
             }
 
+            $overallSuccess = ($results['failed'] === 0 || $results['created'] > 0);
+
             return response()->json([
-                'success' => true,
+                'success' => $overallSuccess,
                 'message' => $summary,
                 'created' => $results['created'],
                 'duplicates' => $results['duplicates'],
                 'failed' => $results['failed'],
-            ]);
+            ], $overallSuccess ? 200 : 422);
 
         } catch (\Exception $e) {
             \Log::error('Pull attendance critical error: ' . $e->getMessage());

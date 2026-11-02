@@ -761,7 +761,12 @@
                         } else if (xhr.responseJSON) {
                             errMsg = xhr.responseJSON.error || xhr.responseJSON.message || errMsg;
                         }
-                        Swal.fire('Pull Failed', errMsg, 'error');
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Pull Failed',
+                            html: '<pre style="text-align:left;font-size:13px;white-space:pre-wrap;">' + errMsg + '</pre>',
+                            confirmButtonText: 'OK'
+                        });
                         btn.prop('disabled', false).html('<i class="fa fa-sync me-1"></i> Pull Attendance');
                     }
                 });

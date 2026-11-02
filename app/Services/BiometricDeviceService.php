@@ -33,9 +33,15 @@ class BiometricDeviceService
     /**
      * Instantiate ZKTeco client
      */
-    public function getZkClient(BiometricDevice $device): ZKTeco
+    public function getZkClient(BiometricDevice $device, int $timeoutSeconds = 8): ZKTeco
     {
-        return new ZKTeco($device->ip_address, (int) ($device->port ?: 4370));
+        $zk = new ZKTeco($device->ip_address, (int) ($device->port ?: 4370));
+        if ($zk->_zkclient) {
+            $timeout = ['sec' => $timeoutSeconds, 'usec' => 0];
+            @socket_set_option($zk->_zkclient, SOL_SOCKET, SO_RCVTIMEO, $timeout);
+            @socket_set_option($zk->_zkclient, SOL_SOCKET, SO_SNDTIMEO, $timeout);
+        }
+        return $zk;
     }
 
     protected function getClient(BiometricDevice $device)
@@ -150,11 +156,11 @@ class BiometricDeviceService
                     return $allLogs;
                 }
 
-                return [];
+                throw new Exception("Device '{$device->name}' ({$device->ip_address}:{$device->port}) is offline or unreachable.");
             } catch (Exception $e) {
                 Log::error('ZKTeco Log Pull Failed: '.$e->getMessage());
 
-                return [];
+                throw $e;
             }
         }
 
