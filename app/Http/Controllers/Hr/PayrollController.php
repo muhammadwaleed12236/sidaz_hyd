@@ -608,6 +608,7 @@ class PayrollController extends Controller
                     'late_penalty_rate' => $latePenaltyRate ?? 0,
                     'late_penalty_type' => $hrPolicy ? ($hrPolicy->late_penalty_type ?? '3_lates_1_day') : '3_lates_1_day',
                     'early_penalty_rate' => $earlyPenaltyRate ?? 0,
+                    'early_penalty_type' => $hrPolicy ? ($hrPolicy->early_checkout_penalty_type ?? '3_earlies_1_day') : '3_earlies_1_day',
                 ],
                 // Detailed day-by-day records
                 'absent_records' => $absentDays,

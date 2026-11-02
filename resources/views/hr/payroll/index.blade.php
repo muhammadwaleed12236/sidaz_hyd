@@ -1361,6 +1361,7 @@
 
                 var lateDeduction = Math.round(parseFloat(data.attendance_breakdown.deduction_details?.late_deduction || data.attendance_breakdown.late_deduction) || 0);
                 var absentDeduction = Math.round(parseFloat(data.attendance_breakdown.deduction_details?.absence_deduction || data.attendance_breakdown.absence_deduction) || 0);
+                var earlyDeduction = Math.round(parseFloat(data.attendance_breakdown.deduction_details?.early_deduction || data.attendance_breakdown.early_deduction) || 0);
                 var otherDeductions = Math.round((parseFloat(data.breakdown.deductions.fixed_deductions) || 0) + (parseFloat(data.breakdown.deductions.manual_deductions) || 0) + (parseFloat(data.breakdown.deductions.carried_forward) || 0));
 
                 var loanSummary = data.loan_summary || {};
@@ -1381,7 +1382,7 @@
                     }
                 }
 
-                var totalDeduction = lateDeduction + absentDeduction + otherDeductions + loanDeduction;
+                var totalDeduction = lateDeduction + absentDeduction + earlyDeduction + otherDeductions + loanDeduction;
                 var netSalary = Math.max(0, grossEarnings - totalDeduction);
 
                 var loanAlertHtml = '';
@@ -1444,6 +1445,12 @@
                                         <span class="text-secondary">Late Deduction <i class="fa fa-info-circle text-danger ms-1 view-date-details-btn" data-type="late" title="View Late Dates Breakdown" style="cursor:pointer;"></i></span>
                                         <span class="fw-semibold text-danger">${formatCurrency(lateDeduction)}</span>
                                     </div>
+                                    ${earlyDeduction > 0 ? `
+                                        <div class="d-flex justify-content-between py-1 border-bottom border-dashed">
+                                            <span class="text-secondary">Early Checkout Deduction <i class="fa fa-info-circle text-danger ms-1 view-date-details-btn" data-type="early" title="View Early Checkout Breakdown" style="cursor:pointer;"></i></span>
+                                            <span class="fw-semibold text-danger">${formatCurrency(earlyDeduction)}</span>
+                                        </div>
+                                    ` : ''}
                                     <div class="d-flex justify-content-between py-1 border-bottom border-dashed">
                                         <span class="text-secondary">Absent Deduction <i class="fa fa-info-circle text-danger ms-1 view-date-details-btn" data-type="absent" title="View Absent Dates Breakdown" style="cursor:pointer;"></i></span>
                                         <span class="fw-semibold text-danger">${formatCurrency(absentDeduction)}</span>
@@ -1702,6 +1709,7 @@
 
                         var lateDeduction = Math.round(parseFloat(response.attendance_breakdown?.deduction_details?.late_deduction || response.attendance_breakdown?.late_deduction) || 0);
                         var absentDeduction = Math.round(parseFloat(response.attendance_breakdown?.deduction_details?.absence_deduction || response.attendance_breakdown?.absence_deduction) || 0);
+                        var earlyDeduction = Math.round(parseFloat(response.attendance_breakdown?.deduction_details?.early_deduction || response.attendance_breakdown?.early_deduction) || 0);
                         var otherDeductions = Math.round((parseFloat(response.breakdown?.deductions?.fixed_deductions) || 0) + (parseFloat(response.breakdown?.deductions?.manual_deductions) || 0) + (parseFloat(response.breakdown?.deductions?.carried_forward) || 0));
 
                         var loanSummary = response.loan_summary || {};
@@ -1722,7 +1730,7 @@
                             }
                         }
 
-                        var totalDeduction = lateDeduction + absentDeduction + otherDeductions + defaultLoanCut;
+                        var totalDeduction = lateDeduction + absentDeduction + earlyDeduction + otherDeductions + defaultLoanCut;
                         var netSalary = Math.max(0, grossEarnings - totalDeduction);
 
                         var loanAlertHtml = '';
@@ -1748,7 +1756,7 @@
                             <input type="hidden" id="baseEarningsHidden" value="${basicSalary + allowances}">
                             <input type="hidden" id="grossEarningsHidden" value="${grossEarnings}">
                             <input type="hidden" id="overtimeHidden" name="overtime" value="${overtime}">
-                            <input type="hidden" id="attendanceDeductionsHidden" name="attendance_deductions" value="${lateDeduction + absentDeduction}">
+                            <input type="hidden" id="attendanceDeductionsHidden" name="attendance_deductions" value="${lateDeduction + absentDeduction + earlyDeduction}">
                             <input type="hidden" id="manualDeductionsHidden" name="manual_deductions" value="${otherDeductions}">
                             <input type="hidden" id="loanDeductionHidden" name="loan_deduction" value="${defaultLoanCut}">
                             <input type="hidden" id="netSalaryHidden" name="net_salary" value="${netSalary}">
@@ -1794,6 +1802,15 @@
                                                 <input type="number" step="any" min="0" name="late_deduction_input" class="form-control text-danger fw-bold text-end deduction-calc-input px-2 shadow-none" value="${lateDeduction}">
                                             </div>
                                         </div>
+                                        ${earlyDeduction > 0 ? `
+                                            <div class="d-flex justify-content-between align-items-center py-1 small mb-1">
+                                                <span class="text-muted">Early Checkout Deduction <i class="fa fa-info-circle text-danger ms-1 view-date-details-btn" data-type="early" title="View Early Checkout Breakdown" style="cursor:pointer;"></i></span>
+                                                <div class="input-group input-group-sm" style="width: 125px;">
+                                                    <span class="input-group-text bg-light text-muted px-2">Rs.</span>
+                                                    <input type="number" step="any" min="0" name="early_deduction_input" class="form-control text-danger fw-bold text-end deduction-calc-input px-2 shadow-none" value="${earlyDeduction}">
+                                                </div>
+                                            </div>
+                                        ` : `<input type="hidden" name="early_deduction_input" class="deduction-calc-input" value="0">`}
                                         <div class="d-flex justify-content-between align-items-center py-1 small mb-1">
                                             <span class="text-muted">Absent Deduction <i class="fa fa-info-circle text-danger ms-1 view-date-details-btn" data-type="absent" title="View Absent Dates Breakdown" style="cursor:pointer;"></i></span>
                                             <div class="input-group input-group-sm" style="width: 125px;">
@@ -1891,10 +1908,11 @@
 
                 var late = parseFloat($('input[name="late_deduction_input"]').val()) || 0;
                 var absent = parseFloat($('input[name="absent_deduction_input"]').val()) || 0;
+                var early = parseFloat($('input[name="early_deduction_input"]').val()) || 0;
                 var loan = parseFloat($('input[name="loan_deduction_input"]').val()) || 0;
                 var manual = parseFloat($('input[name="manual_deductions_input"]').val()) || 0;
 
-                var totalAttendance = late + absent;
+                var totalAttendance = late + absent + early;
                 var totalDeduction = totalAttendance + manual + loan;
 
                 $('#attendanceDeductionsHidden').val(totalAttendance);
@@ -2196,6 +2214,91 @@
                                     <tfoot class="table-light fw-bold">
                                         <tr>
                                             <td colspan="2" class="text-end">Total Absence Deduction:</td>
+                                            <td class="text-danger">-Rs. ${formatCurrency(totalDeduct)}</td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        `;
+                    }
+                } else if (type === 'early') {
+                    title = '<i class="fa fa-door-open text-danger me-2"></i> Early Checkout Breakdown - ' + empName;
+                    var records = data.attendance_breakdown?.early_records || [];
+                    var earlyPolicyType = data.attendance_breakdown?.deduction_details?.early_penalty_type || '3_earlies_1_day';
+                    var perDayRate = parseFloat(data.attendance_breakdown?.deduction_details?.per_day_rate) || 0;
+
+                    if (records.length === 0) {
+                        contentHtml = '<div class="alert alert-success py-2 my-2 small text-start">No early checkout records found for this period.</div>';
+                    } else {
+                        var rows = '';
+                        var totalDeduct = 0;
+
+                        if (earlyPolicyType === '3_earlies_1_day') {
+                            for (var i = 0; i < records.length; i += 3) {
+                                var chunk = records.slice(i, i + 3);
+                                var isFullGroup = (chunk.length === 3);
+                                var groupDeduction = isFullGroup ? perDayRate : 0;
+                                totalDeduct += groupDeduction;
+
+                                for (var j = 0; j < chunk.length; j++) {
+                                    var r = chunk[j];
+                                    rows += '<tr>';
+                                    rows += `<td class="text-start"><strong>${r.date}</strong> <span class="text-muted small">(${r.day})</span></td>`;
+                                    rows += `<td><span class="badge bg-warning text-dark">${r.check_out}</span></td>`;
+                                    rows += `<td><span class="fw-semibold text-dark">${formatMinsToHours(r.early_minutes)}</span></td>`;
+                                    
+                                    if (j === 0) {
+                                        if (isFullGroup) {
+                                            rows += `
+                                                <td rowspan="3" class="align-middle fw-bold text-danger bg-light border-start" style="vertical-align: middle;">
+                                                    <div>-Rs. ${formatCurrency(perDayRate)}</div>
+                                                    <div class="small text-muted fw-normal mt-1" style="font-size: 0.72rem;">(1 Day Cut for 3 Earlies)</div>
+                                                </td>
+                                            `;
+                                        } else {
+                                            rows += `
+                                                <td rowspan="${chunk.length}" class="align-middle text-secondary bg-light border-start" style="vertical-align: middle;">
+                                                    <span class="badge bg-secondary">No Cut Yet</span>
+                                                    <div class="small text-muted fw-normal mt-1" style="font-size: 0.72rem;">(${chunk.length} / 3 Earlies)</div>
+                                                </td>
+                                            `;
+                                        }
+                                    }
+                                    rows += '</tr>';
+                                }
+                            }
+                        } else {
+                            records.forEach(function(r) {
+                                totalDeduct += parseFloat(r.deduction || 0);
+                                rows += `
+                                    <tr>
+                                        <td class="text-start"><strong>${r.date}</strong> <span class="text-muted small">(${r.day})</span></td>
+                                        <td><span class="badge bg-warning text-dark">${r.check_out}</span></td>
+                                        <td><span class="fw-semibold text-dark">${formatMinsToHours(r.early_minutes)}</span></td>
+                                        <td class="fw-bold text-danger">${r.deduction > 0 ? '-Rs. ' + formatCurrency(r.deduction) : 'No Cut'}</td>
+                                    </tr>
+                                `;
+                            });
+                        }
+
+                        contentHtml = `
+                            <div class="text-muted small mb-2 text-start">
+                                <strong>Early Checkout Policy:</strong> ${earlyPolicyType === '3_earlies_1_day' ? 'Every 3 Early Checkouts = 1 Day Salary Cut (Rs. ' + formatCurrency(perDayRate) + ')' : 'Fixed Per Instance'} (${period}):
+                            </div>
+                            <div class="table-responsive" style="max-height: 320px; overflow-y: auto;">
+                                <table class="table table-sm table-bordered align-middle mb-0 text-center" style="font-size: 0.85rem;">
+                                    <thead class="table-light sticky-top">
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Check Out</th>
+                                            <th>Left Early By</th>
+                                            <th>Deduction</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>${rows}</tbody>
+                                    <tfoot class="table-light fw-bold">
+                                        <tr>
+                                            <td colspan="3" class="text-end">Total Early Checkout Deduction:</td>
                                             <td class="text-danger">-Rs. ${formatCurrency(totalDeduct)}</td>
                                         </tr>
                                     </tfoot>
