@@ -1648,10 +1648,10 @@ class PayrollController extends Controller
                 $overtimeHoursTotal += $dailyOt;
 
                 if ($hrPolicy && $hrPolicy->overtime_rate_type === 'fixed' && $hrPolicy->overtime_fixed_rate > 0) {
-                    $dailyEarning = round($dailyOt * $hrPolicy->overtime_fixed_rate, 2);
+                    $dailyEarning = round($dailyOt * $hrPolicy->overtime_fixed_rate, 0);
                 } else {
                     $multiplier = ($hrPolicy && $hrPolicy->overtime_multiplier > 0) ? $hrPolicy->overtime_multiplier : 1.5;
-                    $dailyEarning = round($dailyOt * $hourlySalary * $multiplier, 2);
+                    $dailyEarning = round($dailyOt * $hourlySalary * $multiplier, 0);
                 }
 
                 $overtimeRecords[] = [
@@ -1672,15 +1672,15 @@ class PayrollController extends Controller
                 ->filter(fn($d) => stripos($d->name, 'overtime') !== false || stripos($d->name, 'ot') !== false)
                 ->sum('amount');
             if ($detailOt > 0 && $overtimeHoursTotal > 0) {
-                return ['hours' => $overtimeHoursTotal, 'earnings' => round($detailOt, 2), 'records' => $overtimeRecords];
+                return ['hours' => $overtimeHoursTotal, 'earnings' => round($detailOt, 0), 'records' => $overtimeRecords];
             }
         }
 
         if ($hrPolicy && $hrPolicy->overtime_rate_type === 'fixed' && $hrPolicy->overtime_fixed_rate > 0) {
-            $overtimeEarnings = round($overtimeHoursTotal * $hrPolicy->overtime_fixed_rate, 2);
+            $overtimeEarnings = round($overtimeHoursTotal * $hrPolicy->overtime_fixed_rate, 0);
         } else {
             $multiplier = ($hrPolicy && $hrPolicy->overtime_multiplier > 0) ? $hrPolicy->overtime_multiplier : 1.5;
-            $overtimeEarnings = round($overtimeHoursTotal * $hourlySalary * $multiplier, 2);
+            $overtimeEarnings = round($overtimeHoursTotal * $hourlySalary * $multiplier, 0);
         }
 
         return ['hours' => $overtimeHoursTotal, 'earnings' => $overtimeEarnings, 'records' => $overtimeRecords];

@@ -1356,12 +1356,12 @@
 
                 var basicSalary = parseFloat(data.breakdown.earnings.basic_salary) || 0;
                 var allowances = (parseFloat(data.breakdown.earnings.allowances) || 0) + (parseFloat(data.breakdown.earnings.manual_allowances) || 0);
-                var overtime = parseFloat(data.breakdown?.earnings?.overtime || data.attendance_breakdown?.overtime_earnings) || 0;
+                var overtime = Math.round(parseFloat(data.breakdown?.earnings?.overtime || data.attendance_breakdown?.overtime_earnings) || 0);
                 var grossEarnings = basicSalary + allowances + overtime;
 
-                var lateDeduction = parseFloat(data.attendance_breakdown.deduction_details?.late_deduction || data.attendance_breakdown.late_deduction) || 0;
-                var absentDeduction = parseFloat(data.attendance_breakdown.deduction_details?.absence_deduction || data.attendance_breakdown.absence_deduction) || 0;
-                var otherDeductions = (parseFloat(data.breakdown.deductions.fixed_deductions) || 0) + (parseFloat(data.breakdown.deductions.manual_deductions) || 0) + (parseFloat(data.breakdown.deductions.carried_forward) || 0);
+                var lateDeduction = Math.round(parseFloat(data.attendance_breakdown.deduction_details?.late_deduction || data.attendance_breakdown.late_deduction) || 0);
+                var absentDeduction = Math.round(parseFloat(data.attendance_breakdown.deduction_details?.absence_deduction || data.attendance_breakdown.absence_deduction) || 0);
+                var otherDeductions = Math.round((parseFloat(data.breakdown.deductions.fixed_deductions) || 0) + (parseFloat(data.breakdown.deductions.manual_deductions) || 0) + (parseFloat(data.breakdown.deductions.carried_forward) || 0));
 
                 var loanSummary = data.loan_summary || {};
                 var hasActiveLoan = loanSummary.has_active_loan || false;
@@ -1372,12 +1372,12 @@
 
                 var loanDeduction = 0;
                 if (parseFloat(data.payroll?.loan_deduction) > 0) {
-                    loanDeduction = parseFloat(data.payroll.loan_deduction);
+                    loanDeduction = Math.round(parseFloat(data.payroll.loan_deduction));
                 } else if (hasActiveLoan) {
                     if (suggestedInstallment > 0) {
-                        loanDeduction = Math.min(suggestedInstallment, remainingLoan);
+                        loanDeduction = Math.round(Math.min(suggestedInstallment, remainingLoan));
                     } else {
-                        loanDeduction = remainingLoan;
+                        loanDeduction = Math.round(remainingLoan);
                     }
                 }
 
@@ -1697,12 +1697,12 @@
 
                         var basicSalary = parseFloat(response.breakdown?.earnings?.basic_salary) || 0;
                         var allowances = (parseFloat(response.breakdown?.earnings?.allowances) || 0) + (parseFloat(response.breakdown?.earnings?.manual_allowances) || 0);
-                        var overtime = parseFloat(response.breakdown?.earnings?.overtime || response.attendance_breakdown?.overtime_earnings) || 0;
+                        var overtime = Math.round(parseFloat(response.breakdown?.earnings?.overtime || response.attendance_breakdown?.overtime_earnings) || 0);
                         var grossEarnings = basicSalary + allowances + overtime;
 
-                        var lateDeduction = parseFloat(response.attendance_breakdown?.deduction_details?.late_deduction || response.attendance_breakdown?.late_deduction) || 0;
-                        var absentDeduction = parseFloat(response.attendance_breakdown?.deduction_details?.absence_deduction || response.attendance_breakdown?.absence_deduction) || 0;
-                        var otherDeductions = (parseFloat(response.breakdown?.deductions?.fixed_deductions) || 0) + (parseFloat(response.breakdown?.deductions?.manual_deductions) || 0) + (parseFloat(response.breakdown?.deductions?.carried_forward) || 0);
+                        var lateDeduction = Math.round(parseFloat(response.attendance_breakdown?.deduction_details?.late_deduction || response.attendance_breakdown?.late_deduction) || 0);
+                        var absentDeduction = Math.round(parseFloat(response.attendance_breakdown?.deduction_details?.absence_deduction || response.attendance_breakdown?.absence_deduction) || 0);
+                        var otherDeductions = Math.round((parseFloat(response.breakdown?.deductions?.fixed_deductions) || 0) + (parseFloat(response.breakdown?.deductions?.manual_deductions) || 0) + (parseFloat(response.breakdown?.deductions?.carried_forward) || 0));
 
                         var loanSummary = response.loan_summary || {};
                         var hasActiveLoan = loanSummary.has_active_loan || false;
@@ -1713,12 +1713,12 @@
 
                         var defaultLoanCut = 0;
                         if (parseFloat(response.payroll?.loan_deduction) > 0) {
-                            defaultLoanCut = parseFloat(response.payroll.loan_deduction);
+                            defaultLoanCut = Math.round(parseFloat(response.payroll.loan_deduction));
                         } else if (hasActiveLoan) {
                             if (suggestedInstallment > 0) {
-                                defaultLoanCut = Math.min(suggestedInstallment, remainingLoan);
+                                defaultLoanCut = Math.round(Math.min(suggestedInstallment, remainingLoan));
                             } else {
-                                defaultLoanCut = remainingLoan;
+                                defaultLoanCut = Math.round(remainingLoan);
                             }
                         }
 
@@ -1772,7 +1772,7 @@
                                             <span class="text-muted">Overtime <i class="fa fa-info-circle text-primary ms-1 view-date-details-btn" data-type="overtime" title="View Overtime Date Breakdown" style="cursor:pointer;"></i></span>
                                             <div class="input-group input-group-sm" style="width: 125px;">
                                                 <span class="input-group-text bg-light text-muted px-2">Rs.</span>
-                                                <input type="number" step="1" min="0" name="overtime_input" class="form-control text-success fw-bold text-end earning-calc-input px-2 shadow-none" value="${Math.round(overtime)}">
+                                                <input type="number" step="any" min="0" name="overtime_input" class="form-control text-success fw-bold text-end earning-calc-input px-2 shadow-none" value="${overtime}">
                                             </div>
                                         </div>
                                         <div class="d-flex justify-content-between py-2 mt-2 border-top fw-bold text-success">
@@ -1791,14 +1791,14 @@
                                             <span class="text-muted">Late Deduction <i class="fa fa-info-circle text-danger ms-1 view-date-details-btn" data-type="late" title="View Late Dates Breakdown" style="cursor:pointer;"></i></span>
                                             <div class="input-group input-group-sm" style="width: 125px;">
                                                 <span class="input-group-text bg-light text-muted px-2">Rs.</span>
-                                                <input type="number" step="1" min="0" name="late_deduction_input" class="form-control text-danger fw-bold text-end deduction-calc-input px-2 shadow-none" value="${Math.round(lateDeduction)}">
+                                                <input type="number" step="any" min="0" name="late_deduction_input" class="form-control text-danger fw-bold text-end deduction-calc-input px-2 shadow-none" value="${lateDeduction}">
                                             </div>
                                         </div>
                                         <div class="d-flex justify-content-between align-items-center py-1 small mb-1">
                                             <span class="text-muted">Absent Deduction <i class="fa fa-info-circle text-danger ms-1 view-date-details-btn" data-type="absent" title="View Absent Dates Breakdown" style="cursor:pointer;"></i></span>
                                             <div class="input-group input-group-sm" style="width: 125px;">
                                                 <span class="input-group-text bg-light text-muted px-2">Rs.</span>
-                                                <input type="number" step="1" min="0" name="absent_deduction_input" class="form-control text-danger fw-bold text-end deduction-calc-input px-2 shadow-none" value="${Math.round(absentDeduction)}">
+                                                <input type="number" step="any" min="0" name="absent_deduction_input" class="form-control text-danger fw-bold text-end deduction-calc-input px-2 shadow-none" value="${absentDeduction}">
                                             </div>
                                         </div>
                                         <div class="d-flex justify-content-between align-items-center py-1 small mb-1">
@@ -1808,14 +1808,14 @@
                                             </span>
                                             <div class="input-group input-group-sm" style="width: 125px;">
                                                 <span class="input-group-text bg-light text-muted px-2">Rs.</span>
-                                                <input type="number" step="1" min="0" ${remainingLoan > 0 ? `max="${Math.round(remainingLoan)}"` : ''} name="loan_deduction_input" class="form-control text-danger fw-bold text-end deduction-calc-input px-2 shadow-none" value="${Math.round(defaultLoanCut)}">
+                                                <input type="number" step="any" min="0" ${remainingLoan > 0 ? `max="${remainingLoan}"` : ''} name="loan_deduction_input" class="form-control text-danger fw-bold text-end deduction-calc-input px-2 shadow-none" value="${defaultLoanCut}">
                                             </div>
                                         </div>
                                         <div class="d-flex justify-content-between align-items-center py-1 small mb-1">
                                             <span class="text-muted">Other Deduction</span>
                                             <div class="input-group input-group-sm" style="width: 125px;">
                                                 <span class="input-group-text bg-light text-muted px-2">Rs.</span>
-                                                <input type="number" step="1" min="0" name="manual_deductions_input" class="form-control text-danger fw-bold text-end deduction-calc-input px-2 shadow-none" value="${Math.round(otherDeductions)}">
+                                                <input type="number" step="any" min="0" name="manual_deductions_input" class="form-control text-danger fw-bold text-end deduction-calc-input px-2 shadow-none" value="${otherDeductions}">
                                             </div>
                                         </div>
                                         <div class="d-flex justify-content-between align-items-center py-2 mt-2 border-top fw-bold text-danger">
@@ -1832,10 +1832,10 @@
                                 </div>
                                 <div class="d-flex align-items-center gap-2 mt-2 mt-sm-0">
                                     <span class="fs-5 fw-bold text-white">Rs.</span>
-                                    <input type="number" step="0.01" min="0" id="netSalaryInput" class="form-control form-control-lg text-end fw-bold shadow-sm" style="width: 170px; font-size: 1.4rem; color: #065f46; background: #ecfdf5; border: 2px solid #a7f3d0;" value="${Math.round(netSalary)}">
+                                    <input type="number" step="any" min="0" id="netSalaryInput" class="form-control form-control-lg text-end fw-bold shadow-sm" style="width: 170px; font-size: 1.4rem; color: #065f46; background: #ecfdf5; border: 2px solid #a7f3d0;" value="${netSalary}">
                                 </div>
                             </div>
-                            <div id="zeroPayNotice" class="p-2 mt-2 rounded bg-warning text-dark small fw-bold text-center" style="${Math.round(netSalary) <= 0 ? '' : 'display: none;'}">
+                            <div id="zeroPayNotice" class="p-2 mt-2 rounded bg-warning text-dark small fw-bold text-center" style="${netSalary <= 0 ? '' : 'display: none;'}">
                                 <i class="fa fa-info-circle me-1"></i> Net Payable is Rs. 0 &mdash; Saving will mark this payroll as <strong>Outstanding (Unpaid)</strong> and reverse any account/loan deductions.
                             </div>
                         `;
@@ -1906,7 +1906,7 @@
                 var net = Math.max(0, gross - totalDeduction);
 
                 $('#netSalaryHidden').val(net);
-                $('#netSalaryInput').val(Math.round(net));
+                $('#netSalaryInput').val(parseFloat(net.toFixed(2)));
 
                 if (net <= 0) {
                     $('#zeroPayNotice').slideDown(150);

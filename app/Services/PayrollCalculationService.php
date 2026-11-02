@@ -524,10 +524,10 @@ class PayrollCalculationService
 
                 if ($dailyOtHours > 0) {
                     if ($hrPolicy && $hrPolicy->overtime_rate_type === 'fixed' && $hrPolicy->overtime_fixed_rate > 0) {
-                        $dailyOtEarnings = round($dailyOtHours * $hrPolicy->overtime_fixed_rate, 2);
+                        $dailyOtEarnings = round($dailyOtHours * $hrPolicy->overtime_fixed_rate, 0);
                     } else {
                         $multiplier = ($hrPolicy && $hrPolicy->overtime_multiplier > 0) ? $hrPolicy->overtime_multiplier : 1.5;
-                        $dailyOtEarnings = round($dailyOtHours * $hourlySalary * $multiplier, 2);
+                        $dailyOtEarnings = round($dailyOtHours * $hourlySalary * $multiplier, 0);
                     }
 
                     $otAllowanceDetails[] = [
@@ -816,10 +816,10 @@ class PayrollCalculationService
         $overtimeHoursTotal = round($overtimeHoursTotal, 2);
 
         if ($hrPolicy && $hrPolicy->overtime_rate_type === 'fixed' && $hrPolicy->overtime_fixed_rate > 0) {
-            $overtimeEarnings = round($overtimeHoursTotal * $hrPolicy->overtime_fixed_rate, 2);
+            $overtimeEarnings = round($overtimeHoursTotal * $hrPolicy->overtime_fixed_rate, 0);
         } else {
             $multiplier = ($hrPolicy && $hrPolicy->overtime_multiplier > 0) ? $hrPolicy->overtime_multiplier : 1.5;
-            $overtimeEarnings = round($overtimeHoursTotal * $hourlySalary * $multiplier, 2);
+            $overtimeEarnings = round($overtimeHoursTotal * $hourlySalary * $multiplier, 0);
         }
 
         return ['hours' => $overtimeHoursTotal, 'earnings' => $overtimeEarnings];
