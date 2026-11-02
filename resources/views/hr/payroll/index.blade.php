@@ -1385,6 +1385,12 @@
                 var totalDeduction = lateDeduction + absentDeduction + earlyDeduction + otherDeductions + loanDeduction;
                 var netSalary = Math.max(0, grossEarnings - totalDeduction);
 
+                if (data.payroll.status === 'paid') {
+                    grossEarnings = parseFloat(data.payroll.gross_salary) || grossEarnings;
+                    totalDeduction = parseFloat(data.payroll.total_deductions) || totalDeduction;
+                    netSalary = parseFloat(data.payroll.net_salary) || netSalary;
+                }
+
                 var loanAlertHtml = '';
                 if (hasActiveLoan || totalLoan > 0) {
                     loanAlertHtml = `
@@ -1539,7 +1545,7 @@
                                 <div class="col-4 col-md-2">
                                     <div class="p-2 rounded bg-white border border-danger">
                                         <div class="small text-danger font-weight-bold" style="font-size: 0.68rem;">ATT. DEDUCT</div>
-                                        <div class="font-weight-bold text-danger" style="font-size: 1.05rem;">Rs. ${formatCurrency(data.breakdown.deductions.attendance_deductions)}</div>
+                                        <div class="font-weight-bold text-danger" style="font-size: 1.05rem;">Rs. ${formatCurrency(lateDeduction + absentDeduction + earlyDeduction)}</div>
                                     </div>
                                 </div>
                             </div>

@@ -348,6 +348,14 @@ class PayrollController extends Controller
         $overtimeEarnings = floatval($attendanceBreakdown['overtime_earnings'] ?? 0);
         $totalGrossEarnings = $payroll->basic_salary + $payroll->allowances + $payroll->manual_allowances + $overtimeEarnings;
 
+        $attDeduction = floatval($attendanceBreakdown['total_deduction'] ?? 0);
+        $otherDeductions = floatval($payroll->deductions) + floatval($payroll->manual_deductions) + floatval($payroll->carried_forward_deduction);
+        $loanCut = (floatval($payroll->loan_deduction) > 0) ? floatval($payroll->loan_deduction) : floatval($suggestedInstallment);
+        $totalDeductionsCalculated = $attDeduction + $otherDeductions + $loanCut;
+        $netSalaryCalculated = max(0, $totalGrossEarnings - $totalDeductionsCalculated);
+
+        $isPaid = ($payroll->status === 'paid');
+
         return response()->json([
             'payroll' => $payroll,
             'payroll_period' => $payrollPeriod,
@@ -357,18 +365,18 @@ class PayrollController extends Controller
                     'allowances' => $payroll->allowances,
                     'manual_allowances' => $payroll->manual_allowances,
                     'overtime' => $overtimeEarnings,
-                    'total' => max($payroll->gross_salary, $totalGrossEarnings),
+                    'total' => $isPaid ? $payroll->gross_salary : $totalGrossEarnings,
                 ],
                 'deductions' => [
                     'fixed_deductions' => $payroll->deductions,
-                    'attendance_deductions' => $payroll->attendance_deductions,
+                    'attendance_deductions' => $isPaid ? $payroll->attendance_deductions : $attDeduction,
                     'carried_forward' => $payroll->carried_forward_deduction,
                     'carried_forward_to_next' => $payroll->carried_forward_to_next,
                     'manual_deductions' => $payroll->manual_deductions,
-                    'loan_deduction' => $payroll->loan_deduction ?? 0,
-                    'total' => $payroll->total_deductions,
+                    'loan_deduction' => $isPaid ? ($payroll->loan_deduction ?? 0) : $loanCut,
+                    'total' => $isPaid ? $payroll->total_deductions : $totalDeductionsCalculated,
                 ],
-                'net_payable' => $payroll->net_salary,
+                'net_payable' => $isPaid ? $payroll->net_salary : $netSalaryCalculated,
             ],
             'allowance_details' => $allowanceDetails,
             'deduction_details' => $deductionDetails,
@@ -655,6 +663,8 @@ class PayrollController extends Controller
                     'overtime_earnings' => $otData['earnings'] ?? 0,
                     'overtime_records' => $otData['records'] ?? [],
                     'total_deduction' => $payroll->attendance_deductions,
+                    'late_deduction' => $lateDeductionAmount,
+                    'early_deduction' => $earlyDeductionAmount,
                     'late_deduction_amount' => $lateDeductionAmount,
                     'early_deduction_amount' => $earlyDeductionAmount,
                 ];

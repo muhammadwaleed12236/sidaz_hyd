@@ -160,6 +160,9 @@ class PayrollCalculationService
         $baseSalary = floatval($structure->base_salary ?? 0);
         $perDayDeduction = floatval($structure->leave_salary_per_day ?? 0);
         
+        // Fetch effective HR Policy for employee
+        $hrPolicy = \App\Models\Hr\HrPolicy::getEffectivePolicyForEmployee($employee->id);
+
         // Fallback per-day deduction rate to Basic Salary / 30 if not explicitly set
         if ($perDayDeduction <= 0 && $baseSalary > 0) {
             $perDayDeduction = round($baseSalary / 30, 2);
@@ -222,7 +225,6 @@ class PayrollCalculationService
         $deductionDetails = [];
 
         // Check HR Policy first for absence deduction rate
-        $hrPolicy = \App\Models\Hr\HrPolicy::getEffectivePolicyForEmployee($employee->id);
         if ($hrPolicy && $hrPolicy->absence_deduction_type === 'fixed') {
             $effectivePerDayDeduction = floatval($hrPolicy->absence_fixed_amount);
         } else {
