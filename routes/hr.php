@@ -76,6 +76,7 @@ Route::middleware(['auth'])->prefix('hr')->name('hr.')->group(function () {
 
     // Payroll
     Route::get('payroll', [PayrollController::class, 'index'])->name('payroll.index')->middleware('permission:hr.payroll.view');
+    Route::get('payroll/sheet', [PayrollController::class, 'sheet'])->name('payroll.sheet')->middleware('permission:hr.payroll.view');
     Route::get('payroll/monthly', [PayrollController::class, 'monthly'])->name('payroll.monthly')->middleware('permission:hr.payroll.view');
     Route::get('payroll/daily', [PayrollController::class, 'daily'])->name('payroll.daily')->middleware('permission:hr.payroll.view');
     Route::get('payroll/{payroll}/details', [PayrollController::class, 'details'])->name('payroll.details')->middleware('permission:hr.payroll.view');

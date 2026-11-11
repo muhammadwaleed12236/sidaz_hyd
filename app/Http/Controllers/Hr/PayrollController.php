@@ -154,6 +154,79 @@ class PayrollController extends Controller
     }
 
     /**
+     * Display printable / row-wise salary sheet (Payroll Register)
+     */
+    public function sheet(Request $request)
+    {
+        if (! auth()->user()->can('hr.payroll.view')) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $query = Payroll::with([
+            'employee.designation',
+            'employee.department',
+            'details',
+            'account',
+        ]);
+
+        $availableMonths = Payroll::select('month')->distinct()->orderBy('month', 'desc')->pluck('month');
+        $currentMonth = date('Y-m');
+        $selectedMonth = $request->get('month');
+        if (! $request->has('month')) {
+            $selectedMonth = $availableMonths->contains($currentMonth) ? $currentMonth : ($availableMonths->first() ?? $currentMonth);
+        }
+
+        if ($selectedMonth && $selectedMonth !== 'all') {
+            $query->where('month', $selectedMonth);
+        }
+
+        $selectedType = $request->get('type', 'all');
+        if ($selectedType && $selectedType !== 'all') {
+            $query->where('payroll_type', $selectedType);
+        }
+
+        $selectedStatus = $request->get('status', 'all');
+        if ($selectedStatus && $selectedStatus !== 'all') {
+            $query->where('status', $selectedStatus);
+        }
+
+        $selectedDepartment = $request->get('department_id');
+        if ($selectedDepartment && $selectedDepartment !== 'all') {
+            $query->whereHas('employee', function ($q) use ($selectedDepartment) {
+                $q->where('department_id', $selectedDepartment);
+            });
+        }
+
+        $selectedEmployee = $request->get('employee_id');
+        if ($selectedEmployee && $selectedEmployee !== 'all') {
+            $query->where('employee_id', $selectedEmployee);
+        }
+
+        // Get all payrolls for the sheet, sorted by employee name
+        $payrolls = $query->get()->sortBy(function ($p) {
+            return $p->employee ? ($p->employee->first_name . ' ' . $p->employee->last_name) : 'zzz';
+        })->values();
+
+        // Attach attendance, overtime, deductions, net salary accurately
+        $this->attachAttendanceMetrics($payrolls);
+
+        $departments = \App\Models\Hr\Department::orderBy('name')->get();
+        $employees = Employee::orderBy('first_name')->get();
+
+        return view('hr.payroll.sheet', compact(
+            'payrolls',
+            'departments',
+            'employees',
+            'availableMonths',
+            'selectedMonth',
+            'selectedType',
+            'selectedStatus',
+            'selectedDepartment',
+            'selectedEmployee'
+        ));
+    }
+
+    /**
      * Attach attendance breakdown metrics for payroll table display
      */
     private function attachAttendanceMetrics($payrolls)

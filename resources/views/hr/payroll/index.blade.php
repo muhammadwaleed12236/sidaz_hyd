@@ -678,6 +678,13 @@
                         <p class="page-subtitle">Manage monthly and daily employee payroll</p>
                     </div>
                     <div class="d-flex gap-2">
+                        @can('hr.payroll.view')
+                            <a href="{{ route('hr.payroll.sheet', ['month' => $selectedMonth ?? '']) }}" target="_blank"
+                                class="btn btn-outline-primary fw-bold d-flex align-items-center gap-2"
+                                style="border-radius: 10px; padding: 8px 16px;">
+                                <i class="fa fa-print"></i> <span>Salary Sheet</span>
+                            </a>
+                        @endcan
                         @can('hr.payroll.create')
                             <div class="dropdown">
                                 <button class="btn btn-create dropdown-toggle" type="button" id="generateDropdown"
