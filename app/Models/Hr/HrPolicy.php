@@ -56,16 +56,18 @@ class HrPolicy extends Model
      */
     public static function getEffectivePolicyForEmployee($employeeId): ?self
     {
-        // 1. Look for active policy explicitly targeting this employee ID
-        $specificPolicy = self::where('is_active', true)
-            ->where('applies_to', 'specific')
-            ->get()
-            ->first(function ($policy) use ($employeeId) {
-                return is_array($policy->employee_ids) && in_array($employeeId, $policy->employee_ids);
-            });
+        if ($employeeId) {
+            // 1. Look for active policy explicitly targeting this employee ID
+            $specificPolicy = self::where('is_active', true)
+                ->where('applies_to', 'specific')
+                ->get()
+                ->first(function ($policy) use ($employeeId) {
+                    return is_array($policy->employee_ids) && in_array($employeeId, $policy->employee_ids);
+                });
 
-        if ($specificPolicy) {
-            return $specificPolicy;
+            if ($specificPolicy) {
+                return $specificPolicy;
+            }
         }
 
         // 2. Look for active default / all employees policy

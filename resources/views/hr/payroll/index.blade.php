@@ -1335,11 +1335,11 @@
                     <div class="d-flex align-items-center justify-content-between mb-3 p-3 bg-light rounded-3 border">
                         <div class="d-flex align-items-center gap-3">
                             <div style="background: linear-gradient(135deg, #6366f1, #4f46e5); color: white; width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1rem;">
-                                ${data.payroll.employee.first_name.charAt(0)}${data.payroll.employee.last_name.charAt(0)}
+                                ${(data.payroll.employee?.first_name?.charAt(0) || 'U')}${(data.payroll.employee?.last_name?.charAt(0) || 'N')}
                             </div>
                             <div>
-                                <h6 style="margin:0; font-weight:700;" class="text-dark">${data.payroll.employee.first_name} ${data.payroll.employee.last_name}</h6>
-                                <div class="text-muted small">${data.payroll.employee.designation ? data.payroll.employee.designation.name : 'N/A'}</div>
+                                <h6 style="margin:0; font-weight:700;" class="text-dark">${data.payroll.employee ? (data.payroll.employee.first_name + ' ' + (data.payroll.employee.last_name || '')) : 'Unknown Employee'}</h6>
+                                <div class="text-muted small">${data.payroll.employee?.designation ? data.payroll.employee.designation.name : 'N/A'}</div>
                             </div>
                         </div>
                         <div class="text-end d-flex gap-2 align-items-center">

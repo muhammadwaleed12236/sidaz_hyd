@@ -159,6 +159,20 @@ class PayrollController extends Controller
     private function attachAttendanceMetrics($payrolls)
     {
         foreach ($payrolls as $payroll) {
+            $employee = $payroll->employee;
+            if (!$employee) {
+                $payroll->attendance_days = 30;
+                $payroll->attendance_present = 0;
+                $payroll->attendance_late = 0;
+                $payroll->attendance_absent = 0;
+                $payroll->ot_hours = 0;
+                $payroll->ot_amount = 0;
+                $payroll->calculated_gross = $payroll->gross_salary;
+                $payroll->calculated_total_deductions = $payroll->total_deductions;
+                $payroll->calculated_net_salary = $payroll->net_salary;
+                continue;
+            }
+
             if ($payroll->payroll_type === 'daily') {
                 $dateStr = $payroll->month;
                 $att = Attendance::where('employee_id', $payroll->employee_id)
@@ -418,6 +432,45 @@ class PayrollController extends Controller
     private function getAttendanceBreakdown($payroll): array
     {
         $employee = $payroll->employee;
+        if (!$employee) {
+            return [
+                'has_data' => false,
+                'data_message' => 'No employee assigned',
+                'has_attendance_deductions' => false,
+                'total_working_days' => 0,
+                'total_days_in_month' => 30,
+                'month_start_formatted' => '',
+                'month_end_formatted' => '',
+                'days_present' => 0,
+                'days_present_total' => 0,
+                'days_absent' => 0,
+                'days_leave' => 0,
+                'late_check_ins' => 0,
+                'early_check_outs' => 0,
+                'late_minutes_total' => 0,
+                'early_minutes_total' => 0,
+                'total_hours_worked' => 0,
+                'overtime_hours' => 0,
+                'overtime_earnings' => 0,
+                'total_deduction' => 0,
+                'deduction_details' => [
+                    'absence_deduction' => 0,
+                    'absence_deduction_type' => 'salary_divided_by_30',
+                    'absence_fixed_amount' => 0,
+                    'late_deduction' => 0,
+                    'early_deduction' => 0,
+                    'per_day_rate' => 0,
+                    'late_penalty_rate' => 0,
+                    'late_penalty_type' => '3_lates_1_day',
+                    'early_penalty_rate' => 0,
+                    'early_penalty_type' => '3_earlies_1_day',
+                ],
+                'absent_records' => [],
+                'late_records' => [],
+                'early_records' => [],
+                'overtime_records' => [],
+            ];
+        }
         
         // Get HR Terms & Policy for Employee
         $hrPolicy = \App\Models\Hr\HrPolicy::getEffectivePolicyForEmployee($employee->id);
@@ -1575,6 +1628,10 @@ class PayrollController extends Controller
     private function calculateOvertimeMetrics($payroll, $attendances): array
     {
         $employee = $payroll->employee;
+        if (!$employee) {
+            return ['hours' => 0, 'earnings' => 0, 'records' => []];
+        }
+
         $hrPolicy = \App\Models\Hr\HrPolicy::getEffectivePolicyForEmployee($employee->id);
 
         if ($hrPolicy && isset($hrPolicy->overtime_enabled) && !$hrPolicy->overtime_enabled) {
