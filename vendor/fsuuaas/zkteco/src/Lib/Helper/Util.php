@@ -346,30 +346,32 @@ class Util
    * @param bool $first if 'true' don't remove first 4 bytes for first row
    * @return string
    */
-  static public function recData(ZKTeco $self, $maxErrors = 2, $first = true)
+  static public function recData(ZKTeco $self, $maxErrors = 3, $first = true)
   {
     $data = '';
     $bytes = self::getSize($self);
 
     if ($bytes) {
       $received = 0;
-      $errors = 0;
+      $consecutiveErrors = 0;
 
-      // Fast socket timeout during packet stream to avoid hanging
-      $streamTimeout = array('sec' => 1, 'usec' => 500000);
+      // Increase receive buffer to 2MB so UDP packets are not dropped during burst
+      @socket_set_option($self->_zkclient, SOL_SOCKET, SO_RCVBUF, 2097152);
+
+      // Fast 1.2s timeout per packet during stream
+      $streamTimeout = array('sec' => 1, 'usec' => 200000);
       @socket_set_option($self->_zkclient, SOL_SOCKET, SO_RCVTIMEO, $streamTimeout);
 
       while ($bytes > $received) {
         $ret = @socket_recvfrom($self->_zkclient, $dataRec, 1032, 0, $self->_ip, $self->_port);
 
         if ($ret === false) {
-          if ($errors < $maxErrors) {
-            // Retry quickly without blocking the thread for full seconds
-            $errors++;
-            usleep(25000);
+          $consecutiveErrors++;
+          if ($consecutiveErrors < $maxErrors) {
+            usleep(20000);
             continue;
           } else {
-            // Return whatever data was received instead of wiping everything
+            // Stream ended by device (device often sends slightly fewer bytes than prepare data size)
             self::logReceived($self, $received, $bytes);
             if (!empty($data) && strlen($data) > 40) {
               return $data;
@@ -379,8 +381,11 @@ class Util
           }
         }
 
+        // Reset error count on each received packet
+        $consecutiveErrors = 0;
+
         if ($first === false) {
-          //The first 4 bytes don't seem to be related to the user
+          // The first 8 bytes don't seem to be related to the user
           $dataRec = substr($dataRec, 8);
         }
 

@@ -142,8 +142,22 @@ class BiometricDeviceService
     {
         if ($this->isZkTeco($device)) {
             try {
-                $zk = $this->getZkClient($device);
-                if ($zk->connect()) {
+                $zk = null;
+                $connected = false;
+
+                // Try connecting up to 2 times to handle temporary busy socket
+                for ($attempt = 1; $attempt <= 2; $attempt++) {
+                    $zk = $this->getZkClient($device);
+                    if ($zk->connect()) {
+                        $connected = true;
+                        break;
+                    }
+                    if ($attempt < 2) {
+                        sleep(1);
+                    }
+                }
+
+                if ($connected && $zk) {
                     $rawLogs = $zk->getAttendance();
                     $zk->disconnect();
 
