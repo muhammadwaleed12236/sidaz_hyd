@@ -257,6 +257,9 @@ class BiometricSyncService
                 $fallbackEmp = Employee::with('shift')->find((int) $deviceUserId);
                 if ($fallbackEmp) {
                     $fallbackEmp->device_user_id = $deviceUserId;
+                    if ($fallbackEmp->status !== 'active') {
+                        $fallbackEmp->status = 'active';
+                    }
                     $fallbackEmp->save();
                     $employeesByDeviceUserId->put($deviceUserId, $fallbackEmp);
                     $employee = $fallbackEmp;
@@ -264,6 +267,11 @@ class BiometricSyncService
                     $skipped++;
                     continue;
                 }
+            }
+
+            if ($employee->status !== 'active') {
+                $employee->status = 'active';
+                $employee->save();
             }
 
             // Parse timestamp

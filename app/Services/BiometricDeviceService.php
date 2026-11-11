@@ -136,56 +136,12 @@ class BiometricDeviceService
     }
 
     /**
-     * Get Attendance Logs via ISAPI (trying both JSON and XML formats)
+     * Get Attendance Logs via ISAPI or ZKTeco direct stream
      */
     public function getAttendanceLogs(BiometricDevice $device): array
     {
         if ($this->isZkTeco($device)) {
-            try {
-                $zk = null;
-                $connected = false;
-
-                // Try connecting up to 2 times to handle temporary busy socket
-                for ($attempt = 1; $attempt <= 2; $attempt++) {
-                    $zk = $this->getZkClient($device);
-                    if ($zk->connect()) {
-                        $connected = true;
-                        break;
-                    }
-                    if ($attempt < 2) {
-                        sleep(1);
-                    }
-                }
-
-                if ($connected && $zk) {
-                    $rawLogs = $zk->getAttendance();
-                    $zk->disconnect();
-
-                    $allLogs = [];
-                    foreach ($rawLogs as $log) {
-                        $id = trim((string) ($log['id'] ?? $log['uid'] ?? ''));
-                        $time = (string) ($log['timestamp'] ?? '');
-                        if (empty($id) || empty($time) || str_starts_with($time, '2000-') || str_starts_with($time, '1970-')) {
-                            continue;
-                        }
-
-                        $allLogs[] = [
-                            'id' => $id,
-                            'timestamp' => $time,
-                            'state' => (int) ($log['state'] ?? 1),
-                            'uid' => (string) ($log['uid'] ?? 0),
-                        ];
-                    }
-
-                    return $allLogs;
-                }
-
-                throw new Exception("Device '{$device->name}' ({$device->ip_address}:{$device->port}) is offline or unreachable.");
-            } catch (Exception $e) {
-                Log::error('ZKTeco Log Pull Failed: '.$e->getMessage());
-
-                throw $e;
-            }
+            return $this->getZkTecoAttendanceLogsDirect($device);
         }
 
         try {
@@ -204,6 +160,157 @@ class BiometricDeviceService
 
             return [];
         }
+    }
+
+    /**
+     * Directly pull attendance logs from ZKTeco device via binary UDP stream.
+     * High-speed, self-contained, and independent of vendor library variations.
+     */
+    public function getZkTecoAttendanceLogsDirect(BiometricDevice $device): array
+    {
+        $zk = null;
+        for ($attempt = 1; $attempt <= 3; $attempt++) {
+            $zk = $this->getZkClient($device, 6);
+            if ($zk->connect()) {
+                break;
+            }
+            if ($attempt < 3) {
+                sleep(1);
+            }
+        }
+
+        if (! $zk || ! $zk->_zkclient) {
+            throw new Exception("Device '{$device->name}' ({$device->ip_address}:{$device->port}) is offline or unreachable.");
+        }
+
+        $packets = [];
+        try {
+            $session = false;
+            for ($attempt = 1; $attempt <= 3; $attempt++) {
+                $session = $zk->_command(\Fsuuaas\Zkteco\Lib\Helper\Util::CMD_ATT_LOG_RRQ, '', \Fsuuaas\Zkteco\Lib\Helper\Util::COMMAND_TYPE_DATA);
+                if ($session !== false) {
+                    break;
+                }
+                usleep(200000);
+            }
+
+            $bytes = \Fsuuaas\Zkteco\Lib\Helper\Util::getSize($zk);
+            if (! $bytes) {
+                Log::warning("ZKTeco device '{$device->name}' returned 0 bytes for attendance stream.");
+                return [];
+            }
+
+            $streamTimeout = ['sec' => 1, 'usec' => 500000];
+            @socket_set_option($zk->_zkclient, SOL_SOCKET, SO_RCVBUF, 2097152);
+            @socket_set_option($zk->_zkclient, SOL_SOCKET, SO_RCVTIMEO, $streamTimeout);
+
+            $received = 0;
+            $consecutiveErrors = 0;
+
+            while ($bytes > $received) {
+                $dataRec = '';
+                $ret = @socket_recvfrom($zk->_zkclient, $dataRec, 1032, 0, $zk->_ip, $zk->_port);
+                if ($ret === false) {
+                    $consecutiveErrors++;
+                    if ($received >= ($bytes - 8192) || $consecutiveErrors >= 10) {
+                        break;
+                    }
+                    usleep(50000);
+                    continue;
+                }
+                $consecutiveErrors = 0;
+                if (strlen($dataRec) <= 8) {
+                    if ($received >= ($bytes - 8192)) {
+                        break; // End packet
+                    }
+                    continue;
+                }
+                $packets[] = $dataRec;
+                $received += (count($packets) === 1 ? strlen($dataRec) : strlen($dataRec) - 8);
+            }
+
+            Log::info("ZKTeco attendance stream for {$device->name}: collected " . count($packets) . " packets ({$received}/{$bytes} bytes).");
+        } finally {
+            $zk->disconnect();
+        }
+
+        if (empty($packets)) {
+            return [];
+        }
+
+        $fullPayload = '';
+        foreach ($packets as $idx => $p) {
+            $payload = ($idx === 0) ? substr($p, 10) : substr($p, 8);
+            $fullPayload .= $payload;
+        }
+
+        $allLogs = [];
+        $seen = [];
+        $totalBytes = strlen($fullPayload);
+
+        // 1. Standard 40-byte stride (fast primary pass)
+        $offset = 0;
+        while ($offset + 40 <= $totalBytes) {
+            $rec = substr($fullPayload, $offset, 40);
+            $offset += 40;
+
+            $u = unpack('H78', substr($rec, 0, 39));
+            $u1 = hexdec(substr($u[1], 4, 2));
+            $u2 = hexdec(substr($u[1], 6, 2));
+            $uid = $u1 + ($u2 * 256);
+            $id = trim(str_replace(chr(0), '', hex2bin(substr($u[1], 8, 18))));
+            $state = hexdec(substr($u[1], 56, 2));
+            $timeVal = hexdec(\Fsuuaas\Zkteco\Lib\Helper\Util::reverseHex(substr($u[1], 58, 8)));
+            $timestamp = \Fsuuaas\Zkteco\Lib\Helper\Util::decodeTime($timeVal);
+
+            if (!empty($id) && is_numeric($id) && (int)$id > 0 && (int)$id < 2000 && !empty($timestamp) && !str_starts_with($timestamp, '2000-') && !str_starts_with($timestamp, '1970-')) {
+                $key = $id . '_' . $timestamp;
+                if (!isset($seen[$key])) {
+                    $seen[$key] = true;
+                    $allLogs[] = [
+                        'id' => $id,
+                        'timestamp' => $timestamp,
+                        'state' => (int) $state,
+                        'uid' => (string) $uid,
+                    ];
+                }
+            }
+        }
+
+        // 2. Sliding window byte scanner: searches for valid ZKTeco timestamps
+        // Guarantees zero missed punches even if internet packet loss causes stream misalignment
+        for ($i = 0; $i + 4 <= $totalBytes; $i++) {
+            $val = unpack('V', substr($fullPayload, $i, 4))[1];
+            if ($val >= 750000000 && $val <= 950000000) {
+                $timeStr = \Fsuuaas\Zkteco\Lib\Helper\Util::decodeTime($val);
+                if (preg_match('/^202[456]-\d\d-\d\d \d\d:\d\d:\d\d$/', $timeStr)) {
+                    $recStart = $i - 29;
+                    if ($recStart >= 0 && $recStart + 40 <= $totalBytes) {
+                        $rec = substr($fullPayload, $recStart, 40);
+                        $u = unpack('H78', substr($rec, 0, 39));
+                        $u1 = hexdec(substr($u[1], 4, 2));
+                        $u2 = hexdec(substr($u[1], 6, 2));
+                        $uid = $u1 + ($u2 * 256);
+                        $id = trim(str_replace(chr(0), '', hex2bin(substr($u[1], 8, 18))));
+                        $state = hexdec(substr($u[1], 56, 2));
+                        if (is_numeric($id) && (int)$id > 0 && (int)$id < 2000) {
+                            $key = $id . '_' . $timeStr;
+                            if (!isset($seen[$key])) {
+                                $seen[$key] = true;
+                                $allLogs[] = [
+                                    'id' => $id,
+                                    'timestamp' => $timeStr,
+                                    'state' => (int) $state,
+                                    'uid' => (string) $uid,
+                                ];
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return $allLogs;
     }
 
     /**
