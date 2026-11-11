@@ -346,7 +346,7 @@ class Util
    * @param bool $first if 'true' don't remove first 4 bytes for first row
    * @return string
    */
-  static public function recData(ZKTeco $self, $maxErrors = 10, $first = true)
+  static public function recData(ZKTeco $self, $maxErrors = 2, $first = true)
   {
     $data = '';
     $bytes = self::getSize($self);
@@ -365,8 +365,11 @@ class Util
             sleep(1);
             continue;
           } else {
-            //return empty if has maximum count of errors
+            // Return whatever data was received instead of wiping everything
             self::logReceived($self, $received, $bytes);
+            if (!empty($data) && strlen($data) > 40) {
+              return $data;
+            }
             unset($data);
             return '';
           }
@@ -409,19 +412,28 @@ class Util
    */
   static private function logger(ZKTeco $self, $str)
   {
-    if (defined('ZK_LIB_LOG')) {
-      //use constant if defined
-      $log = ZK_LIB_LOG;
-    } else {
-      $dir = dirname(dirname(__FILE__));
-      $log = $dir . '/logs/error.log';
+    try {
+      if (defined('ZK_LIB_LOG')) {
+        //use constant if defined
+        $log = ZK_LIB_LOG;
+      } else {
+        $dir = dirname(dirname(__FILE__));
+        $log = $dir . '/logs/error.log';
+      }
+
+      $dirPath = dirname($log);
+      if (!is_dir($dirPath)) {
+        @mkdir($dirPath, 0777, true);
+      }
+
+      $row = '<' . $self->_ip . '> [' . date('d.m.Y H:i:s') . '] ';
+      $row .= (empty($self->_section) ? '' : '(' . $self->_section . ') ');
+      $row .= $str;
+      $row .= PHP_EOL;
+
+      @file_put_contents($log, $row, FILE_APPEND);
+    } catch (\Throwable $e) {
+      // Silently ignore logging failures so attendance sync never dies
     }
-
-    $row = '<' . $self->_ip . '> [' . date('d.m.Y H:i:s') . '] ';
-    $row .= (empty($self->_section) ? '' : '(' . $self->_section . ') ');
-    $row .= $str;
-    $row .= PHP_EOL;
-
-    file_put_contents($log, $row, FILE_APPEND);
   }
 }

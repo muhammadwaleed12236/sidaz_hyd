@@ -734,7 +734,7 @@
                 // Show a loading toast so user knows it's working
                 Swal.fire({
                     title: 'Pulling Attendance...',
-                    html: 'Connecting to biometric device(s).<br><small class="text-muted">This may take up to 2 minutes.</small>',
+                    html: 'Connecting to office biometric device...<br><small class="text-muted">Downloading punch records, please wait...</small>',
                     allowOutsideClick: false,
                     allowEscapeKey: false,
                     didOpen: () => { Swal.showLoading(); }

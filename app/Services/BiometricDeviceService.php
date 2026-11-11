@@ -35,6 +35,10 @@ class BiometricDeviceService
      */
     public function getZkClient(BiometricDevice $device, int $timeoutSeconds = 8): ZKTeco
     {
+        if (! defined('ZK_LIB_LOG')) {
+            define('ZK_LIB_LOG', storage_path('logs/zkteco.log'));
+        }
+
         $zk = new ZKTeco($device->ip_address, (int) ($device->port ?: 4370));
         if ($zk->_zkclient) {
             $timeout = ['sec' => $timeoutSeconds, 'usec' => 0];
@@ -145,9 +149,15 @@ class BiometricDeviceService
 
                     $allLogs = [];
                     foreach ($rawLogs as $log) {
+                        $id = trim((string) ($log['id'] ?? $log['uid'] ?? ''));
+                        $time = (string) ($log['timestamp'] ?? '');
+                        if (empty($id) || empty($time) || str_starts_with($time, '2000-') || str_starts_with($time, '1970-')) {
+                            continue;
+                        }
+
                         $allLogs[] = [
-                            'id' => (string) ($log['id'] ?? $log['uid'] ?? '0'),
-                            'timestamp' => (string) ($log['timestamp'] ?? ''),
+                            'id' => $id,
+                            'timestamp' => $time,
                             'state' => (int) ($log['state'] ?? 1),
                             'uid' => (string) ($log['uid'] ?? 0),
                         ];

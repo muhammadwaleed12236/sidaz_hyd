@@ -21,6 +21,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        if (! defined('ZK_LIB_LOG')) {
+            define('ZK_LIB_LOG', storage_path('logs/zkteco.log'));
+        }
+
         \Illuminate\Pagination\Paginator::useBootstrapFive();
     }
 }
