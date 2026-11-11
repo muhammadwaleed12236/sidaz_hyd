@@ -49,6 +49,23 @@ class PayrollCalculationService
             return $employee->salaryStructure;
         }
 
+        // Fallback to employee's custom fixed salary if configured
+        if ($employee->custom_salary !== null && (float) $employee->custom_salary > 0) {
+            $customStruct = new SalaryStructure();
+            $customStruct->id = 0;
+            $customStruct->name = 'Custom Salary (' . number_format($employee->custom_salary) . ' PKR)';
+            $customStruct->salary_type = 'salary';
+            $customStruct->base_salary = (float) $employee->custom_salary;
+            $customStruct->daily_wages = 0;
+            $customStruct->use_daily_wages = false;
+            $customStruct->allowances = [];
+            $customStruct->deductions = [];
+            $customStruct->attendance_deduction_policy = [];
+            $customStruct->carry_forward_deductions = false;
+            $customStruct->leave_salary_per_day = round((float) $employee->custom_salary / 30, 2);
+            return $customStruct;
+        }
+
         // Fallback: match by designation or default structure
         if ($employee->designation) {
             $designationName = strtolower($employee->designation->name);

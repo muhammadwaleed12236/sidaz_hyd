@@ -54,6 +54,7 @@ class EmployeeController extends Controller
             'department_id' => 'required|exists:hr_departments,id',
             'designation_id' => 'required|exists:hr_designations,id',
             'joining_date' => 'required|date',
+            'custom_salary' => 'nullable|numeric|min:0',
             'password' => 'nullable|min:6',
             'punch_gap_minutes' => 'nullable|integer|min:1|max:120',
             'document_degree' => 'nullable|file|mimes:pdf,jpg,png,jpeg|max:2048',
@@ -98,6 +99,7 @@ class EmployeeController extends Controller
         }
 
         $data = $request->except(['document_degree', 'document_certificate', 'document_hsc_marksheet', 'document_ssc_marksheet', 'document_cv', 'password', 'casual_leave_days', 'assign_portal_access', 'basic_salary']);
+        $data['custom_salary'] = $request->filled('custom_salary') ? (float) $request->input('custom_salary') : 0;
         $data['is_docs_submitted'] = $request->has('is_docs_submitted') ? 1 : 0;
 
         // If no email provided (portal access disabled), generate internal unique email for DB

@@ -27,6 +27,7 @@ class Employee extends Model
         'date_of_birth',
         'joining_date',
         'status',
+        'custom_salary',
         'custom_start_time',
         'custom_end_time',
         'face_encoding',

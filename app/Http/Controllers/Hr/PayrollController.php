@@ -103,8 +103,10 @@ class PayrollController extends Controller
 
         $payrolls = $query->latest()->paginate(50);
         $this->attachAttendanceMetrics($payrolls);
-        $employees = Employee::whereHas('salaryStructure', function ($q) {
-            $q->whereIn('salary_type', ['salary', 'both']);
+        $employees = Employee::where(function ($q) {
+            $q->whereHas('salaryStructure', function ($sq) {
+                $sq->whereIn('salary_type', ['salary', 'both']);
+            })->orWhere('custom_salary', '>', 0);
         })->get();
         $accounts = \App\Models\Account::whereNotIn('account_code', $excludedCodes)
             ->whereNotIn('title', $excludedTitles)

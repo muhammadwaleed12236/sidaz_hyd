@@ -718,6 +718,21 @@
                                                         <i class="fa fa-briefcase me-1"></i>{{ optional($emp->designation)->name ?? 'N/A' }}
                                                     </span>
                                                 </div>
+                                                <div class="mt-1">
+                                                    @if ($emp->salaryStructure)
+                                                        <span class="badge bg-light text-success border border-success" style="font-size:0.68rem; padding: 2px 6px;">
+                                                            <i class="fa fa-file-invoice-dollar me-1"></i>{{ Str::limit($emp->salaryStructure->name, 20) }}
+                                                        </span>
+                                                    @elseif($emp->custom_salary > 0)
+                                                        <span class="badge bg-light text-primary border border-primary" style="font-size:0.68rem; padding: 2px 6px;">
+                                                            <i class="fa fa-money-bill-wave me-1"></i>Fixed: Rs. {{ number_format($emp->custom_salary) }}
+                                                        </span>
+                                                    @else
+                                                        <span class="badge bg-light text-danger border border-danger" style="font-size:0.68rem; padding: 2px 6px;">
+                                                            <i class="fa fa-exclamation-circle me-1"></i>No Salary Fixed
+                                                        </span>
+                                                    @endif
+                                                </div>
                                             </td>
                                             <td>
                                                 @if ($emp->custom_start_time)
@@ -783,6 +798,7 @@
                                                 <input type="hidden" class="custom_start_time" value="{{ $emp->custom_start_time }}">
                                                 <input type="hidden" class="custom_end_time" value="{{ $emp->custom_end_time }}">
                                                 <input type="hidden" class="joining_date" value="{{ $emp->joining_date }}">
+                                                <input type="hidden" class="custom_salary" value="{{ $emp->custom_salary }}">
                                                 <input type="hidden" class="status" value="{{ $emp->status }}">
                                                 <input type="hidden" class="is_docs_submitted" value="{{ $emp->is_docs_submitted }}">
                                                 <input type="hidden" class="doc_degree" value="{{ $emp->getDocument('degree') }}">
@@ -1013,6 +1029,15 @@
                                             <i class="fa fa-calendar-alt"></i> Joining Date <span class="required-star">*</span>
                                         </label>
                                         <input type="date" name="joining_date" id="joining_date" class="form-control" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group-modern">
+                                        <label class="form-label">
+                                            <i class="fa fa-money-bill-wave text-success"></i> Custom Fixed Salary (PKR)
+                                        </label>
+                                        <input type="number" step="any" min="0" name="custom_salary" id="custom_salary" class="form-control" placeholder="e.g. 35000">
+                                        <small class="text-muted"><i class="fa fa-info-circle"></i> Agar salary structure assign nahi hai to ye salary fix hogi</small>
                                     </div>
                                 </div>
 
@@ -1316,6 +1341,7 @@
                     casualLeavePicker.clear();
                 }
                 $('#casual_leave_days').val('');
+                $('#custom_salary').val('');
 
                 $('#employeeModal').modal('show');
             });
@@ -1359,6 +1385,7 @@
                 }
 
                 $('#joining_date').val(card.find('.joining_date').val());
+                $('#custom_salary').val(card.find('.custom_salary').val());
                 $('#status').val(card.find('.status').val());
 
                 if (card.find('.is_docs_submitted').val() == '1') {
