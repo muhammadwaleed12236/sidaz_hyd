@@ -355,14 +355,18 @@ class Util
       $received = 0;
       $errors = 0;
 
+      // Fast socket timeout during packet stream to avoid hanging
+      $streamTimeout = array('sec' => 1, 'usec' => 500000);
+      @socket_set_option($self->_zkclient, SOL_SOCKET, SO_RCVTIMEO, $streamTimeout);
+
       while ($bytes > $received) {
         $ret = @socket_recvfrom($self->_zkclient, $dataRec, 1032, 0, $self->_ip, $self->_port);
 
         if ($ret === false) {
           if ($errors < $maxErrors) {
-            //try again if false
+            // Retry quickly without blocking the thread for full seconds
             $errors++;
-            sleep(1);
+            usleep(25000);
             continue;
           } else {
             // Return whatever data was received instead of wiping everything
