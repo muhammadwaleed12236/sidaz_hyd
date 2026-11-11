@@ -253,8 +253,17 @@ class BiometricSyncService
             $employee = $employeesByDeviceUserId->get($deviceUserId);
 
             if (! $employee) {
-                $skipped++;
-                continue;
+                // Auto-fallback: check if an employee exists with this primary ID
+                $fallbackEmp = Employee::with('shift')->find((int) $deviceUserId);
+                if ($fallbackEmp) {
+                    $fallbackEmp->device_user_id = $deviceUserId;
+                    $fallbackEmp->save();
+                    $employeesByDeviceUserId->put($deviceUserId, $fallbackEmp);
+                    $employee = $fallbackEmp;
+                } else {
+                    $skipped++;
+                    continue;
+                }
             }
 
             // Parse timestamp

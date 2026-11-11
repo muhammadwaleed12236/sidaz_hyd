@@ -346,7 +346,7 @@ class Util
    * @param bool $first if 'true' don't remove first 4 bytes for first row
    * @return string
    */
-  static public function recData(ZKTeco $self, $maxErrors = 2, $first = true)
+  static public function recData(ZKTeco $self, $maxErrors = 4, $first = true)
   {
     $data = '';
     $bytes = self::getSize($self);
@@ -355,11 +355,11 @@ class Util
       $received = 0;
       $consecutiveErrors = 0;
 
-      // Increase receive buffer to 2MB so UDP packets are not dropped during burst
+      // 2MB receive buffer prevents kernel packet drops on UDP burst
       @socket_set_option($self->_zkclient, SOL_SOCKET, SO_RCVBUF, 2097152);
 
-      // 1.5s timeout: packets arrive every few milliseconds; 1.5s pause means stream is done
-      $streamTimeout = array('sec' => 1, 'usec' => 500000);
+      // 2.5s socket timeout per packet
+      $streamTimeout = array('sec' => 2, 'usec' => 500000);
       @socket_set_option($self->_zkclient, SOL_SOCKET, SO_RCVTIMEO, $streamTimeout);
 
       while ($bytes > $received) {
@@ -367,11 +367,22 @@ class Util
 
         if ($ret === false) {
           $consecutiveErrors++;
+
+          // If we received 90%+ of bytes, device has finished sending stream
+          if ($received >= ($bytes - 8192)) {
+            self::logReceived($self, $received, $bytes);
+            if (!empty($data) && strlen($data) > 40) {
+              return $data;
+            }
+            unset($data);
+            return '';
+          }
+
+          // In the middle of stream, retry for momentary network jitter
           if ($consecutiveErrors < $maxErrors) {
             usleep(50000);
             continue;
           } else {
-            // Stream ended by device (device sends slightly fewer bytes than prepare data size)
             self::logReceived($self, $received, $bytes);
             if (!empty($data) && strlen($data) > 40) {
               return $data;
@@ -381,11 +392,10 @@ class Util
           }
         }
 
-        // Reset error count on each received packet
         $consecutiveErrors = 0;
 
         if ($first === false) {
-          // The first 8 bytes don't seem to be related to the user
+          // The first 8 bytes of each subsequent packet are UDP wrapper header
           $dataRec = substr($dataRec, 8);
         }
 
@@ -396,7 +406,7 @@ class Util
         $first = false;
       }
 
-      //flush socket
+      // flush socket
       @socket_recvfrom($self->_zkclient, $dataRec, 1024, 0, $self->_ip, $self->_port);
       unset($dataRec);
     }
