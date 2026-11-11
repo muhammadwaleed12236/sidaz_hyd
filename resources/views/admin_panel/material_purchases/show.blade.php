@@ -141,11 +141,17 @@
 
         <div class="d-flex align-items-center gap-2">
             <button type="button" onclick="window.print()" class="btn btn-outline-dark fw-bold px-3">
-                <i class="fas fa-print me-1"></i> Print Invoice
+                <i class="fas fa-print me-1"></i> Print
             </button>
-            <a href="{{ route('material-purchases.edit', $purchase->id) }}" class="btn btn-warning fw-bold text-dark px-3">
-                <i class="fas fa-edit me-1"></i> Edit Purchase
-            </a>
+            @if($purchase->status === 'ordered')
+                <a href="{{ route('material-purchases.edit', $purchase->id) }}" class="btn btn-success fw-bold text-white px-3 shadow-sm">
+                    <i class="fas fa-check-double me-1"></i> Confirm & Receive Order
+                </a>
+            @else
+                <a href="{{ route('material-purchases.edit', $purchase->id) }}" class="btn btn-warning fw-bold text-dark px-3">
+                    <i class="fas fa-edit me-1"></i> Edit Purchase
+                </a>
+            @endif
             <a href="{{ route('material-purchases.index') }}" class="btn btn-outline-secondary fw-semibold px-3">
                 <i class="fas fa-arrow-left me-1"></i> Back to List
             </a>
@@ -164,8 +170,12 @@
                             <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 fw-bold" style="font-size:0.75rem;">
                                 <i class="fas fa-check-circle me-1"></i> COMPLETED
                             </span>
-                        @else
+                        @elseif($purchase->status == 'ordered')
                             <span class="badge bg-warning-subtle text-warning border border-warning-subtle px-3 py-2 fw-bold" style="font-size:0.75rem;">
+                                <i class="fas fa-clipboard-list me-1"></i> ORDERED (PENDING RECEIPT)
+                            </span>
+                        @else
+                            <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle px-3 py-2 fw-bold" style="font-size:0.75rem;">
                                 <i class="fas fa-clock me-1"></i> DRAFT
                             </span>
                         @endif

@@ -79,7 +79,7 @@ class MaterialPurchaseController extends Controller
             
             'transport_charges' => 'nullable|numeric|min:0',
             'paid_amount' => 'nullable|numeric|min:0',
-            'invoice_status' => 'required|in:draft,completed'
+            'invoice_status' => 'required|in:draft,completed,ordered'
         ]);
 
         try {
@@ -122,6 +122,12 @@ class MaterialPurchaseController extends Controller
 
             // 2. Process Items
             for ($i = 0; $i < count($request->item_id); $i++) {
+                $itemId = $request->item_id[$i] ?? null;
+                // Skip empty rows where no item is selected
+                if (empty($itemId)) {
+                    continue;
+                }
+
                 $qty = (float)$request->qty[$i];
                 $price = (float)$request->unit_price[$i];
                 $discount = isset($request->discount[$i]) ? (float)$request->discount[$i] : 0;
@@ -138,8 +144,6 @@ class MaterialPurchaseController extends Controller
                 $itemClass = $request->item_type[$i] == 'RawMaterial' 
                     ? RawMaterial::class 
                     : PackagingMaterial::class;
-                    
-                $itemId = $request->item_id[$i];
 
                 MaterialPurchaseItem::create([
                     'material_purchase_id' => $purchase->id,
@@ -369,7 +373,7 @@ class MaterialPurchaseController extends Controller
             
             'transport_charges' => 'nullable|numeric|min:0',
             'paid_amount' => 'nullable|numeric|min:0',
-            'invoice_status' => 'required|in:draft,completed'
+            'invoice_status' => 'required|in:draft,completed,ordered'
         ]);
 
         try {
@@ -409,6 +413,12 @@ class MaterialPurchaseController extends Controller
 
             // 4. Process New Items
             for ($i = 0; $i < count($request->item_id); $i++) {
+                $itemId = $request->item_id[$i] ?? null;
+                // Skip empty rows where no item is selected
+                if (empty($itemId)) {
+                    continue;
+                }
+
                 $qty = (float)$request->qty[$i];
                 $price = (float)$request->unit_price[$i];
                 $discount = isset($request->discount[$i]) ? (float)$request->discount[$i] : 0;
@@ -425,8 +435,6 @@ class MaterialPurchaseController extends Controller
                 $itemClass = $request->item_type[$i] == 'RawMaterial' 
                     ? RawMaterial::class 
                     : PackagingMaterial::class;
-                    
-                $itemId = $request->item_id[$i];
 
                 MaterialPurchaseItem::create([
                     'material_purchase_id' => $purchase->id,
@@ -532,10 +540,9 @@ class MaterialPurchaseController extends Controller
             ]
         );
 
-        // 3. Delete Journal Entries
-        \App\Models\JournalEntry::where('reference_type', MaterialPurchase::class)
-            ->where('reference_id', $purchase->id)
-            ->delete();
+        // 3. Delete/Reverse Journal Entries & restore account balances
+        $journalService = app(JournalEntryService::class);
+        $journalService->reverseEntriesForSource($purchase);
     }
 
 }

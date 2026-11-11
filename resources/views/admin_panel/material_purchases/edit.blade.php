@@ -205,8 +205,13 @@
 <div class="sup-page container-fluid px-3 px-md-4 pt-3">
     <div class="sup-header d-flex align-items-center justify-content-between">
         <div>
-            <h3 class="sup-title"><i class="fas fa-edit text-primary me-2"></i>Edit Material Purchase</h3>
-            <div class="sup-sub">Edit purchase invoice {{ $purchase->invoice_no }}</div>
+            @if($purchase->status === 'ordered')
+                <h3 class="sup-title text-warning"><i class="fas fa-clipboard-check text-warning me-2"></i>Receive & Confirm Purchase Order</h3>
+                <div class="sup-sub">Verify/adjust received quantities and complete purchase #{{ $purchase->invoice_no }} to update stock and ledger</div>
+            @else
+                <h3 class="sup-title"><i class="fas fa-edit text-primary me-2"></i>Edit Material Purchase</h3>
+                <div class="sup-sub">Edit purchase invoice {{ $purchase->invoice_no }}</div>
+            @endif
         </div>
         <a href="{{ route('material-purchases.index') }}" class="btn btn-outline-secondary px-4 fw-semibold" style="border-radius: 8px;">
             <i class="fas fa-arrow-left me-1"></i> Back
@@ -382,16 +387,28 @@
             
             <div class="bg-light px-4 py-3 border-top d-flex justify-content-between align-items-center">
                 <div>
-                    <span class="text-muted small"><i class="fas fa-info-circle"></i> Drafts do not affect stock or accounting.</span>
+                    <span class="text-muted small"><i class="fas fa-info-circle"></i> Purchase Orders and Drafts do not affect stock or accounting until Confirmed/Completed.</span>
                 </div>
                 <div>
                     <input type="hidden" name="invoice_status" id="invoice_status" value="completed">
-                    <button type="button" class="btn btn-outline-secondary px-4 fw-bold me-2" onclick="submitAs('draft')">
+                    <button type="button" class="btn btn-outline-secondary px-3 fw-bold me-2" onclick="submitAs('draft')">
                         <i class="fas fa-save me-1"></i> Save as Draft
                     </button>
-                    <button type="button" class="btn btn-primary px-5 fw-bold" style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); border: none; border-radius: 8px;" onclick="submitAs('completed')">
-                        <i class="fas fa-check me-1"></i> Complete Purchase
-                    </button>
+                    @if($purchase->status === 'ordered')
+                        <button type="button" class="btn btn-warning px-3 fw-bold me-2 text-dark" onclick="submitAs('ordered')">
+                            <i class="fas fa-clipboard-list me-1"></i> Update Order (Keep as Order)
+                        </button>
+                        <button type="button" class="btn btn-success px-4 fw-bold shadow-sm" style="border-radius: 8px;" onclick="submitAs('completed')">
+                            <i class="fas fa-check-double me-1"></i> Confirm & Receive Stock (Complete)
+                        </button>
+                    @else
+                        <button type="button" class="btn btn-warning px-3 fw-bold me-2 text-dark" onclick="submitAs('ordered')">
+                            <i class="fas fa-clipboard-list me-1"></i> Save as Order (Demand)
+                        </button>
+                        <button type="button" class="btn btn-primary px-4 fw-bold" style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); border: none; border-radius: 8px;" onclick="submitAs('completed')">
+                            <i class="fas fa-check me-1"></i> Complete Purchase
+                        </button>
+                    @endif
                 </div>
             </div>
         </form>
@@ -403,6 +420,36 @@
 @section('js')
 <script>
     function submitAs(status) {
+        // Clean up empty rows before submission so they don't block validation or send null
+        let validRowsCount = 0;
+        $('.item-row').each(function() {
+            const itemId = $(this).find('.item-select').val();
+            if (!itemId) {
+                // If more than 1 row exists, remove this empty row
+                if ($('.item-row').length > 1) {
+                    if ($(this).find('.select2').hasClass("select2-hidden-accessible")) {
+                        $(this).find('.select2').select2('destroy');
+                    }
+                    $(this).remove();
+                }
+            } else {
+                validRowsCount++;
+            }
+        });
+
+        updateRowIndexes();
+        calcTotal();
+
+        if (validRowsCount === 0) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'No Items',
+                text: 'Please select at least one material item before saving.',
+                confirmButtonColor: '#2563eb'
+            });
+            return false;
+        }
+
         $('#invoice_status').val(status);
         $('#purchaseForm').submit();
     }
@@ -410,8 +457,6 @@
     const rawMaterials = @json($rawMaterials);
     const packagingMaterials = @json($packagingMaterials);
 
-    function filterItems() {
-        const type = $('#purchase_type').val();
     function buildItemOptionsHtml() {
         const type = $('#purchase_type').val();
         let options = '<option value="">Select Item</option>';
@@ -534,8 +579,21 @@
     $(document).on('click', '.remove-row', function() {
         if ($('.item-row').length > 1) {
             // Destroy select2 before removing to prevent memory leaks
-            $(this).closest('tr').find('.select2').select2('destroy');
+            if ($(this).closest('tr').find('.select2').hasClass("select2-hidden-accessible")) {
+                $(this).closest('tr').find('.select2').select2('destroy');
+            }
             $(this).closest('tr').remove();
+            updateRowIndexes();
+            calcTotal();
+        } else {
+            // If only 1 row left, reset its fields instead of blocking
+            const $singleRow = $(this).closest('tr');
+            $singleRow.find('.item-select').val('').trigger('change');
+            $singleRow.find('input').val('');
+            $singleRow.find('.item-disc').val('0');
+            $singleRow.find('.item-tax').val('0');
+            $singleRow.find('.item-unit').text('-');
+            $singleRow.find('.item-subtotal').val('0.00');
             calcTotal();
         }
     });

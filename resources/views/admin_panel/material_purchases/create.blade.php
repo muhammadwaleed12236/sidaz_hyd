@@ -583,11 +583,15 @@
                 <div class="d-flex align-items-center gap-2">
                     <input type="hidden" name="invoice_status" id="invoice_status" value="completed">
                     
-                    <button type="button" class="btn btn-outline-secondary px-4 fw-bold py-2" id="btnSaveDraft" onclick="submitFormInteractive('draft')" style="border-radius: 10px;">
+                    <button type="button" class="btn btn-outline-secondary px-3 fw-bold py-2" id="btnSaveDraft" onclick="submitFormInteractive('draft')" style="border-radius: 10px;">
                         <i class="fas fa-bookmark me-1"></i> Save as Draft
                     </button>
                     
-                    <button type="button" class="btn btn-primary px-5 fw-bold py-2 shadow-sm" id="btnSubmitComplete" onclick="submitFormInteractive('completed')" style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); border: none; border-radius: 10px;">
+                    <button type="button" class="btn btn-warning px-3 fw-bold py-2 text-dark shadow-sm" id="btnSaveOrder" onclick="submitFormInteractive('ordered')" style="border-radius: 10px;">
+                        <i class="fas fa-clipboard-list me-1"></i> Place Purchase Order (Demand)
+                    </button>
+                    
+                    <button type="button" class="btn btn-primary px-4 fw-bold py-2 shadow-sm" id="btnSubmitComplete" onclick="submitFormInteractive('completed')" style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); border: none; border-radius: 10px;">
                         <i class="fas fa-check-circle me-1"></i> Complete Purchase Invoice
                     </button>
                 </div>
@@ -774,12 +778,15 @@
             updateRowIndexes();
             calcTotal();
         } else {
-            Swal.fire({
-                icon: 'warning',
-                title: 'Cannot Delete Row',
-                text: 'At least one item row is required for the purchase invoice.',
-                confirmButtonColor: '#2563eb'
-            });
+            // Reset the single row rather than blocking user
+            const $singleRow = $(this).closest('tr');
+            $singleRow.find('.item-select').val('').trigger('change');
+            $singleRow.find('input').val('');
+            $singleRow.find('.item-disc').val('0');
+            $singleRow.find('.item-tax').val('0');
+            $singleRow.find('.item-unit').text('-');
+            $singleRow.find('.item-subtotal').val('0.00');
+            calcTotal();
         }
     });
 
@@ -1038,10 +1045,19 @@
 
         // SUBMIT VIA AJAX (Page Data remains intact on any server error)
         const btnSaveDraft = $('#btnSaveDraft');
+        const btnSaveOrder = $('#btnSaveOrder');
         const btnSubmitComplete = $('#btnSubmitComplete');
         
         btnSaveDraft.prop('disabled', true);
-        btnSubmitComplete.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Saving Purchase...');
+        btnSaveOrder.prop('disabled', true);
+        if (status === 'ordered') {
+            btnSaveOrder.html('<i class="fas fa-spinner fa-spin me-1"></i> Saving Order...');
+        } else if (status === 'draft') {
+            btnSaveDraft.html('<i class="fas fa-spinner fa-spin me-1"></i> Saving Draft...');
+        } else {
+            btnSubmitComplete.html('<i class="fas fa-spinner fa-spin me-1"></i> Saving Purchase...');
+        }
+        btnSubmitComplete.prop('disabled', true);
 
         const formData = $('#purchaseForm').serialize();
 
@@ -1063,7 +1079,8 @@
                 }
             },
             error: function(xhr) {
-                btnSaveDraft.prop('disabled', false);
+                btnSaveDraft.prop('disabled', false).html('<i class="fas fa-bookmark me-1"></i> Save as Draft');
+                btnSaveOrder.prop('disabled', false).html('<i class="fas fa-clipboard-list me-1"></i> Place Purchase Order (Demand)');
                 btnSubmitComplete.prop('disabled', false).html('<i class="fas fa-check-circle me-1"></i> Complete Purchase Invoice');
 
                 let errMsg = 'An unexpected error occurred while saving.';

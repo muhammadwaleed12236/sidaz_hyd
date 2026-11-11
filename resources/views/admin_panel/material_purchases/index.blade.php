@@ -103,10 +103,45 @@
         border-radius: 20px;
         font-size: 0.75rem;
         font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
     }
     .status-completed {
         background: #dcfce7;
         color: #166534;
+        border: 1px solid #bbf7d0;
+    }
+    .status-ordered {
+        background: #fef3c7;
+        color: #92400e;
+        border: 1px solid #fde68a;
+    }
+    .status-draft {
+        background: #f1f5f9;
+        color: #475569;
+        border: 1px solid #e2e8f0;
+    }
+    .btn-confirm-order {
+        background: #16a34a;
+        color: #ffffff !important;
+        font-weight: 600;
+        font-size: 0.78rem;
+        padding: 4px 10px;
+        border-radius: 8px;
+        border: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 4px rgba(22, 163, 74, 0.2);
+    }
+    .btn-confirm-order:hover {
+        background: #15803d;
+        color: #ffffff !important;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(22, 163, 74, 0.3);
     }
 </style>
 
@@ -151,10 +186,21 @@
                             <td class="fw-bold text-dark">Rs. {{ number_format($p->total_amount, 2) }}</td>
                             <td class="text-success">Rs. {{ number_format($p->paid_amount, 2) }}</td>
                             <td>
-                                <span class="status-badge status-completed"><i class="fas fa-check-circle me-1" style="font-size: 8px;"></i> {{ ucfirst($p->status) }}</span>
+                                @if($p->status === 'completed')
+                                    <span class="status-badge status-completed"><i class="fas fa-check-circle" style="font-size: 10px;"></i> Completed</span>
+                                @elseif($p->status === 'ordered')
+                                    <span class="status-badge status-ordered"><i class="fas fa-clipboard-list" style="font-size: 10px;"></i> Ordered</span>
+                                @else
+                                    <span class="status-badge status-draft"><i class="fas fa-clock" style="font-size: 10px;"></i> Draft</span>
+                                @endif
                             </td>
                             <td class="text-end">
-                                <div class="d-flex gap-2 justify-content-end">
+                                <div class="d-flex gap-2 justify-content-end align-items-center">
+                                    @if($p->status === 'ordered')
+                                        <a href="{{ route('material-purchases.edit', $p->id) }}" class="btn-confirm-order" title="Confirm and Receive Order">
+                                            <i class="fas fa-check-double"></i> Confirm & Receive
+                                        </a>
+                                    @endif
                                     <a href="{{ route('material-purchases.show', $p->id) }}" class="btn btn-sm btn-light border" title="View"><i class="fas fa-eye text-primary"></i></a>
                                     <a href="{{ route('material-purchases.edit', $p->id) }}" class="btn btn-sm btn-light border" title="Edit"><i class="fas fa-edit text-warning"></i></a>
                                     <form action="{{ route('material-purchases.destroy', $p->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this purchase? This will reverse any stock and accounting entries.');">
