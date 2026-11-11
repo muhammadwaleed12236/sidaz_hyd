@@ -77,6 +77,68 @@ class BiometricSyncService
         $synced = 0;
         $failed = 0;
 
+        if ($this->deviceService->isZkTeco($device)) {
+            $zk = $this->deviceService->getZkClient($device, 6);
+            if (! $zk->connect()) {
+                return [
+                    'success' => false,
+                    'synced' => 0,
+                    'failed' => $employees->count(),
+                    'message' => "Could not connect to device {$device->name} ({$device->ip_address}:{$device->port}).",
+                ];
+            }
+
+            try {
+                $existingUsers = $zk->getUser();
+                $existingUserIds = [];
+                if (is_array($existingUsers)) {
+                    foreach ($existingUsers as $u) {
+                        $uidStr = trim((string) ($u['userid'] ?? $u['uid'] ?? ''));
+                        if ($uidStr !== '') {
+                            $existingUserIds[$uidStr] = true;
+                        }
+                    }
+                }
+
+                foreach ($employees as $employee) {
+                    if (! $employee->device_user_id) {
+                        $employee->device_user_id = $this->generateDeviceUserId($device);
+                    }
+
+                    if ($employee->biometric_device_id !== $device->id) {
+                        $employee->biometric_device_id = $device->id;
+                    }
+
+                    $devId = (string) $employee->device_user_id;
+                    $uid = (int) $devId;
+
+                    $res = true;
+                    // If not already registered on machine, add user to device
+                    if (! isset($existingUserIds[$devId])) {
+                        $res = (bool) $zk->setUser($uid, $devId, substr($employee->full_name, 0, 24), '');
+                    }
+
+                    if ($res) {
+                        $employee->last_device_sync_at = now();
+                        $employee->save();
+                        $synced++;
+                    } else {
+                        $failed++;
+                    }
+                }
+            } finally {
+                $zk->disconnect();
+            }
+
+            return [
+                'success' => true,
+                'synced' => $synced,
+                'failed' => $failed,
+                'message' => "Successfully synced {$synced} employees to {$device->name}." . ($failed > 0 ? " Failed: {$failed}" : ''),
+            ];
+        }
+
+        // Hikvision fallback
         foreach ($employees as $employee) {
             $result = $this->syncEmployeeToDevice($employee, $device);
             if ($result['success']) {
