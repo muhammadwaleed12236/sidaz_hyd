@@ -346,7 +346,7 @@ class Util
    * @param bool $first if 'true' don't remove first 4 bytes for first row
    * @return string
    */
-  static public function recData(ZKTeco $self, $maxErrors = 3, $first = true)
+  static public function recData(ZKTeco $self, $maxErrors = 10, $first = true)
   {
     $data = '';
     $bytes = self::getSize($self);
@@ -358,8 +358,8 @@ class Util
       // Increase receive buffer to 2MB so UDP packets are not dropped during burst
       @socket_set_option($self->_zkclient, SOL_SOCKET, SO_RCVBUF, 2097152);
 
-      // Fast 1.2s timeout per packet during stream
-      $streamTimeout = array('sec' => 1, 'usec' => 200000);
+      // 5s timeout per packet allows WAN latency without aborting stream prematurely
+      $streamTimeout = array('sec' => 5, 'usec' => 0);
       @socket_set_option($self->_zkclient, SOL_SOCKET, SO_RCVTIMEO, $streamTimeout);
 
       while ($bytes > $received) {
@@ -368,7 +368,7 @@ class Util
         if ($ret === false) {
           $consecutiveErrors++;
           if ($consecutiveErrors < $maxErrors) {
-            usleep(20000);
+            usleep(100000);
             continue;
           } else {
             // Stream ended by device (device often sends slightly fewer bytes than prepare data size)
