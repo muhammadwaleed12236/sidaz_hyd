@@ -539,6 +539,35 @@
     <link rel="stylesheet" href="{{ asset('assets/css/flatpickr.min.css') }}">
 
     @vite(['resources/js/app.js'])
+
+    <style>
+        @media print {
+            .rt_nav_header,
+            .top_nav,
+            .nav-bottom,
+            .rt_nav_wrapper,
+            .nav_wrapper_main,
+            nav.navbar,
+            .navbar-nav,
+            #notificationLi,
+            #profileDropdown,
+            .nav-profile,
+            .navbar-toggler,
+            header,
+            footer,
+            .footer-area,
+            .no-print,
+            .whatsapp-support-btn,
+            .whatsapp-floating-btn {
+                display: none !important;
+                visibility: hidden !important;
+                height: 0 !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                overflow: hidden !important;
+            }
+        }
+    </style>
 </head>
 
 <body>

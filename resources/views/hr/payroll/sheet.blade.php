@@ -43,6 +43,7 @@
     @endphp
 
     <style>
+        /* On-Screen Base Styles */
         .payroll-sheet-wrapper {
             background: #ffffff;
             border-radius: 16px;
@@ -188,41 +189,69 @@
             text-transform: uppercase;
         }
 
-        /* PRINT STYLES */
+        /* STRICT BLACK & WHITE PRINT STYLES */
         @media print {
             @page {
                 size: landscape;
-                margin: 6mm 6mm 6mm 6mm;
+                margin: 8mm 6mm 8mm 6mm;
             }
 
+            /* 1. HIDE ALL NAVIGATION, HEADER, ICONS (Bell, Profile, Menu), FOOTER, AND BUTTONS */
+            nav,
+            .rt_nav_header,
+            .top_nav,
+            .nav-bottom,
+            .rt_nav_wrapper,
+            .nav_wrapper_main,
+            .navbar-nav,
+            #notificationLi,
+            #profileDropdown,
+            .nav-profile,
+            .navbar-toggler,
+            header,
+            footer,
+            .footer-area,
+            .no-print,
+            .whatsapp-support-btn,
+            .whatsapp-floating-btn,
+            .sidebar,
+            .sidebar-menu,
+            .page-title-area {
+                display: none !important;
+                visibility: hidden !important;
+                height: 0 !important;
+                max-height: 0 !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                overflow: hidden !important;
+            }
+
+            /* 2. UNIVERSAL PURE BLACK & WHITE TEXT & BORDERS (NO GRAY, NO COLORS) */
+            *,
+            *::before,
+            *::after {
+                color: #000000 !important;
+                -webkit-text-fill-color: #000000 !important;
+                border-color: #000000 !important;
+                box-shadow: none !important;
+                text-shadow: none !important;
+            }
+
+            html,
             body,
+            .container-scroller,
+            .page-container,
             .main-content,
             .main-content-inner,
             .container-fluid {
                 background: #ffffff !important;
+                color: #000000 !important;
                 margin: 0 !important;
                 padding: 0 !important;
                 width: 100% !important;
                 max-width: 100% !important;
-                box-shadow: none !important;
-            }
-
-            .no-print,
-            header,
-            .sidebar-menu,
-            .sidebar-wrapper,
-            .page-container .sidebar,
-            .header-area,
-            .page-title-area,
-            nav.navbar,
-            footer,
-            .whatsapp-support-btn,
-            .whatsapp-floating-btn {
-                display: none !important;
-            }
-
-            .page-container {
-                padding-left: 0 !important;
+                border: none !important;
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
             }
 
             .payroll-sheet-wrapper {
@@ -230,54 +259,130 @@
                 box-shadow: none !important;
                 padding: 0 !important;
                 margin: 0 !important;
+                background: #ffffff !important;
             }
 
+            .sheet-company-title {
+                color: #000000 !important;
+                font-size: 15pt !important;
+                font-weight: 900 !important;
+                margin-bottom: 2px !important;
+            }
+
+            .sheet-sub-title {
+                color: #000000 !important;
+                font-size: 10.5pt !important;
+                font-weight: 800 !important;
+                margin-bottom: 3px !important;
+            }
+
+            .sheet-meta-text {
+                color: #000000 !important;
+                font-size: 8pt !important;
+                font-weight: 500 !important;
+            }
+
+            /* Black & White KPI Summary Boxes */
+            .kpi-summary-box {
+                background: #ffffff !important;
+                border: 1px solid #000000 !important;
+                border-radius: 3px !important;
+                padding: 3px 5px !important;
+            }
+
+            .kpi-summary-box .kpi-label {
+                color: #000000 !important;
+                font-size: 6.5pt !important;
+                font-weight: 800 !important;
+            }
+
+            .kpi-summary-box .kpi-val {
+                color: #000000 !important;
+                font-size: 9.5pt !important;
+                font-weight: 900 !important;
+            }
+
+            /* Crisp 100% Solid Black Table Borders & Black Font */
             .salary-table {
-                font-size: 8.5pt !important;
                 width: 100% !important;
+                border-collapse: collapse !important;
+                border: 1.5px solid #000000 !important;
+                background: #ffffff !important;
+                margin-top: 6px !important;
             }
 
             .salary-table th {
-                background-color: #f1f5f9 !important;
+                background-color: #ffffff !important;
                 color: #000000 !important;
-                border: 1px solid #000000 !important;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
+                font-weight: 900 !important;
                 font-size: 7.5pt !important;
                 padding: 4px 3px !important;
+                border: 1px solid #000000 !important;
+                border-bottom: 2px solid #000000 !important;
+                text-align: center !important;
             }
 
             .salary-table td {
-                border: 1px solid #000000 !important;
-                padding: 4px 3px !important;
+                background-color: #ffffff !important;
+                color: #000000 !important;
                 font-size: 8pt !important;
+                padding: 3.5px 3px !important;
+                border: 1px solid #000000 !important;
+            }
+
+            .salary-table tbody tr:nth-child(even),
+            .salary-table tbody tr:hover {
+                background-color: #ffffff !important;
             }
 
             .salary-table tfoot th,
             .salary-table tfoot td {
-                background-color: #f8fafc !important;
+                background-color: #ffffff !important;
                 color: #000000 !important;
-                border: 1.5px solid #000000 !important;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
+                font-weight: 900 !important;
+                font-size: 8pt !important;
+                padding: 4px 3px !important;
+                border: 1px solid #000000 !important;
+                border-top: 2px solid #000000 !important;
+                border-bottom: 2px solid #000000 !important;
             }
 
-            .kpi-summary-box {
-                border: 1px solid #94a3b8 !important;
-                padding: 6px 8px !important;
+            /* Badges: Simple Black Text on White Background */
+            .badge-status-paid {
+                background: #ffffff !important;
+                color: #000000 !important;
+                border: 1px solid #000000 !important;
+                font-size: 7pt !important;
+                font-weight: 900 !important;
+                padding: 1px 4px !important;
+                border-radius: 2px !important;
             }
 
-            .kpi-summary-box .kpi-label {
-                font-size: 6.5pt !important;
+            .badge-status-pending {
+                background: #ffffff !important;
+                color: #000000 !important;
+                border: 1px dashed #000000 !important;
+                font-size: 7pt !important;
+                font-weight: 900 !important;
+                padding: 1px 4px !important;
+                border-radius: 2px !important;
             }
 
-            .kpi-summary-box .kpi-val {
-                font-size: 9.5pt !important;
-            }
-
+            /* Signature Blocks in Pure Black */
             .sig-block {
-                padding-top: 35px !important;
-                page-break-inside: avoid;
+                padding-top: 30px !important;
+                page-break-inside: avoid !important;
+            }
+
+            .sig-line {
+                border-top: 1.5px solid #000000 !important;
+                width: 85% !important;
+            }
+
+            .sig-title {
+                color: #000000 !important;
+                font-size: 7.5pt !important;
+                font-weight: 800 !important;
             }
 
             thead {
@@ -383,7 +488,7 @@
                 <div class="payroll-sheet-wrapper">
                     
                     {{-- Formal Sheet Header --}}
-                    <div class="text-center pb-3 border-bottom mb-3">
+                    <div class="text-center pb-2 border-bottom mb-3" style="border-bottom: 2px solid #000000 !important;">
                         <div class="sheet-company-title">SIDAZ PHARMACEUTICALS</div>
                         <div class="sheet-sub-title">MONTHLY SALARY & PAYROLL REGISTER</div>
                         <div class="sheet-meta-text">
@@ -407,7 +512,7 @@
                         <div class="col-4 col-md-2">
                             <div class="kpi-summary-box">
                                 <div class="kpi-label">Overtime ({{ round($totalOtHours, 1) }} hrs)</div>
-                                <div class="kpi-val text-info">Rs. {{ number_format($totalOtAmount, 0) }}</div>
+                                <div class="kpi-val">Rs. {{ number_format($totalOtAmount, 0) }}</div>
                             </div>
                         </div>
                         <div class="col-4 col-md-2">
@@ -419,19 +524,19 @@
                         <div class="col-4 col-md-2">
                             <div class="kpi-summary-box">
                                 <div class="kpi-label">Deductions</div>
-                                <div class="kpi-val text-danger">Rs. {{ number_format($totalDeductions, 0) }}</div>
+                                <div class="kpi-val">Rs. {{ number_format($totalDeductions, 0) }}</div>
                             </div>
                         </div>
                         <div class="col-4 col-md-2">
-                            <div class="kpi-summary-box" style="border-color: #86efac; background: #f0fdf4;">
-                                <div class="kpi-label text-success">Total Paid</div>
-                                <div class="kpi-val text-success">Rs. {{ number_format($totalPaidAmount, 0) }}</div>
+                            <div class="kpi-summary-box">
+                                <div class="kpi-label">Total Paid</div>
+                                <div class="kpi-val">Rs. {{ number_format($totalPaidAmount, 0) }}</div>
                             </div>
                         </div>
                         <div class="col-4 col-md-2">
-                            <div class="kpi-summary-box" style="border-color: #fde68a; background: #fffbeb;">
-                                <div class="kpi-label text-warning">Pending Pay</div>
-                                <div class="kpi-val text-warning">Rs. {{ number_format($totalPendingAmount, 0) }}</div>
+                            <div class="kpi-summary-box">
+                                <div class="kpi-label">Pending Pay</div>
+                                <div class="kpi-val">Rs. {{ number_format($totalPendingAmount, 0) }}</div>
                             </div>
                         </div>
                     </div>
@@ -443,7 +548,7 @@
                                 <tr>
                                     <th style="width: 3%;">#</th>
                                     <th style="width: 7%;">Emp Code</th>
-                                    <th style="width: 16%; text-align: left;">Employee Name & Designation</th>
+                                    <th style="width: 17%; text-align: left;">Employee Name & Designation</th>
                                     <th style="width: 7%; text-align: right;">Basic (Rs.)</th>
                                     <th style="width: 8%;">Att (P/L/A)</th>
                                     <th style="width: 5%;">OT Hrs</th>
@@ -453,7 +558,7 @@
                                     <th style="width: 7%; text-align: right;">Deductions</th>
                                     <th style="width: 8%; text-align: right;">Net Payable</th>
                                     <th style="width: 8%; text-align: right;">Paid Amt</th>
-                                    <th style="width: 6%;">Status</th>
+                                    <th style="width: 5%;">Status</th>
                                     <th style="width: 6%;">Signature</th>
                                 </tr>
                             </thead>
@@ -484,21 +589,21 @@
                                     @endphp
                                     <tr>
                                         <td class="text-center fw-bold">{{ $index + 1 }}</td>
-                                        <td class="text-center font-monospace small">{{ $empCode }}</td>
+                                        <td class="text-center font-monospace">{{ $empCode }}</td>
                                         <td>
-                                            <div class="fw-bold text-dark">{{ $empName }}</div>
-                                            <div class="small text-muted" style="font-size: 0.73rem;">
+                                            <div class="fw-bold">{{ $empName }}</div>
+                                            <div style="font-size: 0.72rem;">
                                                 {{ $desig }} @if($dept) - {{ $dept }} @endif
                                             </div>
                                         </td>
                                         <td class="text-end fw-semibold">{{ number_format($basic, 0) }}</td>
                                         <td class="text-center">
-                                            <span title="Present" class="text-success fw-bold">{{ $present }}</span> /
-                                            <span title="Late" class="text-warning fw-bold">{{ $late }}</span> /
-                                            <span title="Absent" class="text-danger fw-bold">{{ $absent }}</span>
-                                            <span class="text-muted small">({{ $days }}d)</span>
+                                            <span title="Present" class="fw-bold">{{ $present }}</span> /
+                                            <span title="Late" class="fw-bold">{{ $late }}</span> /
+                                            <span title="Absent" class="fw-bold">{{ $absent }}</span>
+                                            <span style="font-size: 0.72rem;">({{ $days }}d)</span>
                                         </td>
-                                        <td class="text-center fw-bold text-info">
+                                        <td class="text-center fw-bold">
                                             {{ $otHrs > 0 ? round($otHrs, 1) : '-' }}
                                         </td>
                                         <td class="text-end fw-semibold">
@@ -508,33 +613,33 @@
                                             {{ $allow > 0 ? number_format($allow, 0) : '-' }}
                                         </td>
                                         <td class="text-end fw-semibold">{{ number_format($gross, 0) }}</td>
-                                        <td class="text-end text-danger fw-semibold">
+                                        <td class="text-end fw-semibold">
                                             {{ $ded > 0 ? number_format($ded, 0) : '-' }}
                                         </td>
-                                        <td class="text-end fw-bold text-dark" style="background-color: #f1f5f9;">
+                                        <td class="text-end fw-bold">
                                             {{ number_format($net, 0) }}
                                         </td>
-                                        <td class="text-end fw-bold {{ $isPaid ? 'text-success' : 'text-muted' }}">
+                                        <td class="text-end fw-bold">
                                             {{ $isPaid ? number_format($paidAmt, 0) : '0' }}
                                         </td>
                                         <td class="text-center">
                                             @if($isPaid)
                                                 <span class="badge-status-paid">PAID</span>
                                                 @if($p->payment_date)
-                                                    <div class="small text-muted" style="font-size: 0.68rem;">{{ \Carbon\Carbon::parse($p->payment_date)->format('d/m') }}</div>
+                                                    <div style="font-size: 0.68rem;">{{ \Carbon\Carbon::parse($p->payment_date)->format('d/m') }}</div>
                                                 @endif
                                             @else
                                                 <span class="badge-status-pending">PENDING</span>
                                             @endif
                                         </td>
-                                        <td class="text-center" style="border-bottom: 1px dotted #94a3b8;">
+                                        <td class="text-center" style="border-bottom: 1px dotted #000000;">
                                             {{-- Empty line for physical signature on printout --}}
                                         </td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="14" class="text-center py-4 text-muted">
-                                            <i class="fa fa-info-circle me-1"></i> No payroll records found for the selected month and filters.
+                                        <td colspan="14" class="text-center py-4">
+                                            No payroll records found for the selected month and filters.
                                         </td>
                                     </tr>
                                 @endforelse
@@ -544,18 +649,18 @@
                                     <th colspan="3" class="text-end text-uppercase">Grand Total ({{ $totalEmployees }} Staff):</th>
                                     <th class="text-end">{{ number_format($totalBasic, 0) }}</th>
                                     <th class="text-center">-</th>
-                                    <th class="text-center text-info">{{ round($totalOtHours, 1) }}</th>
-                                    <th class="text-end text-info">{{ number_format($totalOtAmount, 0) }}</th>
+                                    <th class="text-center">{{ round($totalOtHours, 1) }}</th>
+                                    <th class="text-end">{{ number_format($totalOtAmount, 0) }}</th>
                                     <th class="text-end">{{ number_format($totalAllowances, 0) }}</th>
                                     <th class="text-end">{{ number_format($totalGross, 0) }}</th>
-                                    <th class="text-end text-danger">{{ number_format($totalDeductions, 0) }}</th>
-                                    <th class="text-end text-dark">{{ number_format($totalNetSalary, 0) }}</th>
-                                    <th class="text-end text-success">{{ number_format($totalPaidAmount, 0) }}</th>
+                                    <th class="text-end">{{ number_format($totalDeductions, 0) }}</th>
+                                    <th class="text-end">{{ number_format($totalNetSalary, 0) }}</th>
+                                    <th class="text-end">{{ number_format($totalPaidAmount, 0) }}</th>
                                     <th class="text-center">
                                         @if($totalPendingAmount > 0)
-                                            <span class="small text-danger fw-bold">Due: {{ number_format($totalPendingAmount, 0) }}</span>
+                                            <span style="font-size: 0.72rem; font-weight: bold;">Due: {{ number_format($totalPendingAmount, 0) }}</span>
                                         @else
-                                            <span class="small text-success fw-bold">Cleared</span>
+                                            <span style="font-size: 0.72rem; font-weight: bold;">Cleared</span>
                                         @endif
                                     </th>
                                     <th></th>
