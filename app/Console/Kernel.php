@@ -12,9 +12,8 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
-        // Pull attendance from biometric devices hourly
-        // Pull attendance from biometric devices hourly
-        $schedule->command('attendance:sync-from-device')->hourly();
+        // Pull attendance from biometric devices automatically every 5 minutes
+        $schedule->command('attendance:sync-from-device')->everyFiveMinutes()->withoutOverlapping();
 
         // Mark absent employees automatically every night at 11:00 PM
         $schedule->command('attendance:mark-absent')->dailyAt('23:00');
